@@ -20,24 +20,22 @@ class BasicWorker:
         )
 
         # 4. Create contract instance
-        Incrementer = web3.eth.contract(address=contract_address, abi=contract_abi)
+        contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
         # 5. Build increment tx
-        increment_tx = Incrementer.functions.increment(value).buildTransaction(
+        # increment_tx = contract.functions.increment(value).buildTransaction(
+        register_tx = contract.functions.register_worker().buildTransaction(
             {
                 "gasPrice": 0,
                 "from": Web3.toChecksumAddress(self.address),
-                # "from": Web3.toChecksumAddress(account_from["address"]),
                 "nonce": web3.eth.get_transaction_count(
-                    # Web3.toChecksumAddress(account_from["address"])
                     Web3.toChecksumAddress(self.address)
                 ),
             }
         )
 
         # 6. Sign tx with PK
-        # tx_create = web3.eth.account.sign_transaction(increment_tx, account_from["private_key"])
-        tx_create = web3.eth.account.sign_transaction(increment_tx, self.private_key)
+        tx_create = web3.eth.account.sign_transaction(register_tx, self.private_key)
 
         # 7. Send tx and wait for receipt
         tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)
