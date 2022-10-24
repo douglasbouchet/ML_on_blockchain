@@ -63,7 +63,7 @@ def deploy_smart_contract(contract_name, from_address, from_private_key):
     # 5. Build constructor tx
     # construct_txn = new_contract.constructor(5).buildTransaction(
     construct_txn = new_contract.constructor(
-        5
+        0
     ).buildTransaction(  # TODO modify here the syntax of constructor depending on the smart contract
         {
             "gasPrice": 0,
@@ -84,4 +84,4 @@ def deploy_smart_contract(contract_name, from_address, from_private_key):
     tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
 
     print(f"Contract deployed at address: { tx_receipt.contractAddress }")
-    return tx_receipt.contractAddress
+    return tx_receipt.contractAddress, abi, bytecode

@@ -1,4 +1,5 @@
 from .script.deploy import deploy_smart_contract
+from .modules.contract import Contract
 
 
 class BasicServer:
@@ -8,9 +9,11 @@ class BasicServer:
 
     def deploy(self):
         contract_name = "incrementer"
-        contract_adress = deploy_smart_contract(
+        contract_adress, abi, bytecode = deploy_smart_contract(
             contract_name, self.from_address, self.from_private_key
         )
+        contract = Contract(contract_name, contract_adress, abi, bytecode)
+        return contract
 
 
 def main():
