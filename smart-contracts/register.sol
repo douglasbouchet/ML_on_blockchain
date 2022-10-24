@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
+//pragma solidity ^0.8.17;
+
 pragma solidity ^0.7.0;
+
+//pragma solidity ^0.8.17;
 
 contract Register {
     uint256 public number;

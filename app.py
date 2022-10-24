@@ -25,7 +25,8 @@ def main():
     basic_server = init_server()
     basic_worker = create_single_worker()
     # ------Deploy smart contract---------
-    contract = basic_server.deploy()
+    # contract = basic_server.deploy("incrementer")
+    contract = basic_server.deploy("register")
     print("Initial number of workers:", contract.get_number_of_workers())
     # ------Register worker to server-----
     basic_worker.register_to_learning(contract.contract_address, contract.abi)

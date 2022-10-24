@@ -10,6 +10,8 @@ def compile_smart_contract(contract_name):
     Returns:
         string, string: ABI and bytecode of smart contract.
     """
+    solcx.install_solc(version="0.7.0")
+    solcx.set_solc_version("0.7.0")
     temp_file = solcx.compile_files(
         f"/home/user/ml_on_blockchain/smart-contracts/{contract_name}.sol"
     )
