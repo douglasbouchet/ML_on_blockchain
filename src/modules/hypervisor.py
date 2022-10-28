@@ -1,4 +1,5 @@
-from worker import Worker
+from src.modules.worker import Worker
+from src.modules.helper import Helper
 
 
 class Hypervisor:
@@ -12,22 +13,31 @@ class Hypervisor:
 
     def __init__(self):
         self.workers = []
-        self.address_to_key = {}
+        self.address_to_key = Helper.read_addresses_and_keys_from_yaml(for_worker=True)
 
     def create_worker(self):
-        """Add a worker to the list of workers
+        """Add a worker to the list of workers (maximum 999 workers as no more addresses)
+
+        Returns: the worker if added, None otherwise
+        """
+        # check if we don't have created more workers than the number of addresses
+        if len(self.workers) < len(self.address_to_key):
+            worker = Worker(self.address_to_key[len(self.workers)])
+            self.workers.append(worker)
+            return worker
+        else:
+            return None
+
+    def remove_worker(self, worker_public_address):
+        """Remove a worker from the list of workers
 
         Args:
-            worker (Worker): The worker to add
+            worker_public_address (string): the public address of the worker to remove
 
+        Returns: the worker if removed, None otherwise
         """
-        worker = Worker()
-        self.workers.append(worker)
-
-    def read_addresses_and_keys_from_file(self, file_path):
-        """Get the addresses and keys of the workers
-
-        Returns:
-            dict: The dict of addresses and keys
-        """
-        return self.address_to_key
+        for worker in self.workers:
+            if worker.address == worker_public_address:
+                self.workers.remove(worker)
+                return worker
+        return None
