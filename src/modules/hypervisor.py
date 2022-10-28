@@ -1,5 +1,6 @@
 from src.modules.worker import Worker
 from src.modules.helper import Helper
+from src.modules.contract import Contract
 
 
 class Hypervisor:
@@ -13,7 +14,10 @@ class Hypervisor:
 
     def __init__(self):
         self.workers = []
-        self.address_to_key = Helper.read_addresses_and_keys_from_yaml(for_worker=True)
+        self.address_to_key = Helper.read_addresses_and_keys_from_yaml(
+            Helper, for_worker=True
+        )
+        self.contract = None
 
     def create_worker(self):
         """Add a worker to the list of workers (maximum 999 workers as no more addresses)
@@ -22,7 +26,9 @@ class Hypervisor:
         """
         # check if we don't have created more workers than the number of addresses
         if len(self.workers) < len(self.address_to_key):
-            worker = Worker(self.address_to_key[len(self.workers)])
+            address_and_key = self.address_to_key[len(self.workers)]
+            print(address_and_key)
+            worker = Worker(address_and_key["address"], address_and_key["private"])
             self.workers.append(worker)
             return worker
         else:
@@ -41,3 +47,27 @@ class Hypervisor:
                 self.workers.remove(worker)
                 return worker
         return None
+
+    def make_worker_join_learning(self, worker):
+        """Make a worker participate to the learning
+
+        Args:
+            worker (Worker): the worker to make participate to the learning
+        """
+        # if contract abi and addresses aren't available do nothing
+        if self.contract is None:
+            print("No contract found, please deploy a contract first")
+            return
+        if worker not in self.workers:
+            print("This worker is not managed by this hypervisor")
+            return
+        worker.register_to_learning(self.contract.contract_address, self.contract.abi)
+
+    def set_contract(self, contract):
+        """Set the contract to use for the learning
+
+        Args:
+            contract (Contract): the contract to use for the learning
+        """
+        assert type(contract) == Contract
+        self.contract = contract

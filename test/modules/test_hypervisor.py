@@ -7,12 +7,12 @@ from src.modules.hypervisor import Hypervisor
 
 def test_hypervirsor_read_addresses_list_should_be_999_for_workers():
     hypervisor = Hypervisor()
-    assert len(hypervisor.read_addresses_and_keys_from_file()) == 999
+    assert len(hypervisor.address_to_key) == 999
 
 
 def test_hypervisor_should_start_with_no_workers():
     hypervisor = Hypervisor()
-    assert hypervisor.workers.empty()
+    assert len(hypervisor.workers) == 0
 
 
 def test_hypervisor_should_create_worker():
@@ -71,3 +71,27 @@ def test_hypervisor_should_create_workers_with_correct_address_and_key():
         worker.private_key
         == "a1ab7278965cb9d311093f8c96ade50f998569d4f74941ff923d1cc512492f6b"
     )
+
+
+# def make_worker_join_learning(self, worker):
+#         """Make a worker participate to the learning
+
+#         Args:
+#             worker (Worker): the worker to make participate to the learning
+#         """
+#         # if contract abi and addresses aren't available do nothing
+#         if self.contract is None:
+#             print(
+#                 "No contract found, please deploy a contract first"
+#             )
+#             return
+#         worker.register_to_learning(self.contract.contract_address, self.contract.abi)
+
+#     def set_contract(self, contract):
+#         """Set the contract to use for the learning
+
+#         Args:
+#             contract (Contract): the contract to use for the learning
+#         """
+#         assert type(contract) == Contract
+#         self.contract = contract

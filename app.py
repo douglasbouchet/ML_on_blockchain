@@ -1,6 +1,7 @@
 from src.basic_server import BasicServer
 from src.basic_worker import BasicWorker
 from src.modules.helper import Helper
+from src.modules.hypervisor import Hypervisor
 
 
 def init_server():
@@ -21,19 +22,37 @@ def create_single_worker():
     return basic_worker
 
 
-def main():
+def basic_main():
     # ------Init server and worker--------
-    # basic_server = init_server()
-    # basic_worker = create_single_worker()
-    # # ------Deploy smart contract---------
-    # # contract = basic_server.deploy("incrementer")
-    # contract = basic_server.deploy("register")
-    # print("Initial number of workers:", contract.get_number_of_workers())
-    # # ------Register worker to server-----
-    # basic_worker.register_to_learning(contract.contract_address, contract.abi)
-    # print("current number of workers:", contract.get_number_of_workers())
-    print(Helper().read_addresses_and_keys_from_yaml(Helper(), for_worker=True)[0])
+    basic_server = init_server()
+    basic_worker = create_single_worker()
+    # ------Deploy smart contract---------
+    # contract = basic_server.deploy("incrementer")
+    contract = basic_server.deploy("register")
+    print("Initial number of workers:", contract.get_number_of_workers())
+    # ------Register worker to server-----
+    basic_worker.register_to_learning(contract.contract_address, contract.abi)
+    print("current number of workers:", contract.get_number_of_workers())
+
+
+def hypervisor_based_main():
+    # ------Init server and hypervisor--------
+    basic_server = init_server()
+    hypervisor = Hypervisor()
+    # ------Deploy smart contract---------
+    contract = basic_server.deploy("register")
+    print("Initial number of workers:", contract.get_number_of_workers())
+    # ------Give contract information to hypervisor-----
+    hypervisor.set_contract(contract)
+    # ------Create some workers-----------
+    worker0 = hypervisor.create_worker()
+    worker1 = hypervisor.create_worker()
+    # ------Register worker to server-----
+    hypervisor.make_worker_join_learning(worker0)
+    hypervisor.make_worker_join_learning(worker1)
+    print("current number of workers:", contract.get_number_of_workers())
 
 
 if __name__ == "__main__":
-    main()
+    # basic_main()
+    hypervisor_based_main()
