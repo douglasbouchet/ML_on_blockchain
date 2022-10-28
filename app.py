@@ -1,5 +1,6 @@
 from src.basic_server import BasicServer
 from src.basic_worker import BasicWorker
+from src.modules.helper import Helper
 
 
 def init_server():
@@ -22,15 +23,16 @@ def create_single_worker():
 
 def main():
     # ------Init server and worker--------
-    basic_server = init_server()
-    basic_worker = create_single_worker()
-    # ------Deploy smart contract---------
-    # contract = basic_server.deploy("incrementer")
-    contract = basic_server.deploy("register")
-    print("Initial number of workers:", contract.get_number_of_workers())
-    # ------Register worker to server-----
-    basic_worker.register_to_learning(contract.contract_address, contract.abi)
-    print("current number of workers:", contract.get_number_of_workers())
+    # basic_server = init_server()
+    # basic_worker = create_single_worker()
+    # # ------Deploy smart contract---------
+    # # contract = basic_server.deploy("incrementer")
+    # contract = basic_server.deploy("register")
+    # print("Initial number of workers:", contract.get_number_of_workers())
+    # # ------Register worker to server-----
+    # basic_worker.register_to_learning(contract.contract_address, contract.abi)
+    # print("current number of workers:", contract.get_number_of_workers())
+    print(Helper().read_addresses_and_keys_from_yaml(Helper(), for_worker=True)[0])
 
 
 if __name__ == "__main__":

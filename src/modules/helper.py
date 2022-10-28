@@ -1,3 +1,6 @@
+import yaml
+
+
 class Helper:
     @staticmethod
     def read_addresses_and_keys_from_yaml(self, for_worker):
@@ -7,8 +10,12 @@ class Helper:
 
         Returns: a dict with the addresses and keys if found, otw None
         """
-        # read from the file ../ressources/addresses_and_keys.yaml
-        with open("../ressources/addresses_and_keys.yaml", "r") as stream:
+        worker_path = "/home/user/ml_on_blockchain/resources/workers_addresses.yaml"
+        server_path = (
+            "/home/user/ml_on_blockchain/resources/learning_server_addresse.yaml"
+        )
+        yaml_path = worker_path if for_worker else server_path
+        with open(yaml_path, "r") as stream:
             try:
                 addresses_and_keys = yaml.safe_load(stream)
                 return addresses_and_keys
