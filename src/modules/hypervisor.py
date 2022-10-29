@@ -18,6 +18,7 @@ class Hypervisor:
             Helper, for_worker=True
         )
         self.contract = None
+        self.ip_address = "hypervisor_ip_address"
 
     def create_worker(self):
         """Add a worker to the list of workers (maximum 999 workers as no more addresses)
