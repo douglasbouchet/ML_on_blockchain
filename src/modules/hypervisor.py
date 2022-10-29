@@ -1,3 +1,4 @@
+import src.communication.network
 from src.modules.worker import Worker
 from src.modules.helper import Helper
 from src.modules.contract import Contract
@@ -13,10 +14,11 @@ class Hypervisor:
     """
 
     def __init__(self):
-        self.workers = []
+        self.address_to_workers = {}  # dict of address to worker
         self.address_to_key = Helper.read_addresses_and_keys_from_yaml(
             Helper, for_worker=True
         )
+        self.address_used = []  # usefull as we don't want to use the same address twice
         self.contract = None
         self.ip_address = "hypervisor_ip_address"
 
@@ -26,11 +28,11 @@ class Hypervisor:
         Returns: the worker if added, None otherwise
         """
         # check if we don't have created more workers than the number of addresses
-        if len(self.workers) < len(self.address_to_key):
-            address_and_key = self.address_to_key[len(self.workers)]
-            print(address_and_key)
+        if len(self.address_used) < len(self.address_to_key):
+            address_and_key = self.address_to_key[len(self.address_used)]
+            self.address_used.append(address_and_key["address"])
             worker = Worker(address_and_key["address"], address_and_key["private"])
-            self.workers.append(worker)
+            self.address_to_workers[worker.address] = worker
             return worker
         else:
             return None
@@ -43,11 +45,12 @@ class Hypervisor:
 
         Returns: the worker if removed, None otherwise
         """
-        for worker in self.workers:
-            if worker.address == worker_public_address:
-                self.workers.remove(worker)
-                return worker
-        return None
+        if worker_public_address in self.address_to_workers:
+            worker = self.address_to_workers[worker_public_address]
+            del self.address_to_workers[worker_public_address]
+            return worker
+        else:
+            return None
 
     def make_worker_join_learning(self, worker):
         """Make a worker participate to the learning
@@ -59,7 +62,7 @@ class Hypervisor:
         if self.contract is None:
             print("No contract found, please deploy a contract first")
             return
-        if worker not in self.workers:
+        if worker.address not in self.address_to_workers:
             print("This worker is not managed by this hypervisor")
             return
         worker.register_to_learning(self.contract.contract_address, self.contract.abi)
@@ -73,7 +76,7 @@ class Hypervisor:
         if self.contract is None:
             print("No contract found, please deploy a contract first")
             return
-        if worker not in self.workers:
+        if worker.address not in self.address_to_workers:
             print("This worker is not managed by this hypervisor")
             return
         worker.unregister_from_learning(
@@ -88,3 +91,29 @@ class Hypervisor:
         """
         assert type(contract) == Contract
         self.contract = contract
+
+    def handle_messages(self, network):
+        """Handle the messages received from the workers
+
+        Args:
+            network (Network): Network instance, used to read the messages
+        """
+
+        # get the list of new messages
+        messages = network.read_messages(self.ip_address)
+        print("Hypervisor received {} messages".format(len(messages)))
+
+        # messages are only from learning server atm.
+        for message in messages:
+            worker_address = message.get_worker_address()
+            model_weight = message.get_model_weight()
+            # check if the worker is managed by this hypervisor
+            if worker_address in self.address_to_workers:
+                # update the model of the worker
+                self.address_to_workers[worker_address].get_new_model_weigths(
+                    model_weight
+                )
+            else:
+                print(
+                    "[handle_messages]: This worker is not managed by this hypervisor"
+                )

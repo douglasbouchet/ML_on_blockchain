@@ -5,6 +5,15 @@ class Worker:
     def __init__(self, address, private_key):
         self.address = address
         self.private_key = private_key
+        self.model_weights = None
+
+    # @property
+    # def model_weigths(self):
+    #    """Get the model weigths
+    #
+    #    Returns: model weigths
+    #    """
+    #    return self.model_weights
 
     def register_to_learning(self, contract_address, contract_abi):
 
@@ -74,3 +83,14 @@ class Worker:
         print(
             f"Tx successful with hash: { tx_receipt.transactionHash.hex() } for unregistering the worker"
         )
+
+    def get_new_model_weigths(self, model_weigths):
+        """Update the model weigths with new ones obtained from the learning server
+
+        We assumed that the model weigths are only send by learning server when the worker just registered for learning
+        or already gave back the model weigths from the previous learning round
+
+        Args:
+            model_weigths (float[]): the new model weigths
+        """
+        self.model_weights = model_weigths

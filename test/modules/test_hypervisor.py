@@ -2,7 +2,10 @@ import sys
 
 sys.path.append("/home/user/ml_on_blockchain")
 from src.modules.helper import Helper
+from src.communication.message import Message
+from src.communication.network import Network
 from src.modules.hypervisor import Hypervisor
+from src.modules.learning_server import LearningServer
 
 
 def test_hypervirsor_read_addresses_list_should_be_999_for_workers():
@@ -12,14 +15,14 @@ def test_hypervirsor_read_addresses_list_should_be_999_for_workers():
 
 def test_hypervisor_should_start_with_no_workers():
     hypervisor = Hypervisor()
-    assert len(hypervisor.workers) == 0
+    assert len(hypervisor.address_to_workers) == 0
 
 
 def test_hypervisor_should_create_worker():
     hypervisor = Hypervisor()
     worker = hypervisor.create_worker()
     assert worker is not None
-    assert len(hypervisor.workers) == 1
+    assert len(hypervisor.address_to_workers) == 1
 
 
 def test_hypervisor_should_create_at_most_999_workers():
@@ -27,7 +30,7 @@ def test_hypervisor_should_create_at_most_999_workers():
     hypervisor = Hypervisor()
     for i in range(1100):
         worker = hypervisor.create_worker()
-    assert len(hypervisor.workers) == 999
+    assert len(hypervisor.address_to_workers) == 999
     assert hypervisor.create_worker() is None
 
 
@@ -35,15 +38,15 @@ def test_hypervisor_should_remove_worker():
     # add a worker and remove it
     hypervisor = Hypervisor()
     worker = hypervisor.create_worker()
-    assert len(hypervisor.workers) == 1
+    assert len(hypervisor.address_to_workers) == 1
     assert hypervisor.remove_worker(worker.address) is not None
-    assert len(hypervisor.workers) == 0
+    assert len(hypervisor.address_to_workers) == 0
 
-    # create 999 workers and remove them
-    for i in range(999):
+    # create 998 workers and remove them(not 999 as we already created one before, and we can only assign 999 addresses)
+    for i in range(998):
         worker = hypervisor.create_worker()
         assert hypervisor.remove_worker(worker.address) is not None
-    assert len(hypervisor.workers) == 0
+    assert len(hypervisor.address_to_workers) == 0
 
 
 def test_hypervisor_should_not_remove_worker_if_not_found():
@@ -73,25 +76,27 @@ def test_hypervisor_should_create_workers_with_correct_address_and_key():
     )
 
 
-# def make_worker_join_learning(self, worker):
-#         """Make a worker participate to the learning
+def test_handle_messages_should_update_model_weigths_only_specfifed_workers():
+    hypervisor = Hypervisor()
+    worker1 = hypervisor.create_worker()
+    worker2 = hypervisor.create_worker()
+    learning_server = LearningServer(
+        "public_address", "private_key"
+    )  # no need to give correct ids for this test
 
-#         Args:
-#             worker (Worker): the worker to make participate to the learning
-#         """
-#         # if contract abi and addresses aren't available do nothing
-#         if self.contract is None:
-#             print(
-#                 "No contract found, please deploy a contract first"
-#             )
-#             return
-#         worker.register_to_learning(self.contract.contract_address, self.contract.abi)
+    # create a network
+    network = Network(hypervisor, learning_server)
 
-#     def set_contract(self, contract):
-#         """Set the contract to use for the learning
+    # create a message with the new weights
+    new_weights = [1, 2, 3, 4, 5]
+    msg = Message(worker1.address, new_weights)
 
-#         Args:
-#             contract (Contract): the contract to use for the learning
-#         """
-#         assert type(contract) == Contract
-#         self.contract = contract
+    # send the message to the hypervisor
+    assert network.send_message(msg, hypervisor.ip_address) == True
+
+    # handle the message
+    hypervisor.handle_messages(network)
+
+    # verify that weights of worker1 are updated but not worker2
+    assert worker1.model_weights == new_weights
+    assert worker2.model_weights is None

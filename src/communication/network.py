@@ -1,4 +1,5 @@
-from src.modules.hypervisor import Hypervisor
+# from src.modules.hypervisor import Hypervisor
+import src.modules.hypervisor
 from src.modules.learning_server import LearningServer
 
 
