@@ -63,6 +63,22 @@ class Hypervisor:
             return
         worker.register_to_learning(self.contract.contract_address, self.contract.abi)
 
+    def make_worker_leave_learning(self, worker):
+        """Make a worker stop participating to the learning
+
+        Args:
+            worker (Worker): the worker to make stop participating to the learning
+        """
+        if self.contract is None:
+            print("No contract found, please deploy a contract first")
+            return
+        if worker not in self.workers:
+            print("This worker is not managed by this hypervisor")
+            return
+        worker.unregister_from_learning(
+            self.contract.contract_address, self.contract.abi
+        )
+
     def set_contract(self, contract):
         """Set the contract to use for the learning
 

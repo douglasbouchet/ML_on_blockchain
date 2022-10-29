@@ -51,6 +51,13 @@ def hypervisor_based_main():
     hypervisor.make_worker_join_learning(worker0)
     hypervisor.make_worker_join_learning(worker1)
     print("current number of workers:", contract.get_number_of_workers())
+    # ------Unregister worker from server-----
+    hypervisor.make_worker_leave_learning(worker0)
+    print("current number of workers:", contract.get_number_of_workers())
+    hypervisor.make_worker_leave_learning(worker1)
+    print("current number of workers:", contract.get_number_of_workers())
+    hypervisor.make_worker_leave_learning(worker0)
+    assert contract.get_number_of_workers() == 0
 
 
 if __name__ == "__main__":

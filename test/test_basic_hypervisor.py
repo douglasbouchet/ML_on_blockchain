@@ -55,3 +55,10 @@ def test_hypervisor_based_main():
     hypervisor.make_worker_join_learning(worker0)
     hypervisor.make_worker_join_learning(worker1)
     assert contract.get_number_of_workers() == 2
+    # ------Unregister worker from server-----
+    hypervisor.make_worker_leave_learning(worker0)
+    assert contract.get_number_of_workers() == 1
+    hypervisor.make_worker_leave_learning(worker1)
+    assert contract.get_number_of_workers() == 0
+    hypervisor.make_worker_leave_learning(worker0)
+    assert contract.get_number_of_workers() == 0

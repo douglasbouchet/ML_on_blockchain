@@ -16,6 +16,13 @@ contract Register {
         number += 1;
     }
 
+    function unregister_worker() public {
+        // add check to see if worker is registered to learning
+        if (number > 0) {
+            number -= 1;
+        }
+    }
+
     function reset() public {
         number = 0;
     }

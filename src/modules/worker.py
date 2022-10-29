@@ -44,3 +44,33 @@ class Worker:
         print(
             f"Tx successful with hash: { tx_receipt.transactionHash.hex() } for incrementing the number"
         )
+
+    def unregister_from_learning(self, contract_address, contract_abi):
+
+        web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
+        value = 1
+
+        print(
+            f"Calling the decrement by { value } function in contract at address: { contract_address }"
+        )
+
+        # 4. Create contract instance
+        contract = web3.eth.contract(address=contract_address, abi=contract_abi)
+
+        register_tx = contract.functions.unregister_worker().buildTransaction(
+            {
+                "gasPrice": 0,
+                "from": Web3.toChecksumAddress(self.address),
+                "nonce": web3.eth.get_transaction_count(
+                    Web3.toChecksumAddress(self.address)
+                ),
+            }
+        )
+
+        tx_create = web3.eth.account.sign_transaction(register_tx, self.private_key)
+        tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)
+        tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+
+        print(
+            f"Tx successful with hash: { tx_receipt.transactionHash.hex() } for unregistering the worker"
+        )
