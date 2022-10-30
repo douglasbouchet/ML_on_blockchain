@@ -1,5 +1,5 @@
-from src.script.deploy import deploy_smart_contract
-from src.modules.contract import Contract
+from src.solidity_contract.contract import Contract
+from src.solidity_contract.deploy import deploy_smart_contract
 
 
 class LearningServer:

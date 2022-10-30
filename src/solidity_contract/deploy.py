@@ -1,5 +1,5 @@
 from web3 import Web3
-from .compile import compile_smart_contract
+from src.solidity_contract.compile import compile_smart_contract
 
 
 def deploy_smart_contract(contract_name, from_address, from_private_key):

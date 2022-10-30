@@ -13,3 +13,15 @@ increment the counter by one (this will later on be used in order to add a worke
 
 In order to define a simple behavior, we assume that the learning server only send new model weights to a worker if this
 one has already give its optimization result, or if it just registered to learning.
+
+
+## Centralized federated learning
+
+We will have one node (the learning server) which will be handling the learning process (maintain the learning model
+states, aggregate results of workers, decide which worker should be working on learning). Every node (worker) of the
+process will have to send its result to the learning server.
+
+### assumptions
+
+Every workers make correct computations and send correct data to the learning server (we will maybe work
+ on a bizantine resilient system later.)

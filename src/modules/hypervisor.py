@@ -1,7 +1,7 @@
 import src.communication.network
 from src.modules.worker import Worker
 from src.modules.helper import Helper
-from src.modules.contract import Contract
+from src.solidity_contract.contract import Contract
 
 
 class Hypervisor:
