@@ -6,24 +6,25 @@ pragma solidity ^0.7.0;
 //pragma solidity ^0.8.17;
 
 contract Register {
-    uint256 public number;
-
-    constructor() {
-        number = 0;
-    }
+    address[] public workers_addresses;
 
     function register_worker() public {
-        number += 1;
+        workers_addresses.push(msg.sender);
     }
 
     function unregister_worker() public {
-        // add check to see if worker is registered to learning
-        if (number > 0) {
-            number -= 1;
+        // if msg.sender is in workers_addresses, remove it
+        for (uint256 i = 0; i < workers_addresses.length; i++) {
+            if (workers_addresses[i] == msg.sender) {
+                workers_addresses[i] = workers_addresses[
+                    workers_addresses.length - 1
+                ];
+                workers_addresses.pop();
+            }
         }
     }
 
-    function reset() public {
-        number = 0;
+    function get_workers() public view returns (address[] memory) {
+        return workers_addresses;
     }
 }

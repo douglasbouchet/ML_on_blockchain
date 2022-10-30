@@ -12,5 +12,8 @@ class Contract:
             address=self.contract_address, abi=self.abi
         )
 
+    # def get_number_of_workers(self):
+    #     return self.contract.functions.number().call()
+
     def get_number_of_workers(self):
-        return self.contract.functions.number().call()
+        return len(self.contract.functions.get_workers().call())

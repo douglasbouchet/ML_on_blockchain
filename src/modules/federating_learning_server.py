@@ -35,6 +35,18 @@ class FederatingLearningServer:
         contract = Contract(contract_name, contract_adress, abi, bytecode)
         return contract
 
+    def read_worker_from_smart_contract(self, contract):
+        """Read workers from smart contract
+
+        Args:
+            contract (Contract): Contract instance
+
+        Returns:
+            list: list of workers public addresses
+        """
+        workers = contract.read_workers()
+        return workers
+
     def step():
         """Handle every action server should perform:
         Check if new workers have registered to learning
