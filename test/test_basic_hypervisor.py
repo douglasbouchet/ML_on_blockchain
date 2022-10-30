@@ -6,6 +6,7 @@ from src.basic_server import BasicServer
 from src.basic_worker import BasicWorker
 from src.modules.helper import Helper
 from src.modules.hypervisor import Hypervisor
+from src.modules.federating_learning_server import FederatingLearningServer
 
 
 def init_server():
@@ -41,10 +42,11 @@ def basic_main():
 
 def test_hypervisor_based_main():
     # ------Init server and hypervisor--------
-    basic_server = init_server()
+    # basic_server = init_server()
+    learning_server = FederatingLearningServer(3, 100, 10)
     hypervisor = Hypervisor()
     # ------Deploy smart contract---------
-    contract = basic_server.deploy("register")
+    contract = learning_server.deploy_contract("register")
     assert contract.get_number_of_workers() == 0
     # ------Give contract information to hypervisor-----
     hypervisor.set_contract(contract)
@@ -55,6 +57,11 @@ def test_hypervisor_based_main():
     hypervisor.make_worker_join_learning(worker0)
     hypervisor.make_worker_join_learning(worker1)
     assert contract.get_number_of_workers() == 2
+    # check if learning server has the correct number of workers and their addresses
+    server_workers = learning_server.read_worker_from_smart_contract(contract)
+    assert len(server_workers) == 2
+    assert server_workers[0] == worker0.address
+    assert server_workers[1] == worker1.address
     # ------Unregister worker from server-----
     hypervisor.make_worker_leave_learning(worker0)
     assert contract.get_number_of_workers() == 1

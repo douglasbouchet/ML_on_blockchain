@@ -24,7 +24,7 @@ contract Register {
         }
     }
 
-    function get_workers() public view returns (address[] memory) {
+    function getWorkers() public view returns (address[] memory) {
         return workers_addresses;
     }
 }

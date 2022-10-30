@@ -1,5 +1,6 @@
 # from src.modules.helper import read_addresses_and_keys_from_yaml, get_data
 from src.modules.helper import *
+from src.solidity_contract.contract import Contract
 from src.solidity_contract.deploy import deploy_smart_contract
 
 
@@ -30,13 +31,13 @@ class FederatingLearningServer:
             Contract: Contract instance
         """
         contract_adress, abi, bytecode = deploy_smart_contract(
-            contract_name, self.from_address, self.from_private_key
+            contract_name, self.address, self.private_key
         )
         contract = Contract(contract_name, contract_adress, abi, bytecode)
         return contract
 
     def read_worker_from_smart_contract(self, contract):
-        """Read workers from smart contract
+        """Read workers addresses from smart contract
 
         Args:
             contract (Contract): Contract instance
@@ -44,8 +45,8 @@ class FederatingLearningServer:
         Returns:
             list: list of workers public addresses
         """
-        workers = contract.read_workers()
-        return workers
+        workers_addresses = contract.get_workers()
+        return workers_addresses
 
     def step():
         """Handle every action server should perform:
