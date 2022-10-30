@@ -24,3 +24,8 @@ class Helper:
                 return None
 
         return []
+
+
+def get_data():
+    # TODO
+    return []
