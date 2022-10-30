@@ -16,6 +16,7 @@ def test_fl_server_should_be_initialized_correctly():
     assert fl_server.n_rounds == n_rounds
     assert fl_server.batch_size == batch_size
     assert fl_server.current_round == 0
+    assert fl_server.workers_addresses == []
     assert fl_server.available_workers == []
     # assert fl_server.data is not None
     assert fl_server.address == "fce75e885241b4b465ad8e5919416ad4c9290d3e"

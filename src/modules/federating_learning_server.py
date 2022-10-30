@@ -13,6 +13,7 @@ class FederatingLearningServer:
         self.private_key = address_and_private_key[0]["private"]
         self.ip_address = "ip_addres_federating_learning_server"
         self.group_size = group_size  # n workers asked the same computation
+        self.workers_addresses = []  # list of workers public addresses
         self.available_workers = (
             []
         )  # public address of workers ready to participate to the learning
@@ -36,7 +37,7 @@ class FederatingLearningServer:
         contract = Contract(contract_name, contract_adress, abi, bytecode)
         return contract
 
-    def read_worker_from_smart_contract(self, contract):
+    def read_worker_addresses_from_smart_contract(self, contract):
         """Read workers addresses from smart contract
 
         Args:
@@ -48,7 +49,7 @@ class FederatingLearningServer:
         workers_addresses = contract.get_workers()
         return workers_addresses
 
-    def step():
+    def step(self, contract, network):
         """Handle every action server should perform:
         Check if new workers have registered to learning
         See if new results were sent by workers
@@ -56,8 +57,24 @@ class FederatingLearningServer:
         Ask workers to participate to next round of learning
 
         This method will be called inside the while loop of the main function as we run in sequential atm
+
+        Args:
+            contract (Contract): Contract instance
+            network (Network): Network instance
         """
 
-        # TODO
+        # we start by checking if new workers have registered to the learning
+        # if yes, we add them to the list of available workers
+        workers_addresses = read_worker_addresses_from_smart_contract(contract)
+        # add each address not in workers_addresses inside workers_addresses and available_workers
+        for address in workers_addresses:
+            if address not in self.workers_addresses:
+                self.workers_addresses.append(address)
+                self.available_workers.append(address)
+
+        # check if we have new messages from workers
+        new_messages = network.read_messages(self.ip_address)
+        # each message is the result of a worker
+        # TODO add proper handling of messages
 
         return

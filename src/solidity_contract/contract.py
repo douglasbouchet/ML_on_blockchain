@@ -21,5 +21,4 @@ class Contract:
     def get_workers(self):
         workers_addresses = self.contract.functions.getWorkers().call()
         # for each address, remove the 0x and lower case it
-
         return [worker_address[2:].lower() for worker_address in workers_addresses]
