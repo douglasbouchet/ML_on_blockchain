@@ -1,5 +1,6 @@
 import src.communication.network
 from src.modules.worker import Worker
+from src.modules.mnist_worker import MnsitWorker
 from src.modules.helper import Helper
 from src.solidity_contract.contract import Contract
 
@@ -34,6 +35,23 @@ class Hypervisor:
             worker = Worker(address_and_key["address"], address_and_key["private"])
             self.address_to_workers[worker.address] = worker
             return worker
+        else:
+            return None
+
+    def create_mnist_worker(self):
+        """Add a worker to the list of workers (maximum 999 workers as no more addresses)
+
+        Returns: the worker if added, None otherwise
+        """
+        # check if we don't have created more workers than the number of addresses
+        if len(self.address_used) < len(self.address_to_key):
+            address_and_key = self.address_to_key[len(self.address_used)]
+            self.address_used.append(address_and_key["address"])
+            mnist_worker = MnsitWorker(
+                address_and_key["address"], address_and_key["private"]
+            )
+            self.address_to_workers[mnist_worker.address] = mnist_worker
+            return mnist_worker
         else:
             return None
 

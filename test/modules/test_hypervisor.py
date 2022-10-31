@@ -100,3 +100,15 @@ def test_handle_messages_should_update_model_weigths_only_specfifed_workers():
     # verify that weights of worker1 are updated but not worker2
     assert worker1.model_weights == new_weights
     assert worker2.model_weights is None
+
+
+def test_hypevisor_should_correctly_create_mnist_worker():
+    hypervisor = Hypervisor()
+    mnist_worker = hypervisor.create_mnist_worker()
+    assert mnist_worker is not None
+    assert len(hypervisor.address_to_workers) == 1
+    assert mnist_worker.address == "ad8c4637330e8eab5eadbbda59910a9d926274b2"
+    assert (
+        mnist_worker.private_key
+        == "9793a9cb6042ef94219797af47062b38100e535fdb7034a2ae9ba4136a6d17b4"
+    )

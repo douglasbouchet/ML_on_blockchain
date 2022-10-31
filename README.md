@@ -21,7 +21,19 @@ We will have one node (the learning server) which will be handling the learning 
 states, aggregate results of workers, decide which worker should be working on learning). Every node (worker) of the
 process will have to send its result to the learning server.
 
+As we are running sequentially we will need to split ressources between workers and fl server. The pseudo code of the
+main algorithm is the following:
+TODO!!!!!!!!
+
 ### assumptions
 
 Every workers make correct computations and send correct data to the learning server (we will maybe work
  on a bizantine resilient system later.)
+
+### federated learning explication:
+
+#### aggregation:
+
+Once a group of workers send the same updated model to the fl server, the fl server's model is updated by the following:
+- Each weight of the server's model is the mean between current weight and new weight or,
+- Each weight of the server's model is replaced by new weight
