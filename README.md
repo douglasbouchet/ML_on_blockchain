@@ -39,16 +39,16 @@ etherum, if its computations where classified as correct (we detail all theses p
 
 These are assumptions we defined in order to design our smart contracts, and know wich goals need to be satified.
 
-- The Learning server can be trusted (i.e workers that do a correct job get paid up to a certain probability)
-- The Learning server allows everyone able to access the blockchain to see the model (as wokers need to update it)
-  - We could implement connection between server and model such that model is not sent on blockchain, but as this point there isn't much justification of using a blockchain
-- The Workers cannot be trusted:
+1. The Learning server can be trusted (i.e workers that do a correct job get paid up to a certain probability)
+2. The Learning server allows everyone able to access the blockchain to see the model (as wokers need to update it)
+  - We could implement connection between server and model such that model is not sent on blockchain, but at this point there isn't much justification of using a blockchain
+3. The Workers cannot be trusted:
   - They may never return the results of their calculations
   - They can send wrong computations results (i.e model weights)
   - (Other ?)
-- If a worker make a correct computation, it gets rewarded with probability ??? TODO
-- No more than half of the network's workers can be evil
-- Each worker and the learning server initially possess the exact same dataset (MNIST dataset for example)
+4. If a worker make a correct computation, it gets rewarded with probability ??? TODO
+5. No more than half of the network's workers can be evil
+6. Each worker and the learning server initially possess the exact same dataset (MNIST dataset for example)
 
 ## The task
 
@@ -57,7 +57,36 @@ We will see if under our assumptions, blockchain and smart contract can be used 
 
 ## Sending a job to the worker
 
+The data sent to worker that picked a job will be:
+- model weights (float[])
+- data index for the stochastic gradient descent
+
+### Why this format ?
+
+- Model weights: necessary as the worker needs to start with fresh new weights, i.e don't need to perform all previous work to each this model.
+- Batch index vs Batch data (complete data to perform computation on)
+  - Batch index:
+    - Pros: **lower loading** of the blockchain (we don't need to store data on blockchain); works from asssumption **(6)**
+    - Cons: Needs assumption **(6)**
+  - Batch data:
+    - Pros: no need of assumption **(6)**
+    - Cons: **higher loading** of the blockchain (may cause performances issues).
+
 ## Results Sending
+
+Once the workers have their updated models weights, they send them to the smart contract responsible of the job. Note that data send to smart contract is kept inside private fields of the smart contract (at least until termination). Otherwise anyone could just read the models/models hash and just replicate them, pretending to have done the job.
+
+### Why send models weights and not only hashed ?
+
+- Sending hashed:
+  - Pros: **lower loading** of the blockchain
+  - Cons: need to implement mechanism to get the models weight once the correct model update have been validated. I.e ask worker that sent correct hash to send the complete model, so we need at least one worker to save state of models.
+- Sending models:
+  - Pros: once worker sends their model, they don't need any extra actions; Don't leak any info as updated models are kept private on smart contract (until job ended).
+  - Cons: ***heavier loading* of the blockchain. May be problematic, we will see if Quorum can handle such flow.
+
+So we chose to send weights (implementation much easier). However depending on the results, this could show that this method isn't applicable on Quorum.
+
 
 ## Workers results verification
 
