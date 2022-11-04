@@ -2,6 +2,7 @@
 from src.modules.helper import *
 from src.solidity_contract.contract import Contract
 from src.solidity_contract.deploy import deploy_smart_contract
+from src.solidity_contract.smart_contracts.job_finder import JobFinder
 
 
 class FederatingLearningServer:
@@ -22,7 +23,7 @@ class FederatingLearningServer:
         self.batch_size = batch_size  # number of data used for each round
         self.current_round = 0  # current round of the learning
 
-    def deploy_contract(self, contract_name):
+    def deploy_contract(self, contract_file_name, contract_name):
         """Deploy a smart contract on the blockchain
 
         Args:
@@ -32,10 +33,12 @@ class FederatingLearningServer:
             Contract: Contract instance
         """
         contract_adress, abi, bytecode = deploy_smart_contract(
-            contract_name, self.address, self.private_key
+            contract_file_name, contract_name, self.address, self.private_key
         )
-        contract = Contract(contract_name, contract_adress, abi, bytecode)
-        return contract
+        if contract_name == "JobFinder":
+            return JobFinder(contract_name, contract_adress, abi, bytecode)
+        else:
+            return Contract(contract_name, contract_adress, abi, bytecode)
 
     def read_worker_addresses_from_smart_contract(self, contract):
         """Read workers addresses from smart contract

@@ -46,7 +46,7 @@ def test_hypervisor_based_main():
     learning_server = FederatingLearningServer(3, 100, 10)
     hypervisor = Hypervisor()
     # ------Deploy smart contract---------
-    contract = learning_server.deploy_contract("register")
+    contract = learning_server.deploy_contract("register", "Register")
     assert contract.get_number_of_workers() == 0
     # ------Give contract information to hypervisor-----
     hypervisor.set_contract(contract)

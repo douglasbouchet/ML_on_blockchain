@@ -2,7 +2,9 @@ from web3 import Web3
 from src.solidity_contract.compile import compile_smart_contract
 
 
-def deploy_smart_contract(contract_name, from_address, from_private_key):
+def deploy_smart_contract(
+    contract_file_name, contract_name, from_address, from_private_key
+):
     # 2. Add the Web3 provider logic here:
     web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
     print("web3 connected: {}".format(web3.isConnected()))
@@ -16,7 +18,7 @@ def deploy_smart_contract(contract_name, from_address, from_private_key):
     print(f'Attempting to deploy from account: { account_from["address"] }')
 
     # get abi and bytecode from compiled contract
-    abi, bytecode = compile_smart_contract(contract_name)
+    abi, bytecode = compile_smart_contract(contract_file_name, contract_name)
 
     new_contract = web3.eth.contract(abi=abi, bytecode=bytecode)
 
