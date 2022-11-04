@@ -121,5 +121,7 @@ We will describe the smart contracts structure induced by previous parts
 
 For the moment, only one job is deployed at the time. We will see if depending on the number of worker this strategy
 don't lost too much time.
+Interaction between the Job smart contract and workers is made through the Job finder contract (workers don't
+directly call the Job contract as we don't have its ABI).
 
 ### Job

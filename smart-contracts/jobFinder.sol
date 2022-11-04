@@ -7,12 +7,16 @@ contract JobFinder {
     address[] private jobsAddresses;
     JobContainer private jobContainer;
 
+    // some initial values, to be changed by values sent by fl server
+    int256[] private currentModel = new int256[](10);
+    uint256[] private batchIndex = new uint256[](10);
+
     constructor() {
-        jobContainer = new JobContainer(3, new int256[](0));
+        jobContainer = new JobContainer(3, 0, 1);
     }
 
-    function getJobContainer() public view returns (address) {
-        return address(jobContainer);
+    function getJob() public view returns (int256, uint256) {
+        return jobContainer.getModelAndBatchIndex();
     }
 
     function getNModelsUntilEnd() public view returns (uint16) {
