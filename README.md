@@ -21,10 +21,9 @@ We will have one node (the learning server) which will be handling the learning 
 states, aggregate results of workers, decide which worker should be working on learning). Every node (worker) of the
 process will have to send its result to the learning server.
 
+# Federated learning using smart contract:
 
-# Federated learning using smart contract
-
-## Goals:
+## Goals:
 
 Our goal would be that every person (worker) willing to join the learning process could pick up a "job" - a learning
 task- from the blockchain. As a reward of this task which involves computations, the worker would be rewarded by some
@@ -83,12 +82,24 @@ Once the workers have their updated models weights, they send them to the smart 
   - Cons: need to implement mechanism to get the models weight once the correct model update have been validated. I.e ask worker that sent correct hash to send the complete model, so we need at least one worker to save state of models.
 - Sending models:
   - Pros: once worker sends their model, they don't need any extra actions; Don't leak any info as updated models are kept private on smart contract (until job ended).
-  - Cons: ***heavier loading* of the blockchain. May be problematic, we will see if Quorum can handle such flow.
+  - Cons: ***heavier loading** of the blockchain. May be problematic, we will see if Quorum can handle such flow.
 
 So we chose to send weights (implementation much easier). However depending on the results, this could show that this method isn't applicable on Quorum.
 
 
 ## Workers results verification
+
+From *Results Sending* we now have that the smart contract responsible for the job has the weights sent by each workers
+(kept private), and need to verify if these weights are correct.
+A first mechanism we will implement is the following:
+- We group by models. Group with higher number of element is selected as correct model.
+
+What we want to have according to this result verification process is:
+$$P(\text{worker paid} | \text{good worker, job pool size})$$
+
+Where:
+- good worker is the indicator r.v equal 1 if worker pushed correct weights, 0 otherwise (evil worker)
+- job pool size is the number of models weights sent to server before result verification (could also be expressed as fraction of total workers in the network)
 
 ## Payment of the workers
 
