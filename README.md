@@ -84,7 +84,9 @@ Once the workers have their updated models weights, they send them to the smart 
   - Pros: once worker sends their model, they don't need any extra actions; Don't leak any info as updated models are kept private on smart contract (until job ended).
   - Cons: ***heavier loading** of the blockchain. May be problematic, we will see if Quorum can handle such flow.
 
-So we chose to send weights (implementation much easier). However depending on the results, this could show that this method isn't applicable on Quorum.
+So we chose to send weights (implementation much easier). However depending on the results, this could show that this method isn't applicable on Quorum. We also choose to send complete model weigths - sending only frac of them could reduce blockchain workload
+but in that case we would need mechanism to retrieve complete weights once correct one has been decided, so no advantages
+compare to sending models hashes.
 
 
 ## Workers results verification
@@ -95,7 +97,7 @@ A first mechanism we will implement is the following:
 - We group by models. Group with higher number of element is selected as correct model.
 
 What we want to have according to this result verification process is:
-$$P(\text{worker paid} | \text{good worker, job pool size})$$
+$$P(\text{worker paid} | \text{good worker, job pool size})\textbf{[1]}$$
 
 Where:
 - good worker is the indicator r.v equal 1 if worker pushed correct weights, 0 otherwise (evil worker)
@@ -103,10 +105,21 @@ Where:
 
 ## Payment of the workers
 
+As workers send all their weigths, we can up to a certain probability **[1]** decide if a worker did send a correct weight.
+Ideally we would like to pay workers such that in expectation, good workers get rewarded the correct amount spent for
+their computations (+ benefits). One drawback would be that expectation of earning for evil workers - ressources spent
+would be > 0 (TODO verify with computations).
+As the point of people joining learning process would be that expected earning - ressources spent is greater than 0,
+we decide to adjust paiement value according to **[1]**. Server will be spending more money, but workers will have
+reason to join
+
 ## The smart contracts
 
 We will describe the smart contracts structure induced by previous parts
 
 ### Deploy Jobs
+
+For the moment, only one job is deployed at the time. We will see if depending on the number of worker this strategy
+don't lost too much time.
 
 ### Job
