@@ -10,6 +10,8 @@ contract JobContainer {
     bool private jobFinished;
     int256 public bestModel;
     address[] private receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
+    mapping(int256 => uint256) private modelToCount; // count how many time each model weights were received
+    uint256 private bestModelNoccurences; // count how many time each model weights were received
 
     mapping(bytes32 => address) private modelHashToWorkerAddress; // usefull to pay worker that did provide correct models
 
@@ -48,18 +50,26 @@ contract JobContainer {
         return bestModel;
     }
 
-    function setBestModel(int256 _bestModel) private {
-        bestModel = _bestModel;
-    }
+    function computeBestModel() private returns (bool) {
+        /** Group the received models, and keep the one with the most occurences
+         * TODO implement reverse if dominant model has less than majority
+         * @return the best model from receivedModels TODO null value if no consensus
+         */
+        for (uint256 i = 0; i < receivedModels.length; i++) {
+            if (modelToCount[receivedModels[i]] > bestModelNoccurences) {
+                bestModel = receivedModels[i];
+                bestModelNoccurences = modelToCount[receivedModels[i]];
+            }
+        }
 
-    function computeBestModel() private returns (int256) {
-        // return a trivial model
-        //int256[] memory _bestModel = new int256[](10);
-        //for (uint256 i = 0; i < 10; i++) {
-        //    _bestModel[i] = 0;
-        //}
-        //return _bestModel;
-        return receivedModels[0];
+        // if less than 50% of workers agree on the same model, return null
+        // TODO implement this logic
+        // if (bestModelNoccurences < receivedModels.length / 2) {
+        // revert
+        //     return 0;
+        //return false
+        // }
+        return true;
     }
 
     function submitNewModel(int256 _model, address _workerAddress)
@@ -72,12 +82,13 @@ contract JobContainer {
          */
         // add the model to the list of received models
         receivedModels.push(_model);
+        // update modelToCount
+        modelToCount[_model] += 1;
+
         // if we received enough models, we can compute the best model
         if (receivedModels.length == nModelsUntilEnd) {
-            int256 _bestModel = computeBestModel();
-            // set the best model
-            setBestModel(_bestModel);
-            // set jobFinished to true
+            bool foundBestModel = computeBestModel();
+            // add here handling if computeBestModel didn't found a consensus
             jobFinished = true;
         }
         return jobFinished;

@@ -21,20 +21,16 @@ contract JobFinder {
     }
 
     function createNewJob() private {
-        //jobsAddresses.push(address(jobContainer));
         // push current job to previousJobs
         previousJobs.push(jobContainer);
         // create a new job TODO dummies value atm, should be getted from fl server
         jobContainer = new JobContainer(3, 1, 2);
     }
 
-    //function submitNewModel(int256 _model, address _workerAddress) public {
     function submitNewModel(int256 _model) public {
         bool jobFinished = jobContainer.submitNewModel(_model, msg.sender);
 
         if (jobFinished) {
-            // publish the best model
-            // TODO
             // create a new job
             createNewJob();
         }
