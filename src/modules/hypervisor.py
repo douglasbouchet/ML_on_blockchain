@@ -1,7 +1,8 @@
 import src.communication.network
+from web3 import Web3
 from src.modules.worker import Worker
-from src.modules.mnist_worker import MnsitWorker
 from src.modules.helper import Helper
+from src.modules.mnist_worker import MnsitWorker
 from src.solidity_contract.contract import Contract
 
 
@@ -107,8 +108,38 @@ class Hypervisor:
         Args:
             contract (Contract): the contract to use for the learning
         """
-        assert type(contract) == Contract
+        # assert type(contract) == Contract
+        assert issubclass(type(contract), Contract)
         self.contract = contract
+
+    def submit_new_model(self, new_model, from_worker):
+        """This function is called whenever a worker wants to submit a new model to the job.
+        If the job complete after receiving this worker, the job's resulting model is published on the blockchain and
+        a new job is created.
+
+        TODO add check such that worker submitted for a previous job don't actually put wieghts for the current job
+        Args:
+            new_model (int): new computed weights of the model by the worker
+            worker_address (str): worker public address
+        """
+        web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
+        register_tx = self.contract.contract.functions.submitNewModel(
+            new_model
+        ).buildTransaction(
+            {
+                "gasPrice": 0,
+                "from": Web3.toChecksumAddress(from_worker.address),
+                "nonce": web3.eth.get_transaction_count(
+                    Web3.toChecksumAddress(from_worker.address)
+                ),
+            }
+        )
+
+        tx_create = web3.eth.account.sign_transaction(
+            register_tx, from_worker.private_key
+        )
+        tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)
+        tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
 
     def handle_messages(self, network):
         """Handle the messages received from the workers

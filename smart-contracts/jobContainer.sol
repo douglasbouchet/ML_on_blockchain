@@ -5,18 +5,19 @@ contract JobContainer {
     uint16 nModelsUntilEnd;
     uint256 batchIndex;
     int256 public currentModel;
-    int256[] private receivedModels;
+    //int256[] private receivedModels;
+    int256[] public receivedModels;
     bool private jobFinished;
     int256 public bestModel;
     address[] private receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
 
     mapping(bytes32 => address) private modelHashToWorkerAddress; // usefull to pay worker that did provide correct models
 
-    modifier modelOnlySendOnce() {
+    modifier modelOnlySendOnce(address _workerAddress) {
         // require that the msg.sender isn't already in receivedModelsAddresses
         for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
             require(
-                receivedModelsAddresses[i] != msg.sender,
+                receivedModelsAddresses[i] != _workerAddress,
                 "You already sent a model"
             );
         }
@@ -57,7 +58,16 @@ contract JobContainer {
         return receivedModels[0];
     }
 
-    function submit_new_model(int256 _model) public modelOnlySendOnce {
+    function submitNewModel(int256 _model, address _workerAddress)
+        public
+        returns (
+            //modelOnlySendOnce(_workerAddress)
+            bool
+        )
+    {
+        /** This method should only be called once by each worker, i.e you cannot submit same job multiple time
+         * @return true if the job is finished, false otherwise
+         */
         // add the model to the list of received models
         receivedModels.push(_model);
         // if we received enough models, we can compute the best model
@@ -69,5 +79,11 @@ contract JobContainer {
             // set jobFinished to true
             jobFinished = true;
         }
+    }
+
+    // ----------- DEBUG FUNCTIONS -------------
+    function getReceivedModels() public view returns (int256[] memory) {
+        /** TODO this function is only for debug purpose, we will not allow people to get the current received worker */
+        return receivedModels;
     }
 }
