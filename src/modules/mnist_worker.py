@@ -1,3 +1,4 @@
+from web3 import Web3
 from src.modules.worker import Worker
 
 # import torchvision
@@ -30,3 +31,7 @@ class MnsitWorker(Worker):
     #    x = np.array(data["x"])
     #    y = self.model.predict(x)
     #    return y.tolist()
+
+    def get_balance(self):
+        web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
+        return web3.eth.getBalance(web3.toChecksumAddress(self.address))

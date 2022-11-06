@@ -71,3 +71,22 @@ def test_submit_new_model():
     # TODO check that the best model is the one with the highest number of votes
     assert all_prev_job_best_model[0] == 1
     assert all_prev_job_best_model[1] == 2  # majority of weights is 2
+
+
+def test_paying_of_workers():
+    learning_server = FederatingLearningServer(3, 100, 10)
+    hypervisor = Hypervisor()
+    worker0 = hypervisor.create_mnist_worker()
+    worker1 = hypervisor.create_mnist_worker()
+    worker2 = hypervisor.create_mnist_worker()
+    # ------Deploy smart contract---------
+    job_finder_contract = learning_server.deploy_contract("jobFinder", "JobFinder")
+    hypervisor.set_contract(job_finder_contract)
+    # ------Make workers submit models-------
+    hypervisor.submit_new_model(1, worker0)
+    hypervisor.submit_new_model(1, worker1)
+    hypervisor.submit_new_model(2, worker2)
+    # ----- Check that workers got paid -------
+    assert worker0.get_balance() == 0
+    assert worker1.get_balance() == 0
+    assert worker2.get_balance() == 0

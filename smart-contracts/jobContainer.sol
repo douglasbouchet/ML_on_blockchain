@@ -7,6 +7,7 @@ contract JobContainer {
     int256 public currentModel;
     //int256[] private receivedModels;
     int256[] public receivedModels;
+    mapping(address => int256) public workerAddressToReceivedModels;
     bool private jobFinished;
     int256 public bestModel;
     address[] private receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
@@ -81,17 +82,36 @@ contract JobContainer {
          * @return true if the job is finished, false otherwise
          */
         // add the model to the list of received models
+        workerAddressToReceivedModels[_workerAddress] = _model;
         receivedModels.push(_model);
         // update modelToCount
         modelToCount[_model] += 1;
 
         // if we received enough models, we can compute the best model
         if (receivedModels.length == nModelsUntilEnd) {
-            bool foundBestModel = computeBestModel();
+            //bool foundBestModel = computeBestModel();
+            computeBestModel();
             // add here handling if computeBestModel didn't found a consensus
             jobFinished = true;
+
+            // we can now pay the workers that did provide the best model
+            payWorkers();
         }
         return jobFinished;
+    }
+
+    function payWorkers() private {
+        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
+            // if the model of worker is the best model, we pay the worker
+            if (
+                workerAddressToReceivedModels[receivedModelsAddresses[i]] ==
+                bestModel
+            ) {
+                //TODO compute this value such as expectation for good worker is > 0
+                // transfert money to worker
+                payable(address(receivedModelsAddresses[i])).transfer(0 ether);
+            }
+        }
     }
 
     // ----------- DEBUG FUNCTIONS -------------
