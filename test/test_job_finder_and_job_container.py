@@ -1,5 +1,6 @@
 import sys
 import pytest
+from web3.exceptions import ContractLogicError
 
 sys.path.append("/home/user/ml_on_blockchain")
 from src.modules.federating_learning_server import FederatingLearningServer
@@ -28,8 +29,14 @@ def test_submit_new_model():
     # get_job should return current job container address
     models_weights, data_index = job_finder_contract.get_job()
     # submit new model
-    # job_finder_contract.submit_new_model(1, worker0.address, worker0.private_key)
     hypervisor.submit_new_model(1, worker0)
-    # check that the model has been submitted
+    hypervisor.submit_new_model(1, worker1)
     received_models = job_finder_contract.get_received_models()
-    assert len(received_models) == 1
+    assert len(received_models) == 2
+    # worker submitting twice for the same job should throw exception
+    with pytest.raises(ContractLogicError):
+        hypervisor.submit_new_model(1, worker0)
+    with pytest.raises(ContractLogicError):
+        hypervisor.submit_new_model(3, worker1)
+    received_models = job_finder_contract.get_received_models()
+    assert len(received_models) == 2

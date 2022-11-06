@@ -14,7 +14,7 @@ contract JobContainer {
     mapping(bytes32 => address) private modelHashToWorkerAddress; // usefull to pay worker that did provide correct models
 
     modifier modelOnlySendOnce(address _workerAddress) {
-        // require that the msg.sender isn't already in receivedModelsAddresses
+        // require that the _workerAddress isn't already in receivedModelsAddresses
         for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
             require(
                 receivedModelsAddresses[i] != _workerAddress,
@@ -22,7 +22,7 @@ contract JobContainer {
             );
         }
         // if this address didn't already pushed a model, we can add it to receivedModelsAddresses
-        receivedModelsAddresses.push(msg.sender);
+        receivedModelsAddresses.push(_workerAddress);
         _;
     }
 
@@ -60,10 +60,8 @@ contract JobContainer {
 
     function submitNewModel(int256 _model, address _workerAddress)
         public
-        returns (
-            //modelOnlySendOnce(_workerAddress)
-            bool
-        )
+        modelOnlySendOnce(_workerAddress)
+        returns (bool)
     {
         /** This method should only be called once by each worker, i.e you cannot submit same job multiple time
          * @return true if the job is finished, false otherwise

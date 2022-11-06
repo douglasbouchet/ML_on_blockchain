@@ -10,7 +10,6 @@ contract JobFinder {
     // some initial values, to be changed by values sent by fl server
     int256[] private currentModel = new int256[](10);
     uint256[] private batchIndex = new uint256[](10);
-    int256[] public receivedModels;
 
     constructor() {
         jobContainer = new JobContainer(3, 0, 1);
@@ -30,12 +29,8 @@ contract JobFinder {
 
     //function submitNewModel(int256 _model, address _workerAddress) public {
     function submitNewModel(int256 _model) public {
-        //bool jobFinished = jobContainer.submitNewModel(_model, _workerAddress);
-        receivedModels.push(_model);
+        bool jobFinished = jobContainer.submitNewModel(_model, msg.sender);
 
-        //jobContainer.receivedModels.push(_model);
-        //push _model to receivedModels
-        //jobContainer.receivedModelsAddresses.push(_workerAddress);
         // if (jobFinished) {
         //     createNewJob();
         // }
@@ -47,7 +42,6 @@ contract JobFinder {
 
     // ----------- DEBUG FUNCTIONS -------------
     function getReceivedModels() public view returns (int256[] memory) {
-        //return jobContainer.getReceivedModels();
-        return receivedModels;
+        return jobContainer.getReceivedModels();
     }
 }
