@@ -16,10 +16,13 @@ class JobFinder(Contract):
         """Should be call by a worker willing to participate to the learning
 
         Returns:
-            (int[], int[]): models weights, data indices to perform SGD
+            (int, int): models weights, data indices to perform SGD
         """
 
         return self.contract.functions.getJob().call()
+
+    def get_all_previous_jobs_best_model(self):
+        return self.contract.functions.getAllPreviousJobsBestModel().call()
 
     def submit_new_model(self, new_model, worker_address, worker_private_key):
         """This function is called whenever a worker wants to submit a new model to the job.

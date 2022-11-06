@@ -41,7 +41,11 @@ contract JobContainer {
     }
 
     function getModelAndBatchIndex() public view returns (int256, uint256) {
-        return (bestModel, batchIndex);
+        return (currentModel, batchIndex);
+    }
+
+    function getBestModel() public view returns (int256) {
+        return bestModel;
     }
 
     function setBestModel(int256 _bestModel) private {
@@ -70,13 +74,13 @@ contract JobContainer {
         receivedModels.push(_model);
         // if we received enough models, we can compute the best model
         if (receivedModels.length == nModelsUntilEnd) {
-            // compute the best model
             int256 _bestModel = computeBestModel();
             // set the best model
             setBestModel(_bestModel);
             // set jobFinished to true
             jobFinished = true;
         }
+        return jobFinished;
     }
 
     // ----------- DEBUG FUNCTIONS -------------
