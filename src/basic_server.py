@@ -7,7 +7,7 @@ class BasicServer:
         self.from_address = from_address
         self.from_private_key = from_private_key
 
-    def deploy(self, contract_name):
+    def deploy(self, contract_filename, contract_name):
         """_summary_
 
         Args:
@@ -17,7 +17,7 @@ class BasicServer:
             Contract: Contract instance
         """
         contract_adress, abi, bytecode = deploy_smart_contract(
-            contract_name, self.from_address, self.from_private_key
+            contract_filename, contract_name, self.from_address, self.from_private_key
         )
         contract = Contract(contract_name, contract_adress, abi, bytecode)
         return contract

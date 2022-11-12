@@ -40,7 +40,7 @@ def hypervisor_based_main():
     basic_server = init_server()
     hypervisor = Hypervisor()
     # ------Deploy smart contract---------
-    contract = basic_server.deploy("register")
+    contract = basic_server.deploy("register", "Register")
     print("Initial number of workers:", contract.get_number_of_workers())
     # ------Give contract information to hypervisor-----
     hypervisor.set_contract(contract)
