@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-contract JobContainer {
+contract FragmentedJobContainer {
     struct Fragment {
         uint256 fragNumber;
         int256 weight;
@@ -159,5 +159,9 @@ contract JobContainer {
         } else {
             return (0, false);
         }
+    }
+
+    function getModelIsready() public view returns (bool) {
+        return modelIsReady;
     }
 }
