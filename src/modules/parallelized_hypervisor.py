@@ -1,15 +1,12 @@
-import src.communication.network
-from web3 import Web3
-from src.modules.worker import Worker
+import random
 from src.modules.helper import Helper
-from src.modules.mnist_worker import MnsitWorker
-from src.solidity_contract.contract import Contract
+from src.modules.worker_dir import WaitWorker
 
 
 # new hypervisor which facilitate interactions with worker
 # method to load contracts (should be called everytime a worker wants to join)
 # method to send new model to the contract (should timeout some scnds to simulate computation and send the model)
-# this method should also handle the case where the weights are not accepted by the contract <- see how we implement this
+# this method also handle the case where the weights are not accepted by the contract <- see how we implement this
 
 
 class ParallelizedHypervisor:
@@ -28,7 +25,8 @@ class ParallelizedHypervisor:
         if len(self.address_used) < len(self.address_to_key):
             address_and_key = self.address_to_key[len(self.address_used)]
             self.address_used.append(address_and_key["address"])
-            worker = WaitWorker(address_and_key["address"], address_and_key["private"])
+            worker = WaitWorker(
+                address_and_key["address"], address_and_key["private"])
             self.address_to_workers[worker.address] = worker
             self.workers.append(worker)
 

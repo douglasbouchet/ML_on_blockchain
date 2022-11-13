@@ -1,6 +1,5 @@
 from src.basic_server import BasicServer
 from src.basic_worker import BasicWorker
-from src.modules.helper import Helper
 from src.modules.hypervisor import Hypervisor
 
 
@@ -58,6 +57,12 @@ def hypervisor_based_main():
     print("current number of workers:", contract.get_number_of_workers())
     hypervisor.make_worker_leave_learning(worker0)
     assert contract.get_number_of_workers() == 0
+
+
+# def parallel_learning_main():
+#     parallel_hypervisor = ParallelizedHypervisor()
+#     # init the workers
+#     # create_wait_workers
 
 
 if __name__ == "__main__":
