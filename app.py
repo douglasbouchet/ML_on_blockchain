@@ -1,6 +1,7 @@
 from src.basic_server import BasicServer
 from src.basic_worker import BasicWorker
 from src.modules.hypervisor import Hypervisor
+from src.modules.parallelized_hypervisor import ParallelizedHypervisor
 
 
 def init_server():
@@ -59,12 +60,22 @@ def hypervisor_based_main():
     assert contract.get_number_of_workers() == 0
 
 
-# def parallel_learning_main():
-#     parallel_hypervisor = ParallelizedHypervisor()
-#     # init the workers
-#     # create_wait_workers
+def parallel_learning_main():
+    parallel_hypervisor = ParallelizedHypervisor()
+    # init the workers
+    parallel_hypervisor.create_wait_workers(number_of_workers=999)
+    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=10)
+    print("Number of workers in the pool:", len(worker_pool))
+    get_processes = parallel_hypervisor.create_get_weights_process(
+        worker_pool)
+    print("Number of processes:", len(get_processes))
+
+    # runs all process in parallel
+    parallel_hypervisor.perform_one_process_step(get_processes)
+    print("execution finished")
 
 
 if __name__ == "__main__":
     # basic_main()
-    hypervisor_based_main()
+    # hypervisor_based_main()
+    parallel_learning_main()

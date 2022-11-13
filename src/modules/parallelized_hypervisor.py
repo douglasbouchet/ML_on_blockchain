@@ -1,6 +1,7 @@
 import random
+from multiprocessing import Process
 from src.modules.helper import Helper
-from src.modules.worker_dir import WaitWorker
+from src.modules.worker_dir.waitWorker import WaitWorker
 
 
 # new hypervisor which facilitate interactions with worker
@@ -22,13 +23,14 @@ class ParallelizedHypervisor:
     def create_wait_workers(self, number_of_workers):
         """Add a worker to the list of workers (maximum 999 workers as no more addresses)"""
         # check if we don't have created more workers than the number of addresses
-        if len(self.address_used) < len(self.address_to_key):
-            address_and_key = self.address_to_key[len(self.address_used)]
-            self.address_used.append(address_and_key["address"])
-            worker = WaitWorker(
-                address_and_key["address"], address_and_key["private"])
-            self.address_to_workers[worker.address] = worker
-            self.workers.append(worker)
+        for i in range(number_of_workers):
+            if len(self.address_used) < len(self.address_to_key):
+                address_and_key = self.address_to_key[len(self.address_used)]
+                self.address_used.append(address_and_key["address"])
+                worker = WaitWorker(
+                    address_and_key["address"], address_and_key["private"], i)
+                self.address_to_workers[worker.address] = worker
+                self.workers.append(worker)
 
     def select_worker_pool(self, pool_size):
         """Select a pool of workers to use for the learning
@@ -57,6 +59,8 @@ class ParallelizedHypervisor:
         """
         # call the contract to get the parameters
         # TODO
+        print("Worker {} get the parameters".format(worker.id))
+        return
 
     def learn(self, worker):
         """Learn the model with the parameters getted from the blockchain
@@ -78,3 +82,23 @@ class ParallelizedHypervisor:
         # call the contract to send the weights and handle the response
         # TODO
         return True
+
+    def create_get_weights_process(self, workers):
+        """Create a process which will get the weights from the blockchain for each given worker
+
+        Returns: the process created
+        """
+        process = [Process(target=self.get_weights, args=(worker,))
+                   for worker in workers]
+        return process
+
+    def perform_one_process_step(self, processes):
+        """Perform one step of the process
+
+        Args:
+            processes (list): the list of processes to perform
+        """
+        for process in processes:
+            process.start()
+        for process in processes:
+            process.join()
