@@ -33,7 +33,8 @@ class Hypervisor:
         if len(self.address_used) < len(self.address_to_key):
             address_and_key = self.address_to_key[len(self.address_used)]
             self.address_used.append(address_and_key["address"])
-            worker = Worker(address_and_key["address"], address_and_key["private"])
+            worker = Worker(
+                address_and_key["address"], address_and_key["private"])
             self.address_to_workers[worker.address] = worker
             return worker
         else:
@@ -84,7 +85,8 @@ class Hypervisor:
         if worker.address not in self.address_to_workers:
             print("This worker is not managed by this hypervisor")
             return
-        worker.register_to_learning(self.contract.contract_address, self.contract.abi)
+        worker.register_to_learning(
+            self.contract.contract_address, self.contract.abi)
 
     def make_worker_leave_learning(self, worker):
         """Make a worker stop participating to the learning

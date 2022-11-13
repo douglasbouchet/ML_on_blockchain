@@ -1,10 +1,10 @@
+from src.modules.learning_server import LearningServer
+from src.modules.hypervisor import Hypervisor
+from src.communication.network import Network
+from src.communication.message import Message
 import sys
 
 sys.path.append("/home/user/ml_on_blockchain")
-from src.communication.message import Message
-from src.communication.network import Network
-from src.modules.hypervisor import Hypervisor
-from src.modules.learning_server import LearningServer
 
 hypervisor = Hypervisor()
 workers = [hypervisor.create_worker() for i in range(100)]
@@ -77,7 +77,8 @@ def test_network_send_message_elaborate_case():
     # check that all messages have been correctly read
     assert len(messages) == len(workers)
     for message in messages:
-        assert message.get_worker_address() in [worker.address for worker in workers]
+        assert message.get_worker_address(
+        ) in [worker.address for worker in workers]
         assert message.get_model_weight() == [1, 2, 3]
     # check that all messages have been correctly deleted
     assert len(network.msg_box[learning_server.ip_address]) == 0

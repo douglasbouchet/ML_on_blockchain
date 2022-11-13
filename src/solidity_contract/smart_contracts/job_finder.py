@@ -53,7 +53,8 @@ class JobFinder(Contract):
         )
 
         # 6. Sign tx with PK
-        tx_create = web3.eth.account.sign_transaction(register_tx, worker_private_key)
+        tx_create = web3.eth.account.sign_transaction(
+            register_tx, worker_private_key)
 
         # 7. Send tx and wait for receipt
         tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)

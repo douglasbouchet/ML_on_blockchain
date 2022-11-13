@@ -1,16 +1,17 @@
+from src.modules.hypervisor import Hypervisor
+from src.modules.federating_learning_server import FederatingLearningServer
 import sys
 import pytest
 from web3.exceptions import ContractLogicError
 
 sys.path.append("/home/user/ml_on_blockchain")
-from src.modules.federating_learning_server import FederatingLearningServer
-from src.modules.hypervisor import Hypervisor
 
 
 def test_job_finder_should_create_job_container_upon_creation():
     learning_server = FederatingLearningServer(3, 100, 10)
     # ------Deploy smart contract---------
-    job_finder_contract = learning_server.deploy_contract("jobFinder", "JobFinder")
+    job_finder_contract = learning_server.deploy_contract(
+        "jobFinder", "JobFinder")
     assert job_finder_contract is not None
     # get_job should return current job container address
     models_weights, data_index = job_finder_contract.get_job()
@@ -25,7 +26,8 @@ def test_submit_new_model():
     worker1 = hypervisor.create_mnist_worker()
     worker2 = hypervisor.create_mnist_worker()
     # ------Deploy smart contract---------
-    job_finder_contract = learning_server.deploy_contract("jobFinder", "JobFinder")
+    job_finder_contract = learning_server.deploy_contract(
+        "jobFinder", "JobFinder")
     hypervisor.set_contract(job_finder_contract)
     # get_job should return current job container address
     models_weights, data_index = job_finder_contract.get_job()
@@ -49,7 +51,8 @@ def test_submit_new_model():
     # now the smart contract should have elected a model as the best one
     all_prev_job_best_model = job_finder_contract.get_all_previous_jobs_best_model()
     assert len(all_prev_job_best_model) == 1
-    assert all_prev_job_best_model[0] == 1  # all workers send the same model of 1
+    # all workers send the same model of 1
+    assert all_prev_job_best_model[0] == 1
     # TODO check that the best model is the one with the highest number of votes
     # we should be able to get the new job
     assert job_finder_contract.get_job() == [
@@ -80,7 +83,8 @@ def test_paying_of_workers():
     worker1 = hypervisor.create_mnist_worker()
     worker2 = hypervisor.create_mnist_worker()
     # ------Deploy smart contract---------
-    job_finder_contract = learning_server.deploy_contract("jobFinder", "JobFinder")
+    job_finder_contract = learning_server.deploy_contract(
+        "jobFinder", "JobFinder")
     hypervisor.set_contract(job_finder_contract)
     # ------Make workers submit models-------
     hypervisor.submit_new_model(1, worker0)

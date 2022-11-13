@@ -1,7 +1,7 @@
+from src.modules.federating_learning_server import FederatingLearningServer
 import sys
 
 sys.path.append("/home/user/ml_on_blockchain")
-from src.modules.federating_learning_server import FederatingLearningServer
 
 group_size = 3
 n_rounds = 100

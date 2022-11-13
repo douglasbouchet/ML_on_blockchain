@@ -1,7 +1,7 @@
+from src.modules.helper import Helper
 import sys
 
 sys.path.append("/home/user/ml_on_blockchain")
-from src.modules.helper import Helper
 
 
 def test_read_addresses_list_should_be_999_for_workers():
@@ -10,7 +10,8 @@ def test_read_addresses_list_should_be_999_for_workers():
         == 999
     )
     assert (
-        len(Helper().read_addresses_and_keys_from_yaml(Helper(), for_worker=False)) == 1
+        len(Helper().read_addresses_and_keys_from_yaml(
+            Helper(), for_worker=False)) == 1
     )
 
 

@@ -1,12 +1,11 @@
+from src.modules.federating_learning_server import FederatingLearningServer
+from src.modules.hypervisor import Hypervisor
+from src.modules.helper import Helper
+from src.basic_worker import BasicWorker
+from src.basic_server import BasicServer
 import sys
 
 sys.path.append("/home/user/ml_on_blockchain")
-
-from src.basic_server import BasicServer
-from src.basic_worker import BasicWorker
-from src.modules.helper import Helper
-from src.modules.hypervisor import Hypervisor
-from src.modules.federating_learning_server import FederatingLearningServer
 
 
 def init_server():
@@ -58,7 +57,8 @@ def test_hypervisor_based_main():
     hypervisor.make_worker_join_learning(worker1)
     assert contract.get_number_of_workers() == 2
     # check if learning server has the correct number of workers and their addresses
-    server_workers = learning_server.read_worker_addresses_from_smart_contract(contract)
+    server_workers = learning_server.read_worker_addresses_from_smart_contract(
+        contract)
     assert len(server_workers) == 2
     assert server_workers[0] == worker0.address
     assert server_workers[1] == worker1.address

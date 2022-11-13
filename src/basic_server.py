@@ -11,7 +11,9 @@ class BasicServer:
         """_summary_
 
         Args:
-            contract_name (str): should end with "er" e.g not registering but register
+            contract_filename (str): the filename of the contract (i.e for name.sol only pass "name" as argument)
+            contract_name (str): should end with "er" e.g not registering but register. The name of class in the contract
+            (case sensitive)
 
         Returns:
             Contract: Contract instance

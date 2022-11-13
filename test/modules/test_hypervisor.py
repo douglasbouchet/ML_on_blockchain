@@ -1,11 +1,11 @@
+from src.modules.learning_server import LearningServer
+from src.modules.hypervisor import Hypervisor
+from src.communication.network import Network
+from src.communication.message import Message
+from src.modules.helper import Helper
 import sys
 
 sys.path.append("/home/user/ml_on_blockchain")
-from src.modules.helper import Helper
-from src.communication.message import Message
-from src.communication.network import Network
-from src.modules.hypervisor import Hypervisor
-from src.modules.learning_server import LearningServer
 
 
 def test_hypervirsor_read_addresses_list_should_be_999_for_workers():

@@ -43,7 +43,6 @@ contract JobContainer {
         nFragments = _nFragments;
         currentModel = _currentModel;
         batchIndex = _batchIndex;
-        //TODO init all fragments to false
     }
 
     function getModelAndBatchIndex() public view returns (int256, uint256) {

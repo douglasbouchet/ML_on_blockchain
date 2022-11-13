@@ -1,7 +1,7 @@
+from src.communication.message import Message
 import sys
 
 sys.path.append("/home/user/ml_on_blockchain")
-from src.communication.message import Message
 
 
 def test_message_content():

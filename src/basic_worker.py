@@ -20,7 +20,8 @@ class BasicWorker:
         )
 
         # 4. Create contract instance
-        contract = web3.eth.contract(address=contract_address, abi=contract_abi)
+        contract = web3.eth.contract(
+            address=contract_address, abi=contract_abi)
 
         # 5. Build increment tx
         # increment_tx = contract.functions.increment(value).buildTransaction(
@@ -35,7 +36,8 @@ class BasicWorker:
         )
 
         # 6. Sign tx with PK
-        tx_create = web3.eth.account.sign_transaction(register_tx, self.private_key)
+        tx_create = web3.eth.account.sign_transaction(
+            register_tx, self.private_key)
 
         # 7. Send tx and wait for receipt
         tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)
