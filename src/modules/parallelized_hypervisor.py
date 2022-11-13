@@ -68,7 +68,7 @@ class ParallelizedHypervisor:
             worker (Worker): the worker that will learn the model
         """
         # sleep between 0.1 and 0.3 seconds
-        time.sleep(random.uniform(0.1, 0.3))
+        worker.fake_learn()
 
     def send_weights(self, worker):
         """Send the weights to the blockchain
