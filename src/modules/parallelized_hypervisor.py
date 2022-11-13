@@ -27,7 +27,7 @@ class ParallelizedHypervisor:
                 address_and_key = self.address_to_key[len(self.address_used)]
                 self.address_used.append(address_and_key["address"])
                 worker = WaitWorker(
-                    address_and_key["address"], address_and_key["private"], i)
+                    address_and_key["address"], address_and_key["private"], i, self.contract)
                 self.address_to_workers[worker.address] = worker
                 self.workers.append(worker)
 
@@ -83,7 +83,8 @@ class ParallelizedHypervisor:
         """
         # call the contract to send the weights and handle the response
         # TODO
-        print("Worker {} send the weights".format(worker.id))
+        worker.send_fragment(1)
+        #print("Worker {} send the weights".format(worker.id))
         return True
 
     def create_get_weights_process(self, workers):
@@ -120,7 +121,9 @@ class ParallelizedHypervisor:
         Args:
             processes (list): the list of processes to perform
         """
-        for process in processes:
+        for i, process in enumerate(processes):
+            print("start process: ", i)
             process.start()
-        for process in processes:
             process.join()
+        # for process in processes:
+        #    process.join()

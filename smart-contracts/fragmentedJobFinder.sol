@@ -37,18 +37,19 @@ contract FragmentedJobFinder {
         int256 _weight,
         bytes32 _modelHash
     ) public returns (bool) {
-        bool fragmentAccepted = jobContainer.addFragment(
-            msg.sender,
-            _fragNb,
-            _weight,
-            _modelHash
-        );
+        // bool fragmentAccepted = jobContainer.addFragment(
+        //     msg.sender,
+        //     _fragNb,
+        //     _weight,
+        //     _modelHash
+        // );
 
-        // if the model is complete, create a new job and push the current one to previousJobs
-        if (jobContainer.getModelIsready()) {
-            createNewJob();
-        }
-        return fragmentAccepted;
+        // // if the model is complete, create a new job and push the current one to previousJobs
+        // if (jobContainer.getModelIsready()) {
+        //     createNewJob();
+        // }
+        // return fragmentAccepted;
+        return true;
     }
 
     function getAllPreviousJobsBestModel()
