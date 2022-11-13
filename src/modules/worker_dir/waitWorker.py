@@ -10,5 +10,7 @@ class WaitWorker:
 
     def fake_learn(self):
         # sleep between 0.1 and 0.3 seconds
-        time.sleep(random.uniform(0.1, 0.3))
+        #time.sleep(random.uniform(0.1, 0.3))
+        time.sleep(random.uniform(1, 3))
+        print("Worker {} end learning".format(self.id))
         return

@@ -65,14 +65,22 @@ def parallel_learning_main():
     # init the workers
     parallel_hypervisor.create_wait_workers(number_of_workers=999)
     worker_pool = parallel_hypervisor.select_worker_pool(pool_size=10)
+    #worker_pool = parallel_hypervisor.select_worker_pool(pool_size=100)
     print("Number of workers in the pool:", len(worker_pool))
     get_processes = parallel_hypervisor.create_get_weights_process(
         worker_pool)
     print("Number of processes:", len(get_processes))
 
-    # runs all process in parallel
     parallel_hypervisor.perform_one_process_step(get_processes)
-    print("execution finished")
+    print("get parameters finished")
+    fake_learn_processess = parallel_hypervisor.create_fake_learn_process(
+        worker_pool)
+    parallel_hypervisor.perform_one_process_step(fake_learn_processess)
+    print("learn finished")
+    send_processes = parallel_hypervisor.create_send_weights_process(
+        worker_pool)
+    parallel_hypervisor.perform_one_process_step(send_processes)
+    print("send parameters finished")
 
 
 if __name__ == "__main__":

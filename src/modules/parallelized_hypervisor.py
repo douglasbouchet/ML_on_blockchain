@@ -1,4 +1,3 @@
-import random
 from multiprocessing import Process
 from src.modules.helper import Helper
 from src.modules.worker_dir.waitWorker import WaitWorker
@@ -43,7 +42,8 @@ class ParallelizedHypervisor:
             print("Not enough workers to create a pool of size {}".format(pool_size))
             return
         # select pool_size workers randomly
-        pool = random.sample(self.workers, pool_size)
+        #pool = random.sample(self.workers, pool_size)
+        pool = self.workers[:pool_size]
         return pool
 
     def get_weights(self, worker):
@@ -71,16 +71,19 @@ class ParallelizedHypervisor:
         """
         # sleep between 0.1 and 0.3 seconds
         worker.fake_learn()
+        return
 
-    def send_weights(self, worker):
+    def send_weights(self, worker, weights):
         """Send the weights to the blockchain
 
         Args:
             worker (Worker): the worker that will send the weights
+            weights (list): the weights to send
         Returns: True if the weights are accepted, False otherwise
         """
         # call the contract to send the weights and handle the response
         # TODO
+        print("Worker {} send the weights".format(worker.id))
         return True
 
     def create_get_weights_process(self, workers):
@@ -89,6 +92,25 @@ class ParallelizedHypervisor:
         Returns: the process created
         """
         process = [Process(target=self.get_weights, args=(worker,))
+                   for worker in workers]
+        return process
+
+    def create_fake_learn_process(self, workers):
+        """Create a process which will learn the model for each given worker
+
+        Returns: the process created
+        """
+        process = [Process(target=self.learn, args=(worker,))
+                   for worker in workers]
+        return process
+
+    def create_send_weights_process(self, workers):
+        """Create a process which will send the weights to the blockchain for each given worker
+
+        Returns: the process created
+        """
+        dumb_weight = 1
+        process = [Process(target=self.send_weights, args=(worker, dumb_weight,))
                    for worker in workers]
         return process
 
