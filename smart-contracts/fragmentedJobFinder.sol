@@ -49,7 +49,7 @@ contract FragmentedJobFinder {
         //     createNewJob();
         // }
         // return fragmentAccepted;
-        return true;
+        return false;
     }
 
     function getAllPreviousJobsBestModel()

@@ -72,8 +72,8 @@ def parallel_learning_main():
     # init the workers
     parallel_hypervisor.create_wait_workers(number_of_workers=999)
     #worker_pool = parallel_hypervisor.select_worker_pool(pool_size=10)
-    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=1)
-    #worker_pool = parallel_hypervisor.select_worker_pool(pool_size=100)
+    #worker_pool = parallel_hypervisor.select_worker_pool(pool_size=3)
+    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=2)
     print("Number of workers in the pool:", len(worker_pool))
     get_processes = parallel_hypervisor.create_get_weights_process(
         worker_pool)
@@ -91,7 +91,27 @@ def parallel_learning_main():
     print("send parameters finished")
 
 
+def sequential_learning_main():
+    # ------Init server and hypervisor--------
+    parallel_hypervisor = ParallelizedHypervisor()
+    learning_server = FederatingLearningServer(3, 100, 10)
+    # ------Deploy smart contract---------
+    fragmented_job_finder = learning_server.deploy_contract(
+        "fragmentedJobFinder", "FragmentedJobFinder")
+    parallel_hypervisor.contract = fragmented_job_finder
+    # init the workers
+    parallel_hypervisor.create_wait_workers(number_of_workers=999)
+    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=4)
+    print("sequential execution but random order")
+    parallel_hypervisor.perform_get_weights(worker_pool)
+    print("parallel execution (no interaction with smart contract)")
+    parallel_hypervisor.perform_parallel_fake_learn(worker_pool)
+    print("sequential execution but random order")
+    parallel_hypervisor.perform_send_fragment(worker_pool)
+
+
 if __name__ == "__main__":
     # basic_main()
     # hypervisor_based_main()
-    parallel_learning_main()
+    # parallel_learning_main()
+    sequential_learning_main()

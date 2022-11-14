@@ -1,3 +1,5 @@
+import random
+from web3 import Web3
 from multiprocessing import Process
 from src.modules.helper import Helper
 from src.modules.worker_dir.waitWorker import WaitWorker
@@ -46,22 +48,6 @@ class ParallelizedHypervisor:
         pool = self.workers[:pool_size]
         return pool
 
-    def get_weights(self, worker):
-        """Load a contract to use for the learning.
-        The parameters are getted from the blockchain. We don't make a single call as we want the behavior to be
-        as realistic as possible. I.e in a real system, we assume each workers will independently get the parameters.
-        We can in consequence parallelize the calls to the blockchain.
-
-        This method will be called in parallel by each worker of the pool
-
-        Args:
-            worker (Worker): the worker that will get the parameters
-        """
-        # call the contract to get the parameters
-        # TODO
-        print("Worker {} get the parameters".format(worker.id))
-        return
-
     def learn(self, worker):
         """Learn the model with the parameters getted from the blockchain
         Actually this is just a random time sleep to simulate the learning
@@ -73,7 +59,7 @@ class ParallelizedHypervisor:
         worker.fake_learn()
         return
 
-    def send_weights(self, worker, weights):
+    def send_weights(self, worker, weights, web3):
         """Send the weights to the blockchain
 
         Args:
@@ -83,9 +69,46 @@ class ParallelizedHypervisor:
         """
         # call the contract to send the weights and handle the response
         # TODO
-        worker.send_fragment(1)
-        #print("Worker {} send the weights".format(worker.id))
+        # worker.send_fragment(1)
+        print("Worker {} send the weights".format(worker.id))
         return True
+
+    def perform_get_weights(self, workers):
+        """Perform the get weights step for each given worker
+
+        Args:
+            workers (list): the list of workers to perform the step
+        """
+        # permute the workers to get a random order
+        rmd_ord_workers = random.sample(workers, len(workers))
+        for worker in rmd_ord_workers:
+            worker.get_parameters()
+        return
+
+    def perform_parallel_fake_learn(self, workers):
+        """Perform the get weights step for each given worker
+
+        Args:
+            workers (list): the list of workers to perform the step
+        """
+        # permute the workers to get a random order
+        processes = [Process(target=self.learn, args=(worker,))
+                     for worker in workers]
+        self.perform_one_process_step(processes)
+        return
+
+    def perform_send_fragment(self, workers):
+        """Perform the get weights step for each given worker
+
+        Args:
+            workers (list): the list of workers to perform the step
+        """
+        # permute the workers to get a random order
+        # permute the workers to get a random order
+        rmd_ord_workers = random.sample(workers, len(workers))
+        for worker in rmd_ord_workers:
+            worker.send_fragment(1)
+        return
 
     def create_get_weights_process(self, workers):
         """Create a process which will get the weights from the blockchain for each given worker
@@ -111,7 +134,8 @@ class ParallelizedHypervisor:
         Returns: the process created
         """
         dumb_weight = 1
-        process = [Process(target=self.send_weights, args=(worker, dumb_weight,))
+        web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
+        process = [Process(target=self.send_weights, args=(worker, dumb_weight, web3,))
                    for worker in workers]
         return process
 
@@ -121,9 +145,7 @@ class ParallelizedHypervisor:
         Args:
             processes (list): the list of processes to perform
         """
-        for i, process in enumerate(processes):
-            print("start process: ", i)
+        for process in processes:
             process.start()
+        for process in processes:
             process.join()
-        # for process in processes:
-        #    process.join()

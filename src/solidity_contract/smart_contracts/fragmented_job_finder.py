@@ -21,7 +21,12 @@ class FragmentedJobFinder(Contract):
     def get_all_previous_jobs_best_model(self):
         return self.contract.functions.getAllPreviousJobsBestModel().call()
 
-    def get_TX_result(w3, txhash):
+    def parse_add_fragment_result(self, result):
+        return self.contract.web3.codec.decode_single(
+            "bool", result
+        )
+
+    def get_TX_result(self, w3, txhash):
         try:
             tx = w3.eth.get_transaction(txhash)
         except Exception as e:
@@ -37,7 +42,8 @@ class FragmentedJobFinder(Contract):
         # replay the transaction locally:
         try:
             ret = w3.eth.call(replay_tx, tx.blockNumber - 1)
-            return (True, ret)
+            # return (True, ret)
+            return (True, self.parse_add_fragment_result(ret))
         except Exception as e:
             return (False, str(e))
 
@@ -54,11 +60,11 @@ class FragmentedJobFinder(Contract):
             worker_address (str): worker public address
             worker_private_key (str): worker private key, used to sign the transaction
         """
-        web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
-        print("here 0")
+        #web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
+        web3 = self.contract.web3
         register_tx = self.contract.functions.addFragment(
             _fragNb, _weight, _modelHash
-        ).buildTransaction(
+        ).build_transaction(
             {
                 "gasPrice": 0,
                 "from": Web3.toChecksumAddress(worker_address),
@@ -67,20 +73,17 @@ class FragmentedJobFinder(Contract):
                 ),
             }
         )
-        print("here 1")
 
         # 6. Sign tx with PK
         tx_create = web3.eth.account.sign_transaction(
             register_tx, worker_private_key)
-        print("here 2")
         # 7. Send tx and wait for receipt
         tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)
         print("here 3")
         tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-
         print("here 4")
-
-        return True
+        return self.get_TX_result(web3, tx_hash)
+        # return True
         # return get_TX_result(web3, tx_hash)
 
     # -----------------Debug functions-----------------
