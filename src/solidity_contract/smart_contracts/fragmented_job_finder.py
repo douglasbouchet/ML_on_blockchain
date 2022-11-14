@@ -79,12 +79,8 @@ class FragmentedJobFinder(Contract):
             register_tx, worker_private_key)
         # 7. Send tx and wait for receipt
         tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)
-        print("here 3")
         tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-        print("here 4")
         return self.get_TX_result(web3, tx_hash)
-        # return True
-        # return get_TX_result(web3, tx_hash)
 
     # -----------------Debug functions-----------------
     def get_received_models(self):

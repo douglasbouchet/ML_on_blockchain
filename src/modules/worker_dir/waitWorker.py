@@ -31,17 +31,11 @@ class WaitWorker:
         return
 
     def send_fragment(self, frag_nb):
-        # frag_res = self.contract.add_fragment(
-        #    frag_nb, 1, "0x1234567890", self.address, self.private_key)
-        # print("Worker {} send fragment result: {}".format(self.id, frag_nb))
-        (boolean, msg) = self.contract.add_fragment(
+        (boolean, return_value) = self.contract.add_fragment(
             frag_nb, 1, "0x1234567890", self.address, self.private_key)
-        #print("Worker {} send fragment".format(self.id))
-        print("Worker {} send fragment result: {}:{}".format(self.id, boolean, msg))
-        return
 
-    def print_latest_block(self):
-        web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
-        print("web3 connected: {}".format(web3.isConnected()))
-        # print("Latest Ethereum block number", w3.eth.block)
+        if return_value == True:
+            print("Worker {} send fragment accepted".format(self.id))
+        else:
+            print("Worker {} send fragment refused".format(self.id))
         return

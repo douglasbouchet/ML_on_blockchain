@@ -81,55 +81,49 @@ contract FragmentedJobContainer {
         int256 _weight,
         bytes32 _modelHash
     ) public returns (bool) {
+        // check if we have a model with this hash
+        bool _hashExists = false;
+        for (uint256 i = 0; i < modelsHashes.length; i++) {
+            if (modelsHashes[i] == _modelHash) {
+                _hashExists = true;
+            }
+        }
+        // if we don't have a model with this hash, we add it to modelsHashes
+        if (!_hashExists) {
+            modelsHashes.push(_modelHash);
+            modelHashToSize[_modelHash] = 0;
+            // create an array of fragments for this model
+            //Fragment memory frag = Fragment(_fragNb, _weight); TODO not needed ?
+            //modelHashToFragments[_modelHash].push(frag);
+
+            //modelHashToFragments[_modelHash] = new Fragment[](nFragments); //TODO see if correctly created
+        }
+        uint256 _nFrags = modelHashToSize[_modelHash];
+        // now we iterate over all the fragments of the model hash and see if we already have a fragment with this number
+        for (uint256 i = 0; i < _nFrags; i++) {
+            if (modelHashToFragments[_modelHash][i].fragNumber == _fragNb) {
+                // we already have a fragment with this number
+                return false;
+            }
+        }
+        // now we know we don't have received this fragment yet, we can add it to the model
+        // update the number of fragments for this model hash
+        modelHashToSize[_modelHash] = _nFrags + 1;
+        // add the fragment to the list of fragments
+        modelHashToFragments[_modelHash].push(Fragment(_fragNb, _weight));
+        // add the worker to the list of workers that sent fragments for this model hash
+        workerAddressToModelHash[_workerAddress] = _modelHash;
+        // if we have enough fragments, we can merge them
+        if (_nFrags + 1 == nFragments) {
+            // bool correctModel = mergeFragments(_modelHash);
+            // if (correctModel) {
+            //     // we can now pay the workers that did provide the best model
+            //     payWorkers(_modelHash);
+            // }
+            // TODO handle case where model is not correct
+        }
         return true;
     }
-
-    //         // check if we have a model with this hash
-    //         bool _hashExists = false;
-    //         for (uint256 i = 0; i < modelsHashes.length; i++) {
-    //             if (modelsHashes[i] == _modelHash) {
-    //                 _hashExists = true;
-    //             }
-    //         }
-    //         // if we don't have a model with this hash, we add it to modelsHashes
-    //         if (!_hashExists) {
-    //             modelsHashes.push(_modelHash);
-    //             modelHashToSize[_modelHash] = 0;
-    //             modelHashToFragments[_modelHash] = new Fragment[](nFragments); //TODO see if correctly created
-    //         }
-
-    //         uint256 _nFrags = modelHashToSize[_modelHash];
-    //         // now we iterate over all the fragments of the model hash and see if we already have a fragment with this number
-    //         for (uint256 i = 0; i < _nFrags; i++) {
-    //             if (modelHashToFragments[_modelHash][i].fragNumber == _fragNb) {
-    //                 // we already have a fragment with this number
-    //                 return false;
-    //             }
-    //         }
-
-    //         // now we know we don't have received this fragment yet, we can add it to the model
-
-    //         // update the number of fragments for this model hash
-    //         modelHashToSize[_modelHash] = _nFrags + 1;
-
-    //         // add the fragment to the list of fragments
-    //         modelHashToFragments[_modelHash][_nFrags] = Fragment(_nFrags, _weight);
-
-    //         // add the worker to the list of workers that sent fragments for this model hash
-    //         workerAddressToModelHash[_workerAddress] = _modelHash;
-
-    //         // if we have enough fragments, we can merge them
-    //         if (_nFrags + 1 == nFragments) {
-    //             bool correctModel = mergeFragments(_modelHash);
-    //             if (correctModel) {
-    //                 // we can now pay the workers that did provide the best model
-    //                 payWorkers(_modelHash);
-    //             }
-    //             // TODO handle case where model is not correct
-    //         }
-
-    //         return true;
-    //     }
 
     //     /// @dev function to merge fragments
     //     /// @dev the model hash is computed as the hash of the combined weights

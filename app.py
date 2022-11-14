@@ -101,7 +101,7 @@ def sequential_learning_main():
     parallel_hypervisor.contract = fragmented_job_finder
     # init the workers
     parallel_hypervisor.create_wait_workers(number_of_workers=999)
-    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=4)
+    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=2)
     print("sequential execution but random order")
     parallel_hypervisor.perform_get_weights(worker_pool)
     print("parallel execution (no interaction with smart contract)")
