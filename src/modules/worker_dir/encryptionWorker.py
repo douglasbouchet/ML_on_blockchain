@@ -32,6 +32,8 @@ class EncryptionWorker:
         # xor the model with the secret
         encrypted_model = [model[i] ^ self.secret[i]
                            for i in range(len(model))]
+        # convert encrypted_model to bytes TODO see if necessary
+        # encrypted_model = bytes(encrypted_model)
         return encrypted_model
 
     def send_encrypted_model(self):
@@ -45,12 +47,9 @@ class EncryptionWorker:
             encrypted_model_hex, self.address, self.private_key
         )
 
-    def check_n_submitted_models(self, threshold):
+    def check_can_send_verification_parameters(self):
         # check the number of submitted models from the smart contract
-        n_submitted_models = self.contract.get_number_submitted_models(
-            self.address, self.private_key
-        )
-        return n_submitted_models > threshold
+        return self.contract.check_can_send_verification_parameters(self.address)
 
     def send_veritications(self):
         # send the verifications to the blockchain (self.nounce, self.secret)

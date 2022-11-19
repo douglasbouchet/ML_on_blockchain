@@ -22,3 +22,11 @@ class Contract:
         workers_addresses = self.contract.functions.getWorkers().call()
         # for each address, remove the 0x and lower case it
         return [worker_address[2:].lower() for worker_address in workers_addresses]
+
+    def sign_txs_and_send_it(self, private_key, register_tx):
+        # 6. Sign tx with PK
+        tx_create = self.web3.eth.account.sign_transaction(
+            register_tx, private_key)
+        # 7. Send tx and wait for receipt
+        tx_hash = self.web3.eth.send_raw_transaction(tx_create.rawTransaction)
+        tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)

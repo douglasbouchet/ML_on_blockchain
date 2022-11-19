@@ -5,6 +5,7 @@ from src.solidity_contract.contract import Contract
 class EncryptionJobFinder(Contract):
     def __init__(self, contract_name, contract_address, abi, bytecode):
         super().__init__(contract_name, contract_address, abi, bytecode)
+        self.web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
 
     def get_job_container(self):
         return self.contract.functions.jobContainer().call()
@@ -15,7 +16,6 @@ class EncryptionJobFinder(Contract):
         Returns:
             (int, int): models weights, data indices to perform SGD
         """
-
         return self.contract.functions.getJob().call()
 
     def get_all_previous_jobs_best_model(self):
@@ -24,80 +24,60 @@ class EncryptionJobFinder(Contract):
     def send_encrypted_model(
         self, encrypted_model_hex, worker_address, worker_private_key
     ):
-        # TODO
-        pass
-
-    def get_number_submitted_models(self, worker_address, worker_private_key):
-        # return self.contract.functions.getNumberSubmittedModels().call()
-        # TODO
+        """Send the encrypted model to the blockchain
+        Args:
+            encrypted_model_hex (bytes[]): bytes array of the encrypted model
+            worker_address (_type_): address of the worker
+            worker_private_key (_type_): private key of the worker
+        """
+        register_tx = self.contract.functions.addEncryptedModel(
+            worker_address, encrypted_model_hex
+        ).build_transaction(
+            {
+                "gasPrice": 0,
+                "from": Web3.toChecksumAddress(worker_address),
+                "nonce": web3.eth.get_transaction_count(
+                    Web3.toChecksumAddress(worker_address)
+                ),
+            }
+        )
+        self.contract.sign_txs_and_send_it(worker_private_key, register_tx)
         return
+
+    def check_can_send_verification_parameters(self):
+        """Check weather the worker can send the verification parameters
+
+        Returns:
+            boolean: true if the worker can send the verification parameters false otherwise
+        """
+        # TODO check
+        return self.contract.functions.checkCanSendVerificationParameters().call()
 
     def send_verifications_parameters(
         self, worker_nounce, worker_secret, worker_address, worker_private_key
     ):
-        # TODO
-        pass
+        """Send the verification parameters to the blockchain (worker nounce, worker secret)
 
-    # def parse_add_fragment_result(self, result):
-    #    return self.contract.web3.codec.decode_single(
-    #        "bool", result
-    #    )
-
-    # def get_TX_result(self, w3, txhash):
-    #     try:
-    #         tx = w3.eth.get_transaction(txhash)
-    #     except Exception as e:
-    #         print("Error getting transaction:", e)
-    #         return None
-    #     replay_tx = {
-    #         'to': tx['to'],
-    #         'from': tx['from'],
-    #         'value': tx['value'],
-    #         'data': tx['input'],
-    #         'gas': tx['gas'],
-    #     }
-    #     # replay the transaction locally:
-    #     try:
-    #         ret = w3.eth.call(replay_tx, tx.blockNumber - 1)
-    #         # return (True, ret)
-    #         return (True, self.parse_add_fragment_result(ret))
-    #     except Exception as e:
-    #         return (False, str(e))
-
-    # def add_fragment(self, _fragNb, _weight, _modelHash, worker_address, worker_private_key):
-    #     """This function is called whenever a worker wants to submit a new fragment to the job.
-    #     If the job complete after receiving this worker, the job's resulting model is published on the blockchain and
-    #     a new job is created.
-
-    #     TODO add check such that worker submitted for a previous job don't actually put wieghts for the current job
-    #     Args:
-    #         _fragNb (int): the number of the fragment
-    #         _weight (int): the weight of the fragment
-    #         _modelHash (str): the hash of the complete model
-    #         worker_address (str): worker public address
-    #         worker_private_key (str): worker private key, used to sign the transaction
-    #     """
-    #     #web3 = Web3(Web3.WebsocketProvider("ws://192.168.203.3:9000"))
-    #     web3 = self.contract.web3
-    #     register_tx = self.contract.functions.addFragment(
-    #         _fragNb, _weight, _modelHash
-    #     ).build_transaction(
-    #         {
-    #             "gasPrice": 0,
-    #             "from": Web3.toChecksumAddress(worker_address),
-    #             "nonce": web3.eth.get_transaction_count(
-    #                 Web3.toChecksumAddress(worker_address)
-    #             ),
-    #         }
-    #     )
-
-    #     # 6. Sign tx with PK
-    #     tx_create = web3.eth.account.sign_transaction(
-    #         register_tx, worker_private_key)
-    #     # 7. Send tx and wait for receipt
-    #     tx_hash = web3.eth.send_raw_transaction(tx_create.rawTransaction)
-    #     tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-    #     return self.get_TX_result(web3, tx_hash)
+        Args:
+            worker_nounce (int): _description_
+            worker_secret (bytes[]): _description_
+            worker_address (str): address of the worker
+            worker_private_key (str): worker private key
+        """
+        # TODO check
+        register_tx = self.contract.functions.addVerificationParameters(
+            worker_address, worker_nounce, worker_secret
+        ).build_transaction(
+            {
+                "gasPrice": 0,
+                "from": Web3.toChecksumAddress(worker_address),
+                "nonce": web3.eth.get_transaction_count(
+                    Web3.toChecksumAddress(worker_address)
+                ),
+            }
+        )
+        self.contract.sign_txs_and_send_it(worker_private_key, register_tx)
+        return
 
     # -----------------Debug functions-----------------
     def get_received_models(self):

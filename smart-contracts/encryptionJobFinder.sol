@@ -40,13 +40,27 @@ contract EncryptionJobFinder {
     /// @notice send a new encrypted model to the jobContainer
     /// @param workerAddress the address of the worker sending the model
     /// @param encryptedModel the encrypted model sent by the worker
-    function addFragment(address workerAddress, bytes4 encryptedModel) public {
+    function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
+        public
+    {
         jobContainer.addNewEncryptedModel(workerAddress, encryptedModel);
 
         // // if the model is complete, create a new job and push the current one to previousJobs
         // if (jobContainer.getModelIsready()) {
         //     createNewJob();
         // }
+    }
+
+    function addVerificationParameters(
+        address workerAddress,
+        int256 workerNonce,
+        bytes4 workerSecret
+    ) public {
+        jobContainer.addVerificationParameters(
+            workerAddress,
+            workerNonce,
+            workerSecret
+        );
     }
 
     function getAllPreviousJobsBestModel()

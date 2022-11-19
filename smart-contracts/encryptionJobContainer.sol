@@ -69,7 +69,8 @@ contract EncyptionJobContainer {
         }
     }
 
-    function addNewVerificationParameters(
+    function addVerificationParameters(
+        address _workerAddress,
         int256 _workerNonce,
         bytes4 _workerSecret
     ) public {
@@ -80,18 +81,17 @@ contract EncyptionJobContainer {
             i++
         ) {
             require(
-                receivedVerificationParametersAddresses[i] != msg.sender,
+                receivedVerificationParametersAddresses[i] != _workerAddress,
                 "You already sent your verification parameters"
             );
         }
         // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
-        receivedVerificationParametersAddresses.push(msg.sender);
-        addressToVerificationParameters[msg.sender] = VerificationParameters(
-            _workerNonce,
-            _workerSecret
-        );
+        receivedVerificationParametersAddresses.push(_workerAddress);
+        addressToVerificationParameters[
+            _workerAddress
+        ] = VerificationParameters(_workerNonce, _workerSecret);
         // we decrypt the model of this woker
-        bytes4 encryptedModel = addressToEncModel[msg.sender];
+        bytes4 encryptedModel = addressToEncModel[_workerAddress];
         bytes4 decryptedModel = encryptedModel ^ _workerSecret;
         // we add the decrypted model to the modelToNSameModels mapping
         modelToNSameModels[decryptedModel] += 1;
