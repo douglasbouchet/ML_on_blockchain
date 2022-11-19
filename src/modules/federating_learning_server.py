@@ -3,7 +3,12 @@ from src.modules.helper import *
 from src.solidity_contract.contract import Contract
 from src.solidity_contract.deploy import deploy_smart_contract
 from src.solidity_contract.smart_contracts.job_finder import JobFinder
-from src.solidity_contract.smart_contracts.fragmented_job_finder import FragmentedJobFinder
+from src.solidity_contract.smart_contracts.fragmented_job_finder import (
+    FragmentedJobFinder,
+)
+from src.solidity_contract.smart_contracts.encryption_job_finder import (
+    EncryptionJobFinder,
+)
 
 
 class FederatingLearningServer:
@@ -40,6 +45,8 @@ class FederatingLearningServer:
             return JobFinder(contract_name, contract_adress, abi, bytecode)
         elif contract_name == "FragmentedJobFinder":
             return FragmentedJobFinder(contract_name, contract_adress, abi, bytecode)
+        elif contract_name == "EncryptionJobFinder":
+            return EncryptionJobFinder(contract_name, contract_adress, abi, bytecode)
         else:
             return Contract(contract_name, contract_adress, abi, bytecode)
 
