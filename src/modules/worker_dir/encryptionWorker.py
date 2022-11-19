@@ -9,17 +9,17 @@ class EncryptionWorker:
         self.private_key = private_key
         self.contract = contract
         self.id = id
-        self.r = self.generate_r()
+        self.nounce = self.generate_nounce()
         self.secret = self.generate_secret()
 
-    def generate_r(self):
+    def generate_nounce(self):
         # TODO
         return random.randint(0, 100)
 
     def generate_secret(self):
-        # generate a string of length 32 from r
+        # generate a string of length 32 from nounce
         # TODO
-        return str(self.r).zfill(32)
+        return str(self.nounce).zfill(32)
 
     def encrypt_model(self, model):
         # encrypt the model with the secret
