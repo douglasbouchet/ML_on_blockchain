@@ -47,17 +47,19 @@ contract EncyptionJobContainer {
         return !canReceiveNewModel;
     }
 
-    function addNewEncryptedModel(bytes4 encryptedModel) public {
+    function addNewEncryptedModel(address workerAddress, bytes4 encryptedModel)
+        public
+    {
         // require that the _workerAddress isn't already in receivedModelsAddresses
         for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
             require(
-                receivedModelsAddresses[i] != msg.sender,
+                receivedModelsAddresses[i] != workerAddress,
                 "You already sent a model"
             );
         }
         // if this address didn't already pushed a model, we can add it to receivedModelsAddresses
-        receivedModelsAddresses.push(msg.sender);
-        addressToEncModel[msg.sender] = encryptedModel;
+        receivedModelsAddresses.push(workerAddress);
+        addressToEncModel[workerAddress] = encryptedModel;
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
         // new models
         if (
@@ -154,6 +156,17 @@ contract EncyptionJobContainer {
         }
     }
 
+    /// @notice function to get the model
+    /// @return the model's weights or empty array along with a boolean indicating if the model is valid
+    function getModel() public view returns (bytes4, bool) {
+        if (modelIsReady) {
+            return (newModel, true);
+        } else {
+            return ("0x0", false);
+        }
+    }
+
+    //------------ Debug functions---------------------------------
     function getModelIsready() public view returns (bool) {
         return modelIsReady;
     }
