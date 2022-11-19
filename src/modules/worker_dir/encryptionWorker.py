@@ -12,31 +12,54 @@ class EncryptionWorker:
         self.nounce = self.generate_nounce()
         self.secret = self.generate_secret()
 
+        # send_encrypted_model
+        # get_number_submitted_models
+        # send_verifications_parameters
+
     def generate_nounce(self):
         # TODO
         return random.randint(0, 100)
 
     def generate_secret(self):
-        # generate a string of length 32 from nounce
         # TODO
-        return str(self.nounce).zfill(32)
+        # generate a bit string of length 32
+        secret = [1 for i in range(32)]
+        return secret
 
     def encrypt_model(self, model):
+        # TODO
         # encrypt the model with the secret
-        # TODO
-        return model
+        # xor the model with the secret
+        encrypted_model = [model[i] ^ self.secret[i]
+                           for i in range(len(model))]
+        return encrypted_model
 
-    def send_encrypted_model(self, encrypted_model):
-        # send the encrypted model to the blockchain
-        # TODO
-        pass
+    def send_encrypted_model(self):
+        # learn a model
+        model = self.learn_model()
+        # encrypt the model
+        encrypted_model = self.encrypt_model(model)
+        # convert the model to hexadecimals
+        encrypted_model_hex = Web3.toHex(encrypted_model)
+        self.contract.send_encrypted_model(
+            encrypted_model_hex, self.address, self.private_key
+        )
 
-    def check_n_submitted_models(self):
+    def check_n_submitted_models(self, threshold):
         # check the number of submitted models from the smart contract
-        # TODO
-        return -1
+        n_submitted_models = self.contract.get_number_submitted_models(
+            self.address, self.private_key
+        )
+        return n_submitted_models > threshold
 
     def send_veritications(self):
-        # send the verifications to the blockchain (self.r, self.secret)
+        # send the verifications to the blockchain (self.nounce, self.secret)
+        self.contract.send_verifications_parameters(
+            self.nounce, self.secret, self.address, self.private_key
+        )
+
+    def learn_model(self):
         # TODO
-        pass
+        # generate a 32 bit array of 0s
+        model = [0 for i in range(32)]
+        return model

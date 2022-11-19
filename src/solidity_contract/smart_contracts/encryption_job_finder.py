@@ -21,7 +21,9 @@ class EncryptionJobFinder(Contract):
     def get_all_previous_jobs_best_model(self):
         return self.contract.functions.getAllPreviousJobsBestModel().call()
 
-    def send_encrypted_model(self, encrypted_model, worker_address, worker_private_key):
+    def send_encrypted_model(
+        self, encrypted_model_hex, worker_address, worker_private_key
+    ):
         # TODO
         pass
 
