@@ -2,6 +2,7 @@ from src.basic_server import BasicServer
 from src.basic_worker import BasicWorker
 from src.modules.hypervisor import Hypervisor
 from src.modules.parallelized_hypervisor import ParallelizedHypervisor
+from src.modules.encrypted_hypervisor import EncryptedHypervisor
 from src.modules.federating_learning_server import FederatingLearningServer
 
 
@@ -67,16 +68,16 @@ def parallel_learning_main():
     learning_server = FederatingLearningServer(3, 100, 10)
     # ------Deploy smart contract---------
     fragmented_job_finder = learning_server.deploy_contract(
-        "fragmentedJobFinder", "FragmentedJobFinder")
+        "fragmentedJobFinder", "FragmentedJobFinder"
+    )
     parallel_hypervisor.contract = fragmented_job_finder
     # init the workers
     parallel_hypervisor.create_wait_workers(number_of_workers=999)
-    #worker_pool = parallel_hypervisor.select_worker_pool(pool_size=10)
-    #worker_pool = parallel_hypervisor.select_worker_pool(pool_size=3)
+    # worker_pool = parallel_hypervisor.select_worker_pool(pool_size=10)
+    # worker_pool = parallel_hypervisor.select_worker_pool(pool_size=3)
     worker_pool = parallel_hypervisor.select_worker_pool(pool_size=2)
     print("Number of workers in the pool:", len(worker_pool))
-    get_processes = parallel_hypervisor.create_get_weights_process(
-        worker_pool)
+    get_processes = parallel_hypervisor.create_get_weights_process(worker_pool)
     print("Number of processes:", len(get_processes))
 
     parallel_hypervisor.perform_one_process_step(get_processes)
@@ -97,7 +98,8 @@ def sequential_learning_main():
     learning_server = FederatingLearningServer(3, 100, 10)
     # ------Deploy smart contract---------
     fragmented_job_finder = learning_server.deploy_contract(
-        "fragmentedJobFinder", "FragmentedJobFinder")
+        "fragmentedJobFinder", "FragmentedJobFinder"
+    )
     parallel_hypervisor.contract = fragmented_job_finder
     # init the workers
     parallel_hypervisor.create_wait_workers(number_of_workers=999)
@@ -110,8 +112,22 @@ def sequential_learning_main():
     parallel_hypervisor.perform_send_fragment(worker_pool)
 
 
+def encrypted_main():
+    encrypted_hypervisor = EncryptedHypervisor()
+    learning_server = FederatingLearningServer(3, 100, 10)
+    # ------Deploy smart contract---------
+    encrypted_job_finder = learning_server.deploy_contract(
+        "encryptedJobFinder", "EncryptedJobFinder"
+    )
+    encrypted_hypervisor.contract = encrypted_job_finder
+    # init the workers
+    encrypted_hypervisor.create_wait_workers(number_of_workers=999)
+    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=5)
+
+
 if __name__ == "__main__":
     # basic_main()
     # hypervisor_based_main()
     # parallel_learning_main()
-    sequential_learning_main()
+    # sequential_learning_main()
+    encrypted_main()
