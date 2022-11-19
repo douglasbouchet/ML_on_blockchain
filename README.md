@@ -125,3 +125,26 @@ Interaction between the Job smart contract and workers is made through the Job f
 directly call the Job contract as we don't have its ABI).
 
 ### Job
+
+
+### Communication Protocol
+
+In this section we describe how the workers will send their results to the learning server, and how the verification from server will allows to pay only workers that did learn the correct new model.
+
+Initial Setup:
+- Each worker i has a private key $S_{k_i}$ and public key $P_{k_i}$
+- Let **SC** be the smart contract handling a learning job
+
+For each round of federated learning:
+- At begining: each worker define a secret ($R_i$ for worker i). This can be a big number, st probability that two workers generate same R is low.
+
+- When worker i perform the learning task (i.e compute a new model **M**):
+  - it create a key: $S_i = Enc_{S_{k_i}}(R_i)$. This key should be at least as long as **M** (TBD)
+  - it sends $M\oplus S_i$ to **SC**
+     - Note that as no one knows $S_i$, no one is able to efficiently get **M**
+     - If someone knows **M** -> Pb ?
+  - Then it periodically checks the **SC** until it sees that enough model have been send. Suppose now this is the case, now the SC don't accept any new models submission.
+  - it sends $R_i$ and $S_i$ to **SC**.
+    - Using $S_i$ the *SC* can recover **M** = $M\oplus S_i\oplus S_i$
+
+### Proof that you can't impersonate a worker's job if you didn't learn the model
