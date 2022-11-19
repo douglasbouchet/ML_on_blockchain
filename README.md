@@ -136,15 +136,25 @@ Initial Setup:
 - Let **SC** be the smart contract handling a learning job
 
 For each round of federated learning:
-- At begining: each worker define a secret ($R_i$ for worker i). This can be a big number, st probability that two workers generate same R is low.
+- At begining: each worker define a secret $(R_i$ for worker i$)$. This can be a big number, st probability that two workers generate same R is low.
 
-- When worker i perform the learning task (i.e compute a new model **M**):
-  - it create a key: $S_i = Enc_{S_{k_i}}(R_i)$. This key should be at least as long as **M** (TBD)
+- When worker i perform the learning task (i.e compute a new model **$M$**):
+  - it creates a key: $S_i = Enc_{S_{k_i}}(R_i)$. This key should be at least as long as **$M$** (TBD)
   - it sends $M\oplus S_i$ to **SC**
-     - Note that as no one knows $S_i$, no one is able to efficiently get **M**
+     - Note that as no one knows $S_i$, no one is able to efficiently get **$M$**
      - If someone knows **M** -> Pb ?
-  - Then it periodically checks the **SC** until it sees that enough model have been send. Suppose now this is the case, now the SC don't accept any new models submission.
+- Then it periodically checks the **SC** until it sees that enough model have been send. Suppose now is the case, now the SC don't accept any new models submission.
   - it sends $R_i$ and $S_i$ to **SC**.
-    - Using $S_i$ the *SC* can recover **M** = $M\oplus S_i\oplus S_i$
+    - Using $S_i$ the *SC* can recover **$M$** = $(M\oplus S_i)\oplus S_i$
+    - *SC* can now check that the model was learned by the correct worker:
+      - *SC* can compute $Dec_{P_{k_i}}(S_i) = Dec_{P_{k_i}}(Enc_{S_{k_i}}(R_i')) = R_i'$
+      - If $R_i' \neq R_i$ then the worker i don't get paid
+      - If $R_i' = R_i$ and the model sent by worker i was selected as the best one, worker i gets paid.
 
 ### Proof that you can't impersonate a worker's job if you didn't learn the model
+
+- If someone has M -> learned the model so legit
+- Assume **MIM** previously send $M_{rdm} \oplus S_{MIM}$, with $M_{rdm}$ dumb weights
+  - Man in the middle when worker 0 sends $(R_0, S_0)$
+    - it can replace it with $(R_{MIM}, S_0)$ but in that case the $SC$ will not agree with the decryption of $(M_{rdm} \oplus S_0) \neq (M_{rdm} \oplus S_{MIM})$ So **MIM** don't get paid.
+    - it can replace it with $(R_0, S_{MIM} = S_{k_{MIM}}(R_{0}))$. But in that case $R_0 \neq Dec_{P_{k_0}}(S_{MIM}))$ so don't get paid.
