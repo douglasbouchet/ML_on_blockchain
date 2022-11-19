@@ -23,7 +23,7 @@ contract EncyptionJobContainer {
 
     int256 currentModel;
     uint256 batchIndex;
-    int256 newModel; // the weight of the new model
+    bytes4 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
 
@@ -103,11 +103,14 @@ contract EncyptionJobContainer {
         if (!modelAlreadyInModels) {
             models.push(decryptedModel);
         }
-        bytes4 best_model = checkEnoughSameModel();
-        if (best_model != 0x0) {
+        bytes4 _bestModel = checkEnoughSameModel();
+        if (_bestModel != 0x0) {
             // in that case we elected the best model, so we can pay workers that did correct job
-            // pay workers
             modelIsReady = true;
+            // publish the new model
+            newModel = _bestModel;
+            // pay workers
+            payCorrectWorkers(_bestModel);
         }
     }
 
@@ -119,6 +122,36 @@ contract EncyptionJobContainer {
             }
         }
         return 0x0;
+    }
+
+    function payCorrectWorkers(bytes4 correctModel) private view {
+        require(modelIsReady, "The model is not ready yet");
+        for (
+            uint256 i = 0;
+            i < receivedVerificationParametersAddresses.length;
+            i++
+        ) {
+            address workerAddress = receivedVerificationParametersAddresses[i];
+            VerificationParameters
+                memory verificationParameters = addressToVerificationParameters[
+                    workerAddress
+                ];
+            bytes4 encryptedModel = addressToEncModel[workerAddress];
+            bytes4 decryptedModel = encryptedModel ^
+                verificationParameters.workerSecret;
+            if (decryptedModel == correctModel) {
+                // // now we check that the secret and the nonce are correct
+                // bytes4 secret = verificationParameters.workerSecret;
+                // int256 nonce = verificationParameters.workerNonce;
+                // // we try to decrypt the secret with the public key of worker
+                // string memory workerPublicKey = addressToPublicKey[
+                //     workerAddress
+                // ];
+                // decrypt secret with workerPublicKey
+                // if the result is equal to nonce, we pay the worker else we don't
+                //TODO
+            }
+        }
     }
 
     function getModelIsready() public view returns (bool) {
