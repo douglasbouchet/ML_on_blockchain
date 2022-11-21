@@ -39,17 +39,31 @@ class EncryptionWorker:
     def send_encrypted_model(self):
         # learn a model
         model = self.learn_model()
+        #print("model", model)
         # encrypt the model
         encrypted_model = self.encrypt_model(model)
+        #print("encrypted_model", encrypted_model)
+        encrypted_model = "".join([str(i) for i in encrypted_model])
+        #print("encrypted_model", encrypted_model)
+        # convert the encrypted model a bite array
+        #encrypted_model = bytes(encrypted_model, 'utf-8')
+        encrypted_model = bytes('1111', 'utf-8')
         # convert the model to hexadecimals
-        encrypted_model_hex = Web3.toHex(encrypted_model)
-        self.contract.send_encrypted_model(
-            encrypted_model_hex, self.address, self.private_key
+        #encrypted_model_hex = Web3.toHex(encrypted_model)
+        #print("encrypted_model", encrypted_model)
+        res = self.contract.send_encrypted_model(
+            encrypted_model, self.address, self.private_key
         )
+        if (res[0] == True and res[1] == True):
+            #print("model sent")
+            return True
+        else:
+            #print("model not sent")
+            return False
 
     def check_can_send_verification_parameters(self):
         # check the number of submitted models from the smart contract
-        return self.contract.check_can_send_verification_parameters(self.address)
+        return self.contract.check_can_send_verification_parameters()
 
     def send_veritications(self):
         # send the verifications to the blockchain (self.nounce, self.secret)

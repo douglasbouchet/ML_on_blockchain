@@ -126,8 +126,19 @@ def encrypted_main():
     )
     encrypted_hypervisor.contract = encrypted_job_finder
     # init the workers
-    encrypted_hypervisor.create_wait_workers(number_of_workers=999)
-    worker_pool = parallel_hypervisor.select_worker_pool(pool_size=5)
+    encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
+    worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=5)
+    # make the workers join the learning
+    # TODO
+    # make the workers send their learned models
+    for i, worker in enumerate(worker_pool):
+        print("worker {} send encrypted model return {}".format(
+            i, worker.send_encrypted_model()))
+        print("worker {} send encrypted model return {}".format(
+            i, worker.send_encrypted_model()))
+    # make the workers send their verifications parameters
+    for worker in worker_pool:
+        print(worker.check_can_send_verification_parameters())
 
 
 if __name__ == "__main__":

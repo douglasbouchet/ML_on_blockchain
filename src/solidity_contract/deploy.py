@@ -31,6 +31,7 @@ def deploy_smart_contract(
 
     # 5. Build constructor tx
     # construct_txn = new_contract.constructor(5).buildTransaction(
+    print("worker_address", account_from["address"])
     construct_txn = new_contract.constructor().buildTransaction(  # TODO modify here the syntax of constructor depending on the smart contract
         {
             "chainId": w3.eth.chainId,

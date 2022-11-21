@@ -30,3 +30,4 @@ class Contract:
         # 7. Send tx and wait for receipt
         tx_hash = self.web3.eth.send_raw_transaction(tx_create.rawTransaction)
         tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+        return tx_hash

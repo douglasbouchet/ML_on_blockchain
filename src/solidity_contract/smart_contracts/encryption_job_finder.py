@@ -30,19 +30,19 @@ class EncryptionJobFinder(Contract):
             worker_address (_type_): address of the worker
             worker_private_key (_type_): private key of the worker
         """
+        # Sanize the worker address
+        worker_address = Web3.toChecksumAddress(worker_address)
         register_tx = self.contract.functions.addEncryptedModel(
             worker_address, encrypted_model_hex
         ).build_transaction(
             {
                 "gasPrice": 0,
-                "from": Web3.toChecksumAddress(worker_address),
-                "nonce": web3.eth.get_transaction_count(
-                    Web3.toChecksumAddress(worker_address)
-                ),
+                "from": worker_address,
+                "nonce": self.web3.eth.get_transaction_count(worker_address),
             }
         )
-        self.contract.sign_txs_and_send_it(worker_private_key, register_tx)
-        return
+        tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
+        return self.get_send_encrypted_model_return_value(self.web3, tx_receipt)
 
     def check_can_send_verification_parameters(self):
         """Check weather the worker can send the verification parameters
@@ -51,7 +51,7 @@ class EncryptionJobFinder(Contract):
             boolean: true if the worker can send the verification parameters false otherwise
         """
         # TODO check
-        return self.contract.functions.checkCanSendVerificationParameters().call()
+        return self.contract.functions.canSendVerificationParameters().call()
 
     def send_verifications_parameters(
         self, worker_nounce, worker_secret, worker_address, worker_private_key
@@ -76,8 +76,34 @@ class EncryptionJobFinder(Contract):
                 ),
             }
         )
-        self.contract.sign_txs_and_send_it(worker_private_key, register_tx)
+        tx_receipt = self.contract.sign_txs_and_send_it(
+            worker_private_key, register_tx)
         return
+
+    def parse_send_encrypted_model(self, result):
+        return self.contract.web3.codec.decode_single(
+            "bool", result
+        )
+
+    def get_send_encrypted_model_return_value(self, w3, txhash):
+        try:
+            tx = w3.eth.get_transaction(txhash)
+        except Exception as e:
+            print("Error getting transaction:", e)
+            return None
+        replay_tx = {
+            'to': tx['to'],
+            'from': tx['from'],
+            'value': tx['value'],
+            'data': tx['input'],
+            'gas': tx['gas'],
+        }
+        # replay the transaction locally:
+        try:
+            ret = w3.eth.call(replay_tx, tx.blockNumber - 1)
+            return (True, self.parse_send_encrypted_model(ret))
+        except Exception as e:
+            return (False, str(e))
 
     # -----------------Debug functions-----------------
     def get_received_models(self):

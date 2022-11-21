@@ -49,13 +49,17 @@ contract EncyptionJobContainer {
 
     function addNewEncryptedModel(address workerAddress, bytes4 encryptedModel)
         public
+        returns (bool)
     {
         // require that the _workerAddress isn't already in receivedModelsAddresses
         for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
-            require(
-                receivedModelsAddresses[i] != workerAddress,
-                "You already sent a model"
-            );
+            if (receivedModelsAddresses[i] == workerAddress) {
+                return false;
+            }
+            //require(
+            //    receivedModelsAddresses[i] != workerAddress,
+            //    "You already sent a model"
+            //);
         }
         // if this address didn't already pushed a model, we can add it to receivedModelsAddresses
         receivedModelsAddresses.push(workerAddress);
@@ -67,6 +71,7 @@ contract EncyptionJobContainer {
         ) {
             canReceiveNewModel = false;
         }
+        return true;
     }
 
     function addVerificationParameters(

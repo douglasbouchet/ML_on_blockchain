@@ -9,13 +9,13 @@ contract EncryptionJobFinder {
 
     constructor() {
         uint256 thresholdForBestModel = 2;
-        // uint256 thresholdMaxNumberReceivedModels = 3;
-        // jobContainer = new EncyptionJobContainer(
-        //     5, // model weight (TODO change to bytes4)
-        //     0, // batch index
-        //     thresholdForBestModel,
-        //     thresholdMaxNumberReceivedModels
-        // );
+        uint256 thresholdMaxNumberReceivedModels = 5; //stop receiving models when we have 5 models
+        jobContainer = new EncyptionJobContainer(
+            5, // model weight (TODO change to bytes4)
+            0, // batch index
+            thresholdForBestModel,
+            thresholdMaxNumberReceivedModels
+        );
     }
 
     function getJob() public view returns (int256, uint256) {
@@ -40,10 +40,16 @@ contract EncryptionJobFinder {
     /// @notice send a new encrypted model to the jobContainer
     /// @param workerAddress the address of the worker sending the model
     /// @param encryptedModel the encrypted model sent by the worker
+    /// @return true if the model was added to the jobContainer, false otherwise
     function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
         public
+        returns (bool)
     {
-        jobContainer.addNewEncryptedModel(workerAddress, encryptedModel);
+        bool modelAdded = jobContainer.addNewEncryptedModel(
+            workerAddress,
+            encryptedModel
+        );
+        return modelAdded;
 
         // // if the model is complete, create a new job and push the current one to previousJobs
         // if (jobContainer.getModelIsready()) {
@@ -78,6 +84,10 @@ contract EncryptionJobFinder {
             }
         }
         return bestModels;
+    }
+
+    function canSendVerificationParameters() public view returns (bool) {
+        return jobContainer.canSendVerificationParameters();
     }
 
     // ----------- DEBUG FUNCTIONS -------------
