@@ -9,7 +9,7 @@ contract EncryptionJobFinder {
 
     constructor() {
         uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 5; //stop receiving models when we have 5 models
+        uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 5 models
         jobContainer = new EncyptionJobContainer(
             5, // model weight (TODO change to bytes4)
             0, // batch index
@@ -28,7 +28,7 @@ contract EncryptionJobFinder {
         previousJobs.push(jobContainer);
         // create a new job TODO dummies value atm, should be getted from fl server
         uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 3;
+        uint256 thresholdMaxNumberReceivedModels = 5;
         jobContainer = new EncyptionJobContainer(
             5,
             1,
