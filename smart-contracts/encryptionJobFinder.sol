@@ -9,13 +9,13 @@ contract EncryptionJobFinder {
 
     constructor() {
         uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 3;
-        jobContainer = new EncyptionJobContainer(
-            5, // model weight (TODO change to bytes4)
-            0, // batch index
-            thresholdForBestModel,
-            thresholdMaxNumberReceivedModels
-        );
+        // uint256 thresholdMaxNumberReceivedModels = 3;
+        // jobContainer = new EncyptionJobContainer(
+        //     5, // model weight (TODO change to bytes4)
+        //     0, // batch index
+        //     thresholdForBestModel,
+        //     thresholdMaxNumberReceivedModels
+        // );
     }
 
     function getJob() public view returns (int256, uint256) {

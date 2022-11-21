@@ -26,15 +26,20 @@ def create_single_worker():
 
 def basic_main():
     # ------Init server and worker--------
-    basic_server = init_server()
+    #basic_server = init_server()
+    learning_server = FederatingLearningServer(3, 100, 10)
     basic_worker = create_single_worker()
     # ------Deploy smart contract---------
     # contract = basic_server.deploy("incrementer")
-    contract = basic_server.deploy("register")
-    print("Initial number of workers:", contract.get_number_of_workers())
+    # contract = basic_server.deploy("register", "Register")
+    # contract = learning_server.deploy_contract("register", "Register")
+    # contract = learning_server.deploy_contract("fragmentedJobFinder", "FragmentedJobFinder")
+    contract = learning_server.deploy_contract(
+        "encryptionJobFinder", "EncryptionJobFinder")
+    # print("Initial number of workers:", contract.get_number_of_workers())
     # ------Register worker to server-----
-    basic_worker.register_to_learning(contract.contract_address, contract.abi)
-    print("current number of workers:", contract.get_number_of_workers())
+    # basic_worker.register_to_learning(contract.contract_address, contract.abi)
+    # print("current number of workers:", contract.get_number_of_workers())
 
 
 def hypervisor_based_main():
@@ -117,7 +122,7 @@ def encrypted_main():
     learning_server = FederatingLearningServer(3, 100, 10)
     # ------Deploy smart contract---------
     encrypted_job_finder = learning_server.deploy_contract(
-        "encryptedJobFinder", "EncryptedJobFinder"
+        "encryptionJobFinder", "EncryptionJobFinder"
     )
     encrypted_hypervisor.contract = encrypted_job_finder
     # init the workers
