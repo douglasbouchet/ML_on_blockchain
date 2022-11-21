@@ -108,3 +108,6 @@ class EncryptionJobFinder(Contract):
     # -----------------Debug functions-----------------
     def get_received_models(self):
         return self.contract.functions.getReceivedModels().call()
+
+    def get_model_is_ready(self):
+        return self.contract.functions.getModelIsready().call()

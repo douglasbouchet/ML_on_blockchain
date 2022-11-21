@@ -91,4 +91,8 @@ contract EncryptionJobFinder {
     }
 
     // ----------- DEBUG FUNCTIONS -------------
+
+    function getModelIsready() public view returns (bool) {
+        return jobContainer.getModelIsready();
+    }
 }

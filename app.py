@@ -138,8 +138,12 @@ def encrypted_main():
         print(worker_pool[0].check_can_send_verification_parameters())
         #print("worker {} send encrypted model return {}".format(i,worker.send_encrypted_model()))
     # make the workers send their verifications parameters
-    # for worker in worker_pool:
-    #    print(worker.check_can_send_verification_parameters())
+    for i, worker in enumerate(worker_pool):
+        print("worker {} send verification parameters ".format(i))
+        worker.send_veritications()
+    # after all workers send their verifications, the server should have decrypted the model
+    print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
+    # Fix send_veritications
 
 
 if __name__ == "__main__":
