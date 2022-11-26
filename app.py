@@ -132,7 +132,7 @@ def encrypted_main():
     # TODO
     # make the workers send their learned models
     print(worker_pool[0].check_can_send_verification_parameters())
-    for i, worker in enumerate(worker_pool):
+    for i, worker in enumerate(worker_pool[:3]):
         print("worker {} send encrypted model return {}".format(
             i, worker.send_encrypted_model()))
         print(worker_pool[0].check_can_send_verification_parameters())

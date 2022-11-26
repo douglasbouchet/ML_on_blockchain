@@ -64,20 +64,21 @@ class EncryptionJobFinder(Contract):
             worker_address (str): address of the worker
             worker_private_key (str): worker private key
         """
-        # TODO check
+        worker_address = Web3.toChecksumAddress(worker_address)
         register_tx = self.contract.functions.addVerificationParameters(
-            worker_address, worker_nounce, worker_secret
+            worker_address,
+            worker_nounce,
+            worker_secret
         ).build_transaction(
             {
                 "gasPrice": 0,
-                "from": Web3.toChecksumAddress(worker_address),
-                "nonce": web3.eth.get_transaction_count(
-                    Web3.toChecksumAddress(worker_address)
+                "from": worker_address,
+                "nonce": self.web3.eth.get_transaction_count(
+                    worker_address
                 ),
             }
         )
-        tx_receipt = self.contract.sign_txs_and_send_it(
-            worker_private_key, register_tx)
+        tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
         return
 
     def parse_send_encrypted_model(self, result):
