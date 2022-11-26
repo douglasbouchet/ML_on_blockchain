@@ -94,6 +94,10 @@ contract EncyptionJobContainer {
         int256 _workerNonce,
         bytes4 _workerSecret
     ) public onlyReceivedModelsAddresses(_workerAddress) {
+        require(
+            canReceiveNewModel == false,
+            "Can't send verification parameters, not enough models received"
+        );
         // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
         for (
             uint256 i = 0;

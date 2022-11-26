@@ -65,7 +65,7 @@ class EncryptionWorker:
         # check the number of submitted models from the smart contract
         return self.contract.check_can_send_verification_parameters()
 
-    def send_veritications(self):
+    def send_verifications(self):
         # send the verifications to the blockchain (self.nounce, self.secret)
         # TODO replace secret by full length
         self.contract.send_verifications_parameters(
