@@ -32,11 +32,11 @@ def deploy_smart_contract(
     # 5. Build constructor tx
     # construct_txn = new_contract.constructor(5).buildTransaction(
     print("worker_address", account_from["address"])
-    construct_txn = new_contract.constructor().buildTransaction(  # TODO modify here the syntax of constructor depending on the smart contract
+    construct_txn = new_contract.constructor().build_transaction(  # TODO modify here the syntax of constructor depending on the smart contract
         {
-            "chainId": w3.eth.chainId,
+            "chainId": w3.eth.chain_id,
             "gas": 0,
-            "gasPrice": w3.eth.gasPrice,
+            "gasPrice": w3.eth.gas_price,
             "from": Web3.toChecksumAddress(account_from["address"]),
             "nonce": w3.eth.get_transaction_count(
                 Web3.toChecksumAddress(account_from["address"])

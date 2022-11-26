@@ -149,7 +149,6 @@ def encrypted_main():
         worker.send_verifications()
     # after all workers send their verifications, the server should have decrypted the model
     print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
-    # Fix send_verifications
 
 
 if __name__ == "__main__":

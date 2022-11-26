@@ -55,7 +55,7 @@ class EncryptionJobFinder(Contract):
 
     def send_verifications_parameters(
         self, worker_nounce, worker_secret, worker_address, worker_private_key
-    ):
+    ) -> bool:
         """Send the verification parameters to the blockchain (worker nounce, worker secret)
 
         Args:
@@ -63,6 +63,7 @@ class EncryptionJobFinder(Contract):
             worker_secret (bytes[]): _description_
             worker_address (str): address of the worker
             worker_private_key (str): worker private key
+        return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
         try:
@@ -82,7 +83,8 @@ class EncryptionJobFinder(Contract):
             tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
         except Exception as e:
             print("Error sending verification parameters:", e)
-        return
+            return False
+        return True
 
     def parse_send_encrypted_model(self, result):
         return self.contract.web3.codec.decode_single(

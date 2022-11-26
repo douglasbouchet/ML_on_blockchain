@@ -68,7 +68,7 @@ class EncryptionWorker:
     def send_verifications(self):
         # send the verifications to the blockchain (self.nounce, self.secret)
         # TODO replace secret by full length
-        self.contract.send_verifications_parameters(
+        return self.contract.send_verifications_parameters(
             self.nounce, bytes(self.secret)[:4], self.address, self.private_key
         )
 
