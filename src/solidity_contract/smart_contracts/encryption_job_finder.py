@@ -65,20 +65,23 @@ class EncryptionJobFinder(Contract):
             worker_private_key (str): worker private key
         """
         worker_address = Web3.toChecksumAddress(worker_address)
-        register_tx = self.contract.functions.addVerificationParameters(
-            worker_address,
-            worker_nounce,
-            worker_secret
-        ).build_transaction(
-            {
-                "gasPrice": 0,
-                "from": worker_address,
-                "nonce": self.web3.eth.get_transaction_count(
-                    worker_address
-                ),
-            }
-        )
-        tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
+        try:
+            register_tx = self.contract.functions.addVerificationParameters(
+                worker_address,
+                worker_nounce,
+                worker_secret
+            ).build_transaction(
+                {
+                    "gasPrice": 0,
+                    "from": worker_address,
+                    "nonce": self.web3.eth.get_transaction_count(
+                        worker_address
+                    ),
+                }
+            )
+            tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
+        except Exception as e:
+            print("Error sending verification parameters:", e)
         return
 
     def parse_send_encrypted_model(self, result):

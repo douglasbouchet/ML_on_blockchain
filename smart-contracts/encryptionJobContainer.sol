@@ -27,6 +27,21 @@ contract EncyptionJobContainer {
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
 
+    modifier onlyReceivedModelsAddresses(address workerAddress) {
+        // modified that check if a worker address is inside receivedModelsAddresses
+        bool workerHasSendModel = false;
+        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
+            if (receivedModelsAddresses[i] == workerAddress) {
+                workerHasSendModel = true;
+            }
+        }
+        require(
+            workerHasSendModel,
+            "The worker didn't send a model during training phase, parameters refused"
+        );
+        _;
+    }
+
     constructor(
         int256 _currentModel,
         uint256 _batchIndex,
@@ -78,7 +93,7 @@ contract EncyptionJobContainer {
         address _workerAddress,
         int256 _workerNonce,
         bytes4 _workerSecret
-    ) public {
+    ) public onlyReceivedModelsAddresses(_workerAddress) {
         // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
         for (
             uint256 i = 0;
