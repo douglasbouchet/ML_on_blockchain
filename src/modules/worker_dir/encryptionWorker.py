@@ -1,6 +1,7 @@
+import sha3
+import os
 from web3 import Web3
 from web3.auto import w3
-from cryptography.fernet import Fernet
 
 
 class EncryptionWorker:
@@ -10,27 +11,50 @@ class EncryptionWorker:
         self.contract = contract
         self.id = id
         # key used for model encryption and verification. Should be used once for each model
-        self.secret = Fernet.generate_key()
+        self.secret = self.generate_secret()
+        #self.secret = Fernet.generate_key()
+        self.k = sha3.keccak_256()
+
+    def generate_secret(self) -> bytes:
+        """Generate a secret key for the worker
+        The secret key consists of 32 random bytes
+        Returns:
+            bytes: secret key
+        """
+        # generate a random 32 bytes array
+        return os.urandom(32)
 
     def encrypt_model(self, model) -> bytes:
         """Encrypt the model using the secret key
+        Model xored with secret as a byte array of size 32.
+        Then compute its Keccak256 hash
         Args:
-            model(int[]): model to encrypt
+            model(int[32]): model to encrypt
 
-        return: encrypted model as a byte array of size 200
+        return:
         """
-        fernet = Fernet(self.secret)
-        return fernet.encrypt(bytes(model))
+        print("secret", self.secret)
+        # convert the model to a byte array
+        model_bytes = bytes(model)
+        # xor the model using the secret
+        encrypted_model = bytes(
+            [a ^ b for a, b in zip(model_bytes, self.secret)])
+        # compute the keccak256 hash of the encrypted model
+        self.k.update(encrypted_model)
+        return self.k.digest()
 
     def send_encrypted_model(self, good_model=True):
         # First we compute the model
         model = self.learn_model(good_model)
+        # compute the keccak hash of the model
+        self.k.update(bytes(model))
+        model_keccak = self.k.digest()
         # encrypt the model using Fernet and the worker's secret
-        encrypted_model = self.encrypt_model(model)  # bytes[100]
-        print("encrypted_model", encrypted_model)
-        print(type(encrypted_model))
+        model_secret_keccak = self.encrypt_model(model)  # bytes[64]
+        print("encrypted_model", model_secret_keccak)
+        print(type(model_secret_keccak))
         res = self.contract.send_encrypted_model(
-            encrypted_model, self.address, self.private_key
+            model_keccak, model_secret_keccak, self.address, self.private_key
         )
         if len(res) == 2:
             return (res[0] == True and res[1] == True)

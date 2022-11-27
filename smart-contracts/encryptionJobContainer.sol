@@ -4,15 +4,16 @@ pragma solidity ^0.7.0;
 contract EncyptionJobContainer {
     struct VerificationParameters {
         int256 workerNonce;
-        bytes4 workerSecret;
+        bytes1[44] workerSecret; // size of Fernet's secret key
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
-    mapping(address => bytes4) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
+    //mapping(address => bytes4) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
+    mapping(address => bytes1[32]) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
     // address of a worker to the parameters used to verify the model and proof it was computed by the worker
     mapping(address => VerificationParameters) addressToVerificationParameters;
 
-    mapping(bytes4 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
-    bytes4[] models; // keep track of each different model we decrypted
+    mapping(bytes32 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
+    bytes32[] models; // keep track of each different model we decrypted
 
     uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
     uint256 thresholdMaxNumberReceivedModels;
@@ -23,7 +24,7 @@ contract EncyptionJobContainer {
 
     int256 currentModel;
     uint256 batchIndex;
-    bytes4 newModel; // the weight of the new model
+    bytes32 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
 
@@ -79,11 +80,10 @@ contract EncyptionJobContainer {
     /// @param workerAddress the address of the worker sending the model
     /// @param encryptedModel the encrypted model sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
-    function addNewEncryptedModel(address workerAddress, bytes4 encryptedModel)
-        public
-        modelOnlySendOnce(workerAddress)
-        returns (bool)
-    {
+    function addNewEncryptedModel(
+        address workerAddress,
+        bytes1[32] memory encryptedModel
+    ) public modelOnlySendOnce(workerAddress) returns (bool) {
         receivedModelsAddresses.push(workerAddress);
         addressToEncModel[workerAddress] = encryptedModel;
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
@@ -101,7 +101,7 @@ contract EncyptionJobContainer {
     function addVerificationParameters(
         address _workerAddress,
         int256 _workerNonce,
-        bytes4 _workerSecret
+        bytes1[44] memory _workerSecret
     ) public onlyReceivedModelsAddresses(_workerAddress) {
         require(
             canReceiveNewModel == false,
@@ -124,8 +124,10 @@ contract EncyptionJobContainer {
             _workerAddress
         ] = VerificationParameters(_workerNonce, _workerSecret);
         // we decrypt the model of this woker
-        bytes4 encryptedModel = addressToEncModel[_workerAddress];
-        bytes4 decryptedModel = encryptedModel ^ _workerSecret;
+        //bytes4 encryptedModel = addressToEncModel[_workerAddress];
+        bytes1[32] memory encryptedModel = addressToEncModel[_workerAddress];
+        //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
+        bytes4 decryptedModel = 0; //TODO change
         // we add the decrypted model to the modelToNSameModels mapping
         modelToNSameModels[decryptedModel] += 1;
         // if decryptedModel not in models, we add it
@@ -138,7 +140,7 @@ contract EncyptionJobContainer {
         if (!modelAlreadyInModels) {
             models.push(decryptedModel);
         }
-        bytes4 _bestModel = checkEnoughSameModel();
+        bytes32 _bestModel = checkEnoughSameModel();
         if (_bestModel != 0x0) {
             // in that case we elected the best model, so we can pay workers that did correct job
             modelIsReady = true;
@@ -149,7 +151,7 @@ contract EncyptionJobContainer {
         }
     }
 
-    function checkEnoughSameModel() private view returns (bytes4) {
+    function checkEnoughSameModel() private view returns (bytes32) {
         // if one of the model has been seen more than thresholdForBestModel times, we return true
         for (uint256 i = 0; i < models.length; i++) {
             if (modelToNSameModels[models[i]] >= thresholdForBestModel) {
@@ -159,7 +161,7 @@ contract EncyptionJobContainer {
         return 0x0;
     }
 
-    function payCorrectWorkers(bytes4 correctModel) private view {
+    function payCorrectWorkers(bytes32 correctModel) private view {
         require(modelIsReady, "The model is not ready yet");
         for (
             uint256 i = 0;
@@ -171,9 +173,11 @@ contract EncyptionJobContainer {
                 memory verificationParameters = addressToVerificationParameters[
                     workerAddress
                 ];
-            bytes4 encryptedModel = addressToEncModel[workerAddress];
-            bytes4 decryptedModel = encryptedModel ^
-                verificationParameters.workerSecret;
+            //bytes4 encryptedModel = addressToEncModel[workerAddress];
+            bytes1[32] memory encryptedModel = addressToEncModel[workerAddress];
+            // bytes4 decryptedModel = encryptedModel ^
+            //     verificationParameters.workerSecret;
+            bytes4 decryptedModel = 0;
             if (decryptedModel == correctModel) {
                 // // now we check that the secret and the nonce are correct
                 // bytes4 secret = verificationParameters.workerSecret;
@@ -191,7 +195,7 @@ contract EncyptionJobContainer {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getModel() public view returns (bytes4, bool) {
+    function getModel() public view returns (bytes32, bool) {
         if (modelIsReady) {
             return (newModel, true);
         } else {

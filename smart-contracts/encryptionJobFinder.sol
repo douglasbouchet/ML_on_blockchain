@@ -43,14 +43,14 @@ contract EncryptionJobFinder {
     // function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
     function addEncryptedModel(
         address workerAddress,
-        bytes1[140] memory encryptedModel
+        bytes1[32] memory model_keccak,
+        bytes1[32] memory model_secret_keccak
     ) public returns (bool) {
-        // bool modelAdded = jobContainer.addNewEncryptedModel(
-        //     workerAddress,
-        //     encryptedModel
-        // );
-        // return modelAdded;
-        return true;
+        bool modelAdded = jobContainer.addNewEncryptedModel(
+            workerAddress,
+            model_keccak
+        );
+        return modelAdded;
 
         // // if the model is complete, create a new job and push the current one to previousJobs
         // if (jobContainer.getModelIsready()) {
@@ -61,7 +61,7 @@ contract EncryptionJobFinder {
     function addVerificationParameters(
         address workerAddress,
         int256 workerNonce,
-        bytes4 workerSecret
+        bytes1[44] memory workerSecret
     ) public {
         jobContainer.addVerificationParameters(
             workerAddress,
@@ -73,11 +73,11 @@ contract EncryptionJobFinder {
     function getAllPreviousJobsBestModel()
         public
         view
-        returns (bytes4[] memory)
+        returns (bytes32[] memory)
     {
-        bytes4[] memory bestModels = new bytes4[](previousJobs.length);
+        bytes32[] memory bestModels = new bytes32[](previousJobs.length);
         for (uint256 i = 0; i < previousJobs.length; i++) {
-            (bytes4 newModel, bool ready) = previousJobs[i].getModel();
+            (bytes32 newModel, bool ready) = previousJobs[i].getModel();
             if (ready) {
                 bestModels[i] = newModel;
             } else {
@@ -93,7 +93,7 @@ contract EncryptionJobFinder {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getFinalModel() public view returns (bytes4, bool) {
+    function getFinalModel() public view returns (bytes32, bool) {
         return jobContainer.getModel();
     }
 
