@@ -39,17 +39,18 @@ contract EncryptionJobFinder {
 
     /// @notice send a new encrypted model to the jobContainer
     /// @param workerAddress the address of the worker sending the model
-    /// @param encryptedModel the encrypted model sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
-    function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
-        public
-        returns (bool)
-    {
-        bool modelAdded = jobContainer.addNewEncryptedModel(
-            workerAddress,
-            encryptedModel
-        );
-        return modelAdded;
+    // function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
+    function addEncryptedModel(
+        address workerAddress,
+        bytes1[140] memory encryptedModel
+    ) public returns (bool) {
+        // bool modelAdded = jobContainer.addNewEncryptedModel(
+        //     workerAddress,
+        //     encryptedModel
+        // );
+        // return modelAdded;
+        return true;
 
         // // if the model is complete, create a new job and push the current one to previousJobs
         // if (jobContainer.getModelIsready()) {

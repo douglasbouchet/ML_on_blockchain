@@ -22,19 +22,24 @@ class EncryptionJobFinder(Contract):
         return self.contract.functions.getAllPreviousJobsBestModel().call()
 
     def send_encrypted_model(
-        self, encrypted_model_hex, worker_address, worker_private_key
+        self, encrypted_model, worker_address, worker_private_key
     ):
         """Send the encrypted model to the blockchain
         Args:
-            encrypted_model_hex (bytes[]): bytes array of the encrypted model
+            encrypted_model (bytes[]): bytes array of the encrypted model
             worker_address (_type_): address of the worker
             worker_private_key (_type_): private key of the worker
         """
         # Sanize the worker address
         worker_address = Web3.toChecksumAddress(worker_address)
+        # convert encrypted model to a byte array of size 140
+        encrypted_model = bytes(encrypted_model)
+        # split each byte of the encrypted model into a list of bytes
+        encrypted_model = [encrypted_model[i:i + 1]
+                           for i in range(0, len(encrypted_model), 1)]
         try:
             register_tx = self.contract.functions.addEncryptedModel(
-                worker_address, encrypted_model_hex
+                worker_address, encrypted_model
             ).build_transaction(
                 {
                     "gasPrice": 0,

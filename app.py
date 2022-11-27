@@ -131,11 +131,11 @@ def encrypted_main():
     # make the workers join the learning
     # TODO
     # make the workers send their learned models
-    print(worker_pool[0].check_can_send_verification_parameters())
+    # print(worker_pool[0].check_can_send_verification_parameters())
 
     for i, worker in enumerate(worker_pool[:3]):
         print("worker {} send encrypted model return {}".format(
-            i, worker.send_encrypted_model()))
+            i, worker.send_encrypted_model(True)))
         print(worker_pool[0].check_can_send_verification_parameters())
         if i == 0:
             #  this should throw an error as not enough models were sent
