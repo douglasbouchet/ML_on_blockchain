@@ -42,6 +42,18 @@ contract EncyptionJobContainer {
         _;
     }
 
+    modifier modelOnlySendOnce(address workerAddress) {
+        // modified that check if a worker address is inside receivedModelsAddresses
+        bool workerHasSendModel = false;
+        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
+            if (receivedModelsAddresses[i] == workerAddress) {
+                workerHasSendModel = true;
+            }
+        }
+        require(!workerHasSendModel, "The worker already sent a model");
+        _;
+    }
+
     constructor(
         int256 _currentModel,
         uint256 _batchIndex,
@@ -62,21 +74,16 @@ contract EncyptionJobContainer {
         return !canReceiveNewModel;
     }
 
+    /// @notice send a new encrypted model to the jobContainer
+    /// @notice each address can send only one model
+    /// @param workerAddress the address of the worker sending the model
+    /// @param encryptedModel the encrypted model sent by the worker
+    /// @return true if the model was added to the jobContainer, false otherwise
     function addNewEncryptedModel(address workerAddress, bytes4 encryptedModel)
         public
+        modelOnlySendOnce(workerAddress)
         returns (bool)
     {
-        // require that the _workerAddress isn't already in receivedModelsAddresses
-        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
-            if (receivedModelsAddresses[i] == workerAddress) {
-                return false;
-            }
-            //require(
-            //    receivedModelsAddresses[i] != workerAddress,
-            //    "You already sent a model"
-            //);
-        }
-        // if this address didn't already pushed a model, we can add it to receivedModelsAddresses
         receivedModelsAddresses.push(workerAddress);
         addressToEncModel[workerAddress] = encryptedModel;
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
@@ -89,6 +96,8 @@ contract EncyptionJobContainer {
         return true;
     }
 
+    /// @notice send a new verification parameters to the jobContainer
+    /// @notice each address can send only one verification parameters (if has previously sent a model)
     function addVerificationParameters(
         address _workerAddress,
         int256 _workerNonce,

@@ -32,17 +32,21 @@ class EncryptionJobFinder(Contract):
         """
         # Sanize the worker address
         worker_address = Web3.toChecksumAddress(worker_address)
-        register_tx = self.contract.functions.addEncryptedModel(
-            worker_address, encrypted_model_hex
-        ).build_transaction(
-            {
-                "gasPrice": 0,
-                "from": worker_address,
-                "nonce": self.web3.eth.get_transaction_count(worker_address),
-            }
-        )
-        tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
-        return self.get_send_encrypted_model_return_value(self.web3, tx_receipt)
+        try:
+            register_tx = self.contract.functions.addEncryptedModel(
+                worker_address, encrypted_model_hex
+            ).build_transaction(
+                {
+                    "gasPrice": 0,
+                    "from": worker_address,
+                    "nonce": self.web3.eth.get_transaction_count(worker_address),
+                }
+            )
+            tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
+            return self.get_send_encrypted_model_return_value(self.web3, tx_receipt)
+        except Exception as e:
+            print("Error sending encrypted model:", e)
+            return [False]
 
     def check_can_send_verification_parameters(self):
         """Check weather the worker can send the verification parameters

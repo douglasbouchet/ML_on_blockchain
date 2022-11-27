@@ -25,16 +25,24 @@ def test_encryption_worker():
     assert worker_pool[0].check_can_send_verification_parameters() == False
     # TEST of send_encrypted_model
     for i, worker in enumerate(worker_pool[:3]):
-        send_encrypted_model_return = worker.send_encrypted_model()
-        assert send_encrypted_model_return == True
+        assert worker.send_encrypted_model() == True  #  check model was correctly sent
+        #  check that the worker can't send the model twice
+        assert worker.send_encrypted_model() == False
         if i < 2:
             for worker_bis in worker_pool:
                 assert worker_bis.check_can_send_verification_parameters() == False
                 assert worker_bis.send_verifications() == False
-                # assert
+        # now that we sent 3 models, we should be able to send verification parameters
         else:
             for worker_bis in worker_pool:
                 assert worker_bis.check_can_send_verification_parameters() == True
+                # but only worker 0,1,2 should be able to send verifications as other ones
+                # didn't send their model
+                if worker_bis.id in [0, 1, 2]:
+                    assert worker_bis.send_verifications() == True
+                else:
+                    assert worker_bis.send_verifications() == False
+
         # if i == 0:
         #    #  this should throw an error as not enough models were sent
         #    worker_pool[0].send_verifications()

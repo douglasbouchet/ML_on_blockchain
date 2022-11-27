@@ -54,12 +54,9 @@ class EncryptionWorker:
         res = self.contract.send_encrypted_model(
             encrypted_model, self.address, self.private_key
         )
-        if (res[0] == True and res[1] == True):
-            #print("model sent")
-            return True
-        else:
-            #print("model not sent")
-            return False
+        if len(res) == 2:
+            return (res[0] == True and res[1] == True)
+        return False
 
     def check_can_send_verification_parameters(self):
         # check the number of submitted models from the smart contract
