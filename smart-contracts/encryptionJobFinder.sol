@@ -90,6 +90,12 @@ contract EncryptionJobFinder {
         return jobContainer.canSendVerificationParameters();
     }
 
+    /// @notice function to get the model
+    /// @return the model's weights or empty array along with a boolean indicating if the model is valid
+    function getFinalModel() public view returns (bytes4, bool) {
+        return jobContainer.getModel();
+    }
+
     // ----------- DEBUG FUNCTIONS -------------
 
     function getModelIsready() public view returns (bool) {

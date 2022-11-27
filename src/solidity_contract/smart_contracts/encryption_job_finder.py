@@ -115,6 +115,9 @@ class EncryptionJobFinder(Contract):
         except Exception as e:
             return (False, str(e))
 
+    def get_final_model(self):
+        return self.contract.functions.getFinalModel().call()
+
     # -----------------Debug functions-----------------
     def get_received_models(self):
         return self.contract.functions.getReceivedModels().call()
