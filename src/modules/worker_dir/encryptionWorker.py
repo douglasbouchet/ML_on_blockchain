@@ -51,8 +51,7 @@ class EncryptionWorker:
         model_keccak = self.k.digest()
         # encrypt the model using Fernet and the worker's secret
         model_secret_keccak = self.encrypt_model(model)  # bytes[64]
-        print("encrypted_model", model_secret_keccak)
-        print(type(model_secret_keccak))
+        print("model_keccal sended = ", model_keccak)
         res = self.contract.send_encrypted_model(
             model_keccak, model_secret_keccak, self.address, self.private_key
         )
@@ -90,14 +89,22 @@ class EncryptionWorker:
     #         #self.nounce, bytes(self.secret)[:4], self.address, self.private_key
     #         0, bytes("sdsdsdsd".encode())[:4], self.address, self.secret
     #     )
-    def send_verifications(self, good_model=True) -> bool:
-        clear_secret = self.secret
+    # def send_verifications(self, good_model=True) -> bool:
+    def send_verifications(self, good_model=True):
+        # clear_secret = self.secret
         clear_model = self.learn_model(good_model)
         # convert the model to a byte array
         clear_model_bytes = bytes(clear_model)
-        return self.contract.send_verifications_parameters(
-            clear_secret, clear_model_bytes, self.address, self.private_key
+        # return self.contract.send_verifications_parameters(
+        #     clear_secret, clear_model_bytes, self.address, self.private_key
+        # )
+        res = self.contract.get_keccak(
+            clear_model_bytes
         )
+        self.k.update(clear_model_bytes)
+        print("The smart contract keccak is", res)
+        print("The python keccak is ", self.k.digest())
+        return res
 
     def learn_model(self, good_model=True):
         """Learn a new model

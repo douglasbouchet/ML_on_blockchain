@@ -113,4 +113,12 @@ contract EncryptionJobFinder {
     function getModelIsready() public view returns (bool) {
         return jobContainer.getModelIsready();
     }
+
+    function computeKeccak256(bytes1[32] memory clearModel)
+        public
+        view
+        returns (bytes32)
+    {
+        return jobContainer.computeKeccak256(clearModel);
+    }
 }

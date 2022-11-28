@@ -3,8 +3,8 @@ pragma solidity ^0.7.0;
 
 contract EncyptionJobContainer {
     struct VerificationParameters {
-        int256 workerNonce;
-        bytes1[44] workerSecret; // size of Fernet's secret key
+        bytes1[32] workerModel; // 32 bytes for the model (will change after to non fixed size)
+        bytes1[32] workerSecret; // 32 bytes worker's secret key (not the private key)
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
     //mapping(address => bytes4) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
@@ -96,6 +96,14 @@ contract EncyptionJobContainer {
         return true;
     }
 
+    function computeKeccak256(bytes1[32] memory clearModel)
+        public
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(clearModel));
+    }
+
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
     // function addVerificationParameters(
@@ -123,37 +131,47 @@ contract EncyptionJobContainer {
                 "You already sent your verification parameters"
             );
         }
-        // // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
-        // receivedVerificationParametersAddresses.push(_workerAddress);
-        // addressToVerificationParameters[
-        //     _workerAddress
-        // ] = VerificationParameters(_workerNonce, _workerSecret);
-        // // we decrypt the model of this woker
-        // //bytes4 encryptedModel = addressToEncModel[_workerAddress];
-        // bytes1[32] memory encryptedModel = addressToEncModel[_workerAddress];
-        // //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
-        // bytes4 decryptedModel = 0; //TODO change
-        // // we add the decrypted model to the modelToNSameModels mapping
-        // modelToNSameModels[decryptedModel] += 1;
-        // // if decryptedModel not in models, we add it
-        // bool modelAlreadyInModels = false;
-        // for (uint256 i = 0; i < models.length; i++) {
-        //     if (models[i] == decryptedModel) {
-        //         modelAlreadyInModels = true;
-        //     }
-        // }
-        // if (!modelAlreadyInModels) {
-        //     models.push(decryptedModel);
-        // }
-        // bytes32 _bestModel = checkEnoughSameModel();
-        // if (_bestModel != 0x0) {
-        //     // in that case we elected the best model, so we can pay workers that did correct job
-        //     modelIsReady = true;
-        //     // publish the new model
-        //     newModel = _bestModel;
-        //     // pay workers
-        //     payCorrectWorkers(_bestModel);
-        // }
+        // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
+        receivedVerificationParametersAddresses.push(_workerAddress);
+        addressToVerificationParameters[
+            _workerAddress
+        ] = VerificationParameters(_clearModel, _workerSecret);
+        // We check if hash of clear model is equal to the hash of the model sent by the worker during leaning phase
+        bytes32 _modelHash = keccak256(abi.encodePacked(_clearModel));
+        // get first byte of _modelHash
+        bytes1 _firstByte = bytes1(_modelHash[0]);
+        bytes1 _firstByteEnc = bytes1(addressToEncModel[_workerAddress][0]);
+        require(
+            _firstByte == _firstByteEnc,
+            "The model sent by the worker is not the same as the one he sent during learning phase"
+        );
+
+        // we decrypt the model of this woker
+        //bytes4 encryptedModel = addressToEncModel[_workerAddress];
+        bytes1[32] memory encryptedModel = addressToEncModel[_workerAddress];
+        //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
+        bytes4 decryptedModel = 0; //TODO change
+        // we add the decrypted model to the modelToNSameModels mapping
+        modelToNSameModels[decryptedModel] += 1;
+        // if decryptedModel not in models, we add it
+        bool modelAlreadyInModels = false;
+        for (uint256 i = 0; i < models.length; i++) {
+            if (models[i] == decryptedModel) {
+                modelAlreadyInModels = true;
+            }
+        }
+        if (!modelAlreadyInModels) {
+            models.push(decryptedModel);
+        }
+        bytes32 _bestModel = checkEnoughSameModel();
+        if (_bestModel != 0x0) {
+            // in that case we elected the best model, so we can pay workers that did correct job
+            modelIsReady = true;
+            // publish the new model
+            newModel = _bestModel;
+            // pay workers
+            payCorrectWorkers(_bestModel);
+        }
     }
 
     function checkEnoughSameModel() private view returns (bytes32) {

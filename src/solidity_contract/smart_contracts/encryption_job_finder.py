@@ -39,7 +39,9 @@ class EncryptionJobFinder(Contract):
                         for i in range(0, len(model_keccak), 1)]
         model_secret_keccak = [model_secret_keccak[i:i + 1]
                                for i in range(0, len(model_secret_keccak), 1)]
-        # ßßprint(len(encrypted_model))
+        # print the first byte of the encrypted model
+        print("Inside send_encrypted_model, model_keccak:", model_keccak[0])
+
         try:
             register_tx = self.contract.functions.addEncryptedModel(
                 worker_address, model_keccak, model_secret_keccak
@@ -83,15 +85,8 @@ class EncryptionJobFinder(Contract):
                                for i in range(0, len(clear_worker_secret), 1)]
         clear_model = [clear_model[i:i + 1]
                        for i in range(0, len(clear_model), 1)]
-        print("inside send verification parameters")
-        print(len(clear_worker_secret))
-        print(len(clear_model))
+        print("Inside send_verifications_parameters, clear_model:", clear_model)
         try:
-            # register_tx = self.contract.functions.addVerificationParameters(
-            #     worker_address,
-            #     worker_nounce,
-            #     worker_secret
-            # ).build_transaction(
             register_tx = self.contract.functions.addVerificationParameters(
                 worker_address,
                 clear_worker_secret,
@@ -145,3 +140,14 @@ class EncryptionJobFinder(Contract):
 
     def get_model_is_ready(self):
         return self.contract.functions.getModelIsready().call()
+
+    def get_keccak(self, clear_model):
+        clear_model = [clear_model[i:i + 1]
+                       for i in range(0, len(clear_model), 1)]
+        ret = self.contract.functions.computeKeccak256(clear_model).call()
+        # parse the ret to get the hash
+        return self.contract.web3.codec.decode_single(
+            "bytes32", ret
+        )
+        # return self.contract.functions.computeKeccak256(clear_model).call()
+        # return self.contract.functions.computeKeccak256().call()
