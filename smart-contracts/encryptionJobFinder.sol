@@ -58,15 +58,26 @@ contract EncryptionJobFinder {
         // }
     }
 
+    // function addVerificationParameters(
+    //     address workerAddress,
+    //     int256 workerNonce,
+    //     bytes1[44] memory workerSecret
+    // ) public {
+    //     jobContainer.addVerificationParameters(
+    //         workerAddress,
+    //         workerNonce,
+    //         workerSecret
+    //     );
+    // }
     function addVerificationParameters(
         address workerAddress,
-        int256 workerNonce,
-        bytes1[44] memory workerSecret
+        bytes1[32] memory workerSecret,
+        bytes1[32] memory clearModel
     ) public {
         jobContainer.addVerificationParameters(
             workerAddress,
-            workerNonce,
-            workerSecret
+            workerSecret,
+            clearModel
         );
     }
 

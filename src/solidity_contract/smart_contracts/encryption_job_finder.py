@@ -66,23 +66,36 @@ class EncryptionJobFinder(Contract):
         return self.contract.functions.canSendVerificationParameters().call()
 
     def send_verifications_parameters(
-        self, worker_nounce, worker_secret, worker_address, worker_private_key
+        # self, worker_nounce, worker_secret, worker_address, worker_private_key
+        self, clear_worker_secret, clear_model, worker_address, worker_private_key
     ) -> bool:
         """Send the verification parameters to the blockchain (worker nounce, worker secret)
 
         Args:
-            worker_nounce (int): _description_
-            worker_secret (bytes[]): _description_
-            worker_address (str): address of the worker
-            worker_private_key (str): worker private key
+            clear_worker_secret (bytes[]): bytes array of the worker secret
+            clear_model (bytes[]): bytes array of the model
+            worker_address (_type_): address of the worker
+            worker_private_key (_type_): private key of the worker
         return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
+        clear_worker_secret = [clear_worker_secret[i:i + 1]
+                               for i in range(0, len(clear_worker_secret), 1)]
+        clear_model = [clear_model[i:i + 1]
+                       for i in range(0, len(clear_model), 1)]
+        print("inside send verification parameters")
+        print(len(clear_worker_secret))
+        print(len(clear_model))
         try:
+            # register_tx = self.contract.functions.addVerificationParameters(
+            #     worker_address,
+            #     worker_nounce,
+            #     worker_secret
+            # ).build_transaction(
             register_tx = self.contract.functions.addVerificationParameters(
                 worker_address,
-                worker_nounce,
-                worker_secret
+                clear_worker_secret,
+                clear_model
             ).build_transaction(
                 {
                     "gasPrice": 0,

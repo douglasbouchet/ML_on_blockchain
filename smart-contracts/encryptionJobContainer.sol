@@ -98,10 +98,15 @@ contract EncyptionJobContainer {
 
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
+    // function addVerificationParameters(
+    //     address _workerAddress,
+    //     int256 _workerNonce,
+    //     bytes1[44] memory _workerSecret
+    // ) public onlyReceivedModelsAddresses(_workerAddress) {
     function addVerificationParameters(
         address _workerAddress,
-        int256 _workerNonce,
-        bytes1[44] memory _workerSecret
+        bytes1[32] memory _workerSecret,
+        bytes1[32] memory _clearModel
     ) public onlyReceivedModelsAddresses(_workerAddress) {
         require(
             canReceiveNewModel == false,
@@ -118,37 +123,37 @@ contract EncyptionJobContainer {
                 "You already sent your verification parameters"
             );
         }
-        // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
-        receivedVerificationParametersAddresses.push(_workerAddress);
-        addressToVerificationParameters[
-            _workerAddress
-        ] = VerificationParameters(_workerNonce, _workerSecret);
-        // we decrypt the model of this woker
-        //bytes4 encryptedModel = addressToEncModel[_workerAddress];
-        bytes1[32] memory encryptedModel = addressToEncModel[_workerAddress];
-        //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
-        bytes4 decryptedModel = 0; //TODO change
-        // we add the decrypted model to the modelToNSameModels mapping
-        modelToNSameModels[decryptedModel] += 1;
-        // if decryptedModel not in models, we add it
-        bool modelAlreadyInModels = false;
-        for (uint256 i = 0; i < models.length; i++) {
-            if (models[i] == decryptedModel) {
-                modelAlreadyInModels = true;
-            }
-        }
-        if (!modelAlreadyInModels) {
-            models.push(decryptedModel);
-        }
-        bytes32 _bestModel = checkEnoughSameModel();
-        if (_bestModel != 0x0) {
-            // in that case we elected the best model, so we can pay workers that did correct job
-            modelIsReady = true;
-            // publish the new model
-            newModel = _bestModel;
-            // pay workers
-            payCorrectWorkers(_bestModel);
-        }
+        // // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
+        // receivedVerificationParametersAddresses.push(_workerAddress);
+        // addressToVerificationParameters[
+        //     _workerAddress
+        // ] = VerificationParameters(_workerNonce, _workerSecret);
+        // // we decrypt the model of this woker
+        // //bytes4 encryptedModel = addressToEncModel[_workerAddress];
+        // bytes1[32] memory encryptedModel = addressToEncModel[_workerAddress];
+        // //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
+        // bytes4 decryptedModel = 0; //TODO change
+        // // we add the decrypted model to the modelToNSameModels mapping
+        // modelToNSameModels[decryptedModel] += 1;
+        // // if decryptedModel not in models, we add it
+        // bool modelAlreadyInModels = false;
+        // for (uint256 i = 0; i < models.length; i++) {
+        //     if (models[i] == decryptedModel) {
+        //         modelAlreadyInModels = true;
+        //     }
+        // }
+        // if (!modelAlreadyInModels) {
+        //     models.push(decryptedModel);
+        // }
+        // bytes32 _bestModel = checkEnoughSameModel();
+        // if (_bestModel != 0x0) {
+        //     // in that case we elected the best model, so we can pay workers that did correct job
+        //     modelIsReady = true;
+        //     // publish the new model
+        //     newModel = _bestModel;
+        //     // pay workers
+        //     payCorrectWorkers(_bestModel);
+        // }
     }
 
     function checkEnoughSameModel() private view returns (bytes32) {

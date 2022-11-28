@@ -83,12 +83,20 @@ class EncryptionWorker:
         # check the number of submitted models from the smart contract
         return self.contract.check_can_send_verification_parameters()
 
-    def send_verifications(self):
-        # send the verifications to the blockchain (self.nounce, self.secret)
-        # TODO replace secret by full length
+    # def send_verifications(self):
+    #     # send the verifications to the blockchain (self.nounce, self.secret)
+    #     # TODO replace secret by full length
+    #     return self.contract.send_verifications_parameters(
+    #         #self.nounce, bytes(self.secret)[:4], self.address, self.private_key
+    #         0, bytes("sdsdsdsd".encode())[:4], self.address, self.secret
+    #     )
+    def send_verifications(self, good_model=True) -> bool:
+        clear_secret = self.secret
+        clear_model = self.learn_model(good_model)
+        # convert the model to a byte array
+        clear_model_bytes = bytes(clear_model)
         return self.contract.send_verifications_parameters(
-            #self.nounce, bytes(self.secret)[:4], self.address, self.private_key
-            0, bytes("sdsdsdsd".encode())[:4], self.address, self.secret
+            clear_secret, clear_model_bytes, self.address, self.private_key
         )
 
     def learn_model(self, good_model=True):
