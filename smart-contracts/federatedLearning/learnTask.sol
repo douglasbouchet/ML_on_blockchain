@@ -234,4 +234,8 @@ contract LearnTask {
     function setModelIsready(bool _modelIsReady) public {
         modelIsReady = _modelIsReady;
     }
+
+    function getAddressToEncModelLen() public view returns (uint256) {
+        return receivedModelsAddresses.length;
+    }
 }
