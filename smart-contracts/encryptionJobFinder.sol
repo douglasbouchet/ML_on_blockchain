@@ -28,7 +28,7 @@ contract EncryptionJobFinder {
         previousJobs.push(jobContainer);
         // create a new job TODO dummies value atm, should be getted from fl server
         uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 5;
+        uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 3 models
         jobContainer = new EncyptionJobContainer(
             5,
             1,

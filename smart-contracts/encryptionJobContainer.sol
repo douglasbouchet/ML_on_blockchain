@@ -84,6 +84,10 @@ contract EncyptionJobContainer {
         modelOnlySendOnce(workerAddress)
         returns (bool)
     {
+        // if we already received the maximum number of models, we don't accept new ones
+        if (!canReceiveNewModel) {
+            return false;
+        }
         receivedModelsAddresses.push(workerAddress);
         addressToHashModel[workerAddress] = modelHash;
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
