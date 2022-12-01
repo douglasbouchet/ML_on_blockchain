@@ -62,15 +62,18 @@ class EncryptionWorker:
 
     def send_encrypted_model_v2(self):
         # == '0x4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45'
-        model_hash = Web3.solidityKeccak(["uint8", "uint8", "uint8"], self.model).hex()[
-            2:
-        ]
+        # model_hash = Web3.solidityKeccak(["uint8", "uint8", "uint8"], self.model).hex()[
+        #     2:
+        # ]
+        model_hash = Web3.solidityKeccak(
+            ["uint8", "uint8", "uint8"], self.model).hex()
         print("model_hash", model_hash)
-        model_hash_utf_8 = model_hash.encode("utf-8")
-        print("model_hash_utf_8", model_hash_utf_8)
-        print("model_hash_utf_8 type:", type(model_hash_utf_8))
+        #model_hash_utf_8 = model_hash.encode("utf-8")
+        #print("model_hash_utf_8", model_hash_utf_8)
+        #print("model_hash_utf_8 type:", type(model_hash_utf_8))
         res = self.contract.compare_hash(
-            model_hash_utf_8,
+            # model_hash_utf_8,
+            model_hash,
             self.address,
             self.private_key
             # model_keccak, model_secret_keccak, self.address, self.private_key

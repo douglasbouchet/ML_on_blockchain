@@ -28,6 +28,7 @@ class EncryptionJobFinder(Contract):
         # model_hash should by bytes32 compatible...
         try:
             register_tx = self.contract.functions.compareKeccak(
+                # '0xf005ba11'
                 model_hash
             ).build_transaction(
                 {

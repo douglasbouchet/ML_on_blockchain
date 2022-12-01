@@ -163,15 +163,16 @@ def simple_encryption_check():
     # init the workers
     encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
     worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=5)
+    worker_pool[0].send_encrypted_model_v2()
 
-    for i, worker in enumerate(worker_pool):
-        print(worker_pool[0].check_can_send_verification_parameters())
+    # for i, worker in enumerate(worker_pool):
+    #    print(worker_pool[0].check_can_send_verification_parameters())
     # make the workers send their verifications parameters
-    for i, worker in enumerate(worker_pool):
-        print("worker {} send verification parameters ".format(i))
-        worker.send_verifications(good_model=True)
+    # for i, worker in enumerate(worker_pool):
+    #    print("worker {} send verification parameters ".format(i))
+    #    worker.send_verifications(good_model=True)
     # after all workers send their verifications, the server should have decrypted the model
-    print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
+    #print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
 
 
 if __name__ == "__main__":
@@ -179,4 +180,5 @@ if __name__ == "__main__":
     # hypervisor_based_main()
     # parallel_learning_main()
     # sequential_learning_main()
-    encrypted_main()
+    # encrypted_main()
+    simple_encryption_check()
