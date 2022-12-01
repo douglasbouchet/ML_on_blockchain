@@ -77,14 +77,17 @@ class EncryptionJobFinder(Contract):
             print("Error sending encrypted model:", e)
             return [False]
 
-    def check_can_send_verification_parameters(self):
+    def check_can_send_verification_parameters(self, worker_address):
         """Check weather the worker can send the verification parameters
+        True if worker did send a model and if job has received enough models
 
+        Args:
+            worker_address (address): address of the worker
         Returns:
             boolean: true if the worker can send the verification parameters false otherwise
         """
         # TODO check
-        return self.contract.functions.canSendVerificationParameters().call()
+        return self.contract.functions.canSendVerificationParameters(Web3.toChecksumAddress(worker_address)).call()
 
     def send_verifications_parameters(
         # self, worker_nounce, worker_secret, worker_address, worker_private_key
@@ -98,7 +101,7 @@ class EncryptionJobFinder(Contract):
 
         Args:
             clear_worker_secret (bytes[]): bytes array of the worker secret
-            clear_model (bytes[]): bytes array of the model
+            clear_model (int): the model as an integer (simple atm)
             worker_address (_type_): address of the worker
             worker_private_key (_type_): private key of the worker
         return: true if the transaction is successful false otherwise
@@ -108,8 +111,6 @@ class EncryptionJobFinder(Contract):
             clear_worker_secret[i: i + 1]
             for i in range(0, len(clear_worker_secret), 1)
         ]
-        clear_model = [clear_model[i: i + 1]
-                       for i in range(0, len(clear_model), 1)]
         print("Inside send_verifications_parameters, clear_model:", clear_model)
         try:
             register_tx = self.contract.functions.addVerificationParameters(

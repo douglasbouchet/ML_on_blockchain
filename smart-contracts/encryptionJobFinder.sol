@@ -87,8 +87,12 @@ contract EncryptionJobFinder {
         return bestModels;
     }
 
-    function canSendVerificationParameters() public view returns (bool) {
-        return jobContainer.canSendVerificationParameters();
+    function canSendVerificationParameters(address workerAddress)
+        public
+        view
+        returns (bool)
+    {
+        return jobContainer.canSendVerificationParameters(workerAddress);
     }
 
     /// @notice function to get the model

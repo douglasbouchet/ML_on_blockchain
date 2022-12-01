@@ -96,7 +96,7 @@ class EncryptionWorker:
 
     def check_can_send_verification_parameters(self):
         # check the number of submitted models from the smart contract
-        return self.contract.check_can_send_verification_parameters()
+        return self.contract.check_can_send_verification_parameters(self.address)
 
     # def send_verifications(self):
     #     # send the verifications to the blockchain (self.nounce, self.secret)
@@ -106,18 +106,14 @@ class EncryptionWorker:
     #         0, bytes("sdsdsdsd".encode())[:4], self.address, self.secret
     #     )
     # def send_verifications(self, good_model=True) -> bool:
-    def send_verifications(self, good_model=True):
-        # clear_secret = self.secret
-        clear_model = self.learn_model(good_model)
-        # convert the model to a byte array
-        clear_model_bytes = bytes(clear_model)
-        # return self.contract.send_verifications_parameters(
-        #     clear_secret, clear_model_bytes, self.address, self.private_key
-        # )
-        res = self.contract.get_keccak(clear_model_bytes)
-        self.k.update(clear_model_bytes)
-        print("The smart contract keccak is", res)
-        print("The python keccak is ", self.k.digest())
+    # def send_verifications(self, good_model=True):
+    def send_verifications(self):
+        clear_secret = self.secret
+        #clear_model = self.learn_model(good_model)
+        clear_model = self.model[0]  # only send one int atm
+        return self.contract.send_verifications_parameters(
+            clear_secret, clear_model, self.address, self.private_key
+        )
         return res
 
     def learn_model(self, good_model=True):

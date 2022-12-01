@@ -70,8 +70,22 @@ contract EncyptionJobContainer {
         return (currentModel, batchIndex);
     }
 
-    function canSendVerificationParameters() public view returns (bool) {
-        return !canReceiveNewModel;
+    /// @notice tell weather a worker can send its verification parameters or not
+    /// @param workerAddress the address of the worker
+    /// @return true if the worker can send its verification parameters, false otherwise
+    function canSendVerificationParameters(address workerAddress)
+        public
+        view
+        returns (bool)
+    {
+        // check if the workerAddress did send a model during learning phase
+        bool workerHasSendModel = false;
+        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
+            if (receivedModelsAddresses[i] == workerAddress) {
+                workerHasSendModel = true;
+            }
+        }
+        return !canReceiveNewModel && workerHasSendModel;
     }
 
     /// @notice send a new encrypted model to the jobContainer
@@ -115,62 +129,64 @@ contract EncyptionJobContainer {
         bytes1[32] memory _workerSecret,
         uint256 _clearModel
     ) public onlyReceivedModelsAddresses(_workerAddress) {
-        require(
-            canReceiveNewModel == false,
-            "Can't send verification parameters, not enough models received"
-        );
-        // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
-        for (
-            uint256 i = 0;
-            i < receivedVerificationParametersAddresses.length;
-            i++
-        ) {
+        // check that worker has send a model and we don't receive new model anymore
+        if (canSendVerificationParameters(_workerAddress)) {
+            // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
+            for (
+                uint256 i = 0;
+                i < receivedVerificationParametersAddresses.length;
+                i++
+            ) {
+                require(
+                    receivedVerificationParametersAddresses[i] !=
+                        _workerAddress,
+                    "You already sent your verification parameters"
+                );
+            }
+            // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
+            receivedVerificationParametersAddresses.push(_workerAddress);
+            addressToVerificationParameters[
+                _workerAddress
+            ] = VerificationParameters(_clearModel, _workerSecret);
+            // We check if hash of clear model is equal to the hash of the model sent by the worker during leaning phase
+            // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
+            bytes32 modelHash = keccak256(abi.encodePacked(_clearModel));
+            // we get the model sent by the worker during learning phase
+            bytes32 modelSentByWorker = addressToHashModel[_workerAddress];
+            // we check if the two are equals
             require(
-                receivedVerificationParametersAddresses[i] != _workerAddress,
-                "You already sent your verification parameters"
+                modelHash == modelSentByWorker,
+                "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
             );
-        }
-        // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
-        receivedVerificationParametersAddresses.push(_workerAddress);
-        addressToVerificationParameters[
-            _workerAddress
-        ] = VerificationParameters(_clearModel, _workerSecret);
-        // We check if hash of clear model is equal to the hash of the model sent by the worker during leaning phase
-        // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
-        bytes32 modelHash = keccak256(abi.encodePacked(_clearModel));
-        // we get the model sent by the worker during learning phase
-        bytes32 modelSentByWorker = addressToHashModel[_workerAddress];
-        // we check if the two are equals
-        require(
-            modelHash == modelSentByWorker,
-            "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
-        );
 
-        // // we decrypt the model of this woker
-        // bytes32 encryptedModel = addressToHashModel[_workerAddress];
-        // //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
-        // bytes4 decryptedModel = 0; //TODO change
-        // // we add the decrypted model to the modelToNSameModels mapping
-        // modelToNSameModels[decryptedModel] += 1;
-        // // if decryptedModel not in models, we add it
-        // bool modelAlreadyInModels = false;
-        // for (uint256 i = 0; i < models.length; i++) {
-        //     if (models[i] == decryptedModel) {
-        //         modelAlreadyInModels = true;
-        //     }
-        // }
-        // if (!modelAlreadyInModels) {
-        //     models.push(decryptedModel);
-        // }
-        // bytes32 _bestModel = checkEnoughSameModel();
-        // if (_bestModel != 0x0) {
-        //     // in that case we elected the best model, so we can pay workers that did correct job
-        //     modelIsReady = true;
-        //     // publish the new model
-        //     newModel = _bestModel;
-        //     // pay workers
-        //     payCorrectWorkers(_bestModel);
-        // }
+            // // we decrypt the model of this woker
+            // bytes32 encryptedModel = addressToHashModel[_workerAddress];
+            // //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
+            // bytes4 decryptedModel = 0; //TODO change
+            // // we add the decrypted model to the modelToNSameModels mapping
+            // modelToNSameModels[decryptedModel] += 1;
+            // // if decryptedModel not in models, we add it
+            // bool modelAlreadyInModels = false;
+            // for (uint256 i = 0; i < models.length; i++) {
+            //     if (models[i] == decryptedModel) {
+            //         modelAlreadyInModels = true;
+            //     }
+            // }
+            // if (!modelAlreadyInModels) {
+            //     models.push(decryptedModel);
+            // }
+            // bytes32 _bestModel = checkEnoughSameModel();
+            // if (_bestModel != 0x0) {
+            //     // in that case we elected the best model, so we can pay workers that did correct job
+            //     modelIsReady = true;
+            //     // publish the new model
+            //     newModel = _bestModel;
+            //     // pay workers
+            //     payCorrectWorkers(_bestModel);
+            // }
+        } else {
+            revert("You can't send your verification parameters");
+        }
     }
 
     function checkEnoughSameModel() private view returns (bytes32) {
