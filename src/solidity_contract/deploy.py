@@ -31,7 +31,6 @@ def deploy_smart_contract(
 
     # 5. Build constructor tx
     # construct_txn = new_contract.constructor(5).buildTransaction(
-    print("worker_address", account_from["address"])
     construct_txn = new_contract.constructor().build_transaction(  # TODO modify here the syntax of constructor depending on the smart contract
         {
             "chainId": w3.eth.chain_id,
@@ -44,7 +43,7 @@ def deploy_smart_contract(
         }
     )
     gas = w3.eth.estimate_gas(construct_txn)
-    print('Estimated gas: ', gas)
+    #print('Estimated gas: ', gas)
     construct_txn.update({'gas': gas})
 
     # 6. Sign tx with PK
@@ -53,7 +52,7 @@ def deploy_smart_contract(
     )
     # 7. Send tx and wait for receipt
     tx_hash = w3.eth.send_raw_transaction(tx_create.rawTransaction)
-    print('tx sent')
+    #print('tx sent')
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     print(f"Contract deployed at address: { tx_receipt.contractAddress }")

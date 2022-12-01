@@ -48,7 +48,7 @@ class EncryptionWorker:
     def send_encrypted_model(self, good_model=True):
         model_hash = Web3.solidityKeccak(
             ["uint256"], self.model).hex()
-        print("model_hash", model_hash)
+        # print("model_hash", model_hash)
         # First we compute the model
         model = self.learn_model(good_model)
         model_secret_keccak = self.encrypt_model(model)  # bytes[64]
@@ -106,11 +106,14 @@ class EncryptionWorker:
     #         0, bytes("sdsdsdsd".encode())[:4], self.address, self.secret
     #     )
     # def send_verifications(self, good_model=True) -> bool:
-    # def send_verifications(self, good_model=True):
-    def send_verifications(self):
+    def send_verifications(self, good_model):
         clear_secret = self.secret
         #clear_model = self.learn_model(good_model)
-        clear_model = self.model[0]  # only send one int atm
+        if good_model:
+            clear_model = self.model[0]
+        else:
+            # we send a model which din't match the one we send before
+            clear_model = 0
         return self.contract.send_verifications_parameters(
             clear_secret, clear_model, self.address, self.private_key
         )
