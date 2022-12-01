@@ -21,6 +21,27 @@ class EncryptionJobFinder(Contract):
     def get_all_previous_jobs_best_model(self):
         return self.contract.functions.getAllPreviousJobsBestModel().call()
 
+    def compare_hash(self, model_hash, worker_address, worker_private_key):
+        worker_address = Web3.toChecksumAddress(worker_address)
+        # model_keccak = [model_keccak[i:i + 1]
+        #                for i in range(0, len(model_keccak), 1)]
+        # model_hash should by bytes32 compatible...
+        try:
+            register_tx = self.contract.functions.compareKeccak(
+                model_hash
+            ).build_transaction(
+                {
+                    "gasPrice": 0,
+                    "from": worker_address,
+                    "nonce": self.web3.eth.get_transaction_count(worker_address),
+                }
+            )
+            tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
+            return self.get_compare_hash(self.web3, tx_receipt)
+        except Exception as e:
+            print("Error compare_hash:", e)
+            return False
+
     def send_encrypted_model(
         self, model_keccak, model_secret_keccak, worker_address, worker_private_key
     ):
@@ -35,10 +56,12 @@ class EncryptionJobFinder(Contract):
         worker_address = Web3.toChecksumAddress(worker_address)
         # convert encrypted model to a byte array of size 140
         # split each byte of the encrypted model into a list of bytes
-        model_keccak = [model_keccak[i:i + 1]
+        model_keccak = [model_keccak[i: i + 1]
                         for i in range(0, len(model_keccak), 1)]
-        model_secret_keccak = [model_secret_keccak[i:i + 1]
-                               for i in range(0, len(model_secret_keccak), 1)]
+        model_secret_keccak = [
+            model_secret_keccak[i: i + 1]
+            for i in range(0, len(model_secret_keccak), 1)
+        ]
         # print the first byte of the encrypted model
         print("Inside send_encrypted_model, model_keccak:", model_keccak[0])
 
@@ -69,7 +92,11 @@ class EncryptionJobFinder(Contract):
 
     def send_verifications_parameters(
         # self, worker_nounce, worker_secret, worker_address, worker_private_key
-        self, clear_worker_secret, clear_model, worker_address, worker_private_key
+        self,
+        clear_worker_secret,
+        clear_model,
+        worker_address,
+        worker_private_key,
     ) -> bool:
         """Send the verification parameters to the blockchain (worker nounce, worker secret)
 
@@ -81,23 +108,21 @@ class EncryptionJobFinder(Contract):
         return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
-        clear_worker_secret = [clear_worker_secret[i:i + 1]
-                               for i in range(0, len(clear_worker_secret), 1)]
-        clear_model = [clear_model[i:i + 1]
+        clear_worker_secret = [
+            clear_worker_secret[i: i + 1]
+            for i in range(0, len(clear_worker_secret), 1)
+        ]
+        clear_model = [clear_model[i: i + 1]
                        for i in range(0, len(clear_model), 1)]
         print("Inside send_verifications_parameters, clear_model:", clear_model)
         try:
             register_tx = self.contract.functions.addVerificationParameters(
-                worker_address,
-                clear_worker_secret,
-                clear_model
+                worker_address, clear_worker_secret, clear_model
             ).build_transaction(
                 {
                     "gasPrice": 0,
                     "from": worker_address,
-                    "nonce": self.web3.eth.get_transaction_count(
-                        worker_address
-                    ),
+                    "nonce": self.web3.eth.get_transaction_count(worker_address),
                 }
             )
             tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
@@ -107,9 +132,7 @@ class EncryptionJobFinder(Contract):
         return True
 
     def parse_send_encrypted_model(self, result):
-        return self.contract.web3.codec.decode_single(
-            "bool", result
-        )
+        return self.contract.web3.codec.decode_single("bool", result)
 
     def get_send_encrypted_model_return_value(self, w3, txhash):
         try:
@@ -118,11 +141,11 @@ class EncryptionJobFinder(Contract):
             print("Error getting transaction:", e)
             return None
         replay_tx = {
-            'to': tx['to'],
-            'from': tx['from'],
-            'value': tx['value'],
-            'data': tx['input'],
-            'gas': tx['gas'],
+            "to": tx["to"],
+            "from": tx["from"],
+            "value": tx["value"],
+            "data": tx["input"],
+            "gas": tx["gas"],
         }
         # replay the transaction locally:
         try:
@@ -130,6 +153,26 @@ class EncryptionJobFinder(Contract):
             return (True, self.parse_send_encrypted_model(ret))
         except Exception as e:
             return (False, str(e))
+
+    def get_compare_hash(self, w3, txhash):
+        try:
+            tx = w3.eth.get_transaction(txhash)
+        except Exception as e:
+            print("Error getting transaction:", e)
+            return None
+        replay_tx = {
+            "to": tx["to"],
+            "from": tx["from"],
+            "value": tx["value"],
+            "data": tx["input"],
+            "gas": tx["gas"],
+        }
+        # replay the transaction locally:
+        try:
+            ret = w3.eth.call(replay_tx, tx.blockNumber - 1)
+            return self.parse_send_encrypted_model(ret)
+        except Exception as e:
+            return False
 
     def get_final_model(self):
         return self.contract.functions.getFinalModel().call()
@@ -142,12 +185,10 @@ class EncryptionJobFinder(Contract):
         return self.contract.functions.getModelIsready().call()
 
     def get_keccak(self, clear_model):
-        clear_model = [clear_model[i:i + 1]
+        clear_model = [clear_model[i: i + 1]
                        for i in range(0, len(clear_model), 1)]
         ret = self.contract.functions.computeKeccak256(clear_model).call()
         # parse the ret to get the hash
-        return self.contract.web3.codec.decode_single(
-            "bytes32", ret
-        )
+        return self.contract.web3.codec.decode_single("bytes32", ret)
         # return self.contract.functions.computeKeccak256(clear_model).call()
         # return self.contract.functions.computeKeccak256().call()

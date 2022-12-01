@@ -25,6 +25,19 @@ class Helper:
 
         return []
 
+    def f():
+        # create a byte array of size 32
+        # and fill it with random bytes
+        # using random.getrandbits(8)
+        # this will give us a random byte
+        # array of size 32
+        res = bytearray(32)
+        for i in range(32):
+            res[i] = random.getrandbits(8)
+        # convert res to string
+        # and return it
+        return str(res)
+
 
 def get_data():
     # TODO

@@ -12,8 +12,9 @@ class EncryptionWorker:
         self.id = id
         # key used for model encryption and verification. Should be used once for each model
         self.secret = self.generate_secret()
-        #self.secret = Fernet.generate_key()
+        # self.secret = Fernet.generate_key()
         self.k = sha3.keccak_256()
+        self.model = [97, 98, 99]
 
     def generate_secret(self) -> bytes:
         """Generate a secret key for the worker
@@ -56,8 +57,27 @@ class EncryptionWorker:
             model_keccak, model_secret_keccak, self.address, self.private_key
         )
         if len(res) == 2:
-            return (res[0] == True and res[1] == True)
+            return res[0] == True and res[1] == True
         return False
+
+    def send_encrypted_model_v2(self):
+        # == '0x4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45'
+        model_hash = Web3.solidityKeccak(["uint8", "uint8", "uint8"], self.model).hex()[
+            2:
+        ]
+        print("model_hash", model_hash)
+        model_hash_utf_8 = model_hash.encode("utf-8")
+        print("model_hash_utf_8", model_hash_utf_8)
+        print("model_hash_utf_8 type:", type(model_hash_utf_8))
+        res = self.contract.compare_hash(
+            model_hash_utf_8,
+            self.address,
+            self.private_key
+            # model_keccak, model_secret_keccak, self.address, self.private_key
+        )
+        print("send_encrypted_model_v2: return value", res)
+        return res
+
     # def send_encrypted_model(self, good_model=True):
     #     model = self.learn_model(good_model)
     #     # encrypt the model using Fernet and the worker's secret
@@ -98,9 +118,7 @@ class EncryptionWorker:
         # return self.contract.send_verifications_parameters(
         #     clear_secret, clear_model_bytes, self.address, self.private_key
         # )
-        res = self.contract.get_keccak(
-            clear_model_bytes
-        )
+        res = self.contract.get_keccak(clear_model_bytes)
         self.k.update(clear_model_bytes)
         print("The smart contract keccak is", res)
         print("The python keccak is ", self.k.digest())
@@ -122,5 +140,5 @@ class EncryptionWorker:
             return [0 for i in range(32)]
         # TODO
         # generate a 32 bit array of 0s
-        #model = [0 for i in range(32)]
+        # model = [0 for i in range(32)]
         # return model

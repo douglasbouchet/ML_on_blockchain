@@ -101,6 +101,15 @@ contract LearnTask {
         pure
         returns (bytes32)
     {
+        bytes32 a = bytes32(
+            0x300330ecd127756b824aa13e843cb1f43c473cb22eaf3750d5fb9c99279af8c3
+        );
+        // convert bytes32 to byte1[32]
+        bytes1[32] memory b;
+        for (uint256 i = 0; i < 32; i++) {
+            b[i] = a[i];
+        }
+
         return keccak256(abi.encodePacked(clearModel));
     }
 
@@ -131,6 +140,7 @@ contract LearnTask {
                 "You already sent your verification parameters"
             );
         }
+
         // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
         receivedVerificationParametersAddresses.push(_workerAddress);
         addressToVerificationParameters[
@@ -237,5 +247,12 @@ contract LearnTask {
 
     function getAddressToEncModelLen() public view returns (uint256) {
         return receivedModelsAddresses.length;
+    }
+
+    function compareKeccak(bytes32 modelHash) public pure returns (bool) {
+        bytes32 computedModelHash = keccak256(
+            abi.encodePacked(uint8(97), uint8(98), uint8(99))
+        );
+        return modelHash == computedModelHash;
     }
 }

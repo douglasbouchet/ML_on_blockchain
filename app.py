@@ -152,6 +152,28 @@ def encrypted_main():
     print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
 
 
+def simple_encryption_check():
+    encrypted_hypervisor = EncryptedHypervisor()
+    learning_server = FederatingLearningServer(3, 100, 10)
+    # ------Deploy smart contract---------
+    encrypted_job_finder = learning_server.deploy_contract(
+        "encryptionJobFinder", "EncryptionJobFinder"
+    )
+    encrypted_hypervisor.contract = encrypted_job_finder
+    # init the workers
+    encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
+    worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=5)
+
+    for i, worker in enumerate(worker_pool):
+        print(worker_pool[0].check_can_send_verification_parameters())
+    # make the workers send their verifications parameters
+    for i, worker in enumerate(worker_pool):
+        print("worker {} send verification parameters ".format(i))
+        worker.send_verifications(good_model=True)
+    # after all workers send their verifications, the server should have decrypted the model
+    print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
+
+
 if __name__ == "__main__":
     # basic_main()
     # hypervisor_based_main()

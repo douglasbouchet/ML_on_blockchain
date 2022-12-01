@@ -114,11 +114,7 @@ contract TaskFinder {
         return jobContainer.getModelIsready();
     }
 
-    function computeKeccak256(bytes1[32] memory clearModel)
-        public
-        view
-        returns (bytes32)
-    {
-        return jobContainer.computeKeccak256(clearModel);
+    function compareKeccak(bytes32 modelHash) public view returns (bool) {
+        return jobContainer.compareKeccak(modelHash);
     }
 }

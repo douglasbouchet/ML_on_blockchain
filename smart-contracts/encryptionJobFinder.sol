@@ -121,4 +121,8 @@ contract EncryptionJobFinder {
     {
         return jobContainer.computeKeccak256(clearModel);
     }
+
+    function compareKeccak(bytes32 modelHash) public view returns (bool) {
+        return jobContainer.compareKeccak(modelHash);
+    }
 }

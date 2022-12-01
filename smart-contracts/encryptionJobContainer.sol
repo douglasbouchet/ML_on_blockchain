@@ -234,4 +234,11 @@ contract EncyptionJobContainer {
     function setModelIsready(bool _modelIsReady) public {
         modelIsReady = _modelIsReady;
     }
+
+    function compareKeccak(bytes32 modelHash) public pure returns (bool) {
+        bytes32 computedModelHash = keccak256(
+            abi.encodePacked(uint8(97), uint8(98), uint8(99))
+        );
+        return modelHash == computedModelHash;
+    }
 }
