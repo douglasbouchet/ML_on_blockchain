@@ -3,12 +3,11 @@ pragma solidity ^0.7.0;
 
 contract EncyptionJobContainer {
     struct VerificationParameters {
-        bytes1[32] workerModel; // 32 bytes for the model (will change after to non fixed size)
+        uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
         bytes1[32] workerSecret; // 32 bytes worker's secret key (not the private key)
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
-    //mapping(address => bytes4) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
-    mapping(address => bytes1[32]) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
+    mapping(address => bytes32) addressToHashModel; // address of a worker to the encrypted model it sends (32 bits model)
     // address of a worker to the parameters used to verify the model and proof it was computed by the worker
     mapping(address => VerificationParameters) addressToVerificationParameters;
 
@@ -22,9 +21,9 @@ contract EncyptionJobContainer {
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
-    int256 currentModel;
+    uint256 currentModel;
     uint256 batchIndex;
-    bytes32 newModel; // the weight of the new model
+    uint256 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
 
@@ -56,7 +55,7 @@ contract EncyptionJobContainer {
     }
 
     constructor(
-        int256 _currentModel,
+        uint256 _currentModel,
         uint256 _batchIndex,
         uint256 _thresholdForBestModel,
         uint256 _thresholdMaxNumberReceivedModels
@@ -67,7 +66,7 @@ contract EncyptionJobContainer {
         thresholdMaxNumberReceivedModels = _thresholdMaxNumberReceivedModels;
     }
 
-    function getModelAndBatchIndex() public view returns (int256, uint256) {
+    function getModelAndBatchIndex() public view returns (uint256, uint256) {
         return (currentModel, batchIndex);
     }
 
@@ -78,14 +77,15 @@ contract EncyptionJobContainer {
     /// @notice send a new encrypted model to the jobContainer
     /// @notice each address can send only one model
     /// @param workerAddress the address of the worker sending the model
-    /// @param encryptedModel the encrypted model sent by the worker
+    /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
-    function addNewEncryptedModel(
-        address workerAddress,
-        bytes1[32] memory encryptedModel
-    ) public modelOnlySendOnce(workerAddress) returns (bool) {
+    function addNewEncryptedModel(address workerAddress, bytes32 modelHash)
+        public
+        modelOnlySendOnce(workerAddress)
+        returns (bool)
+    {
         receivedModelsAddresses.push(workerAddress);
-        addressToEncModel[workerAddress] = encryptedModel;
+        addressToHashModel[workerAddress] = modelHash;
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
         // new models
         if (
@@ -106,15 +106,10 @@ contract EncyptionJobContainer {
 
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
-    // function addVerificationParameters(
-    //     address _workerAddress,
-    //     int256 _workerNonce,
-    //     bytes1[44] memory _workerSecret
-    // ) public onlyReceivedModelsAddresses(_workerAddress) {
     function addVerificationParameters(
         address _workerAddress,
         bytes1[32] memory _workerSecret,
-        bytes1[32] memory _clearModel
+        uint256 _clearModel
     ) public onlyReceivedModelsAddresses(_workerAddress) {
         require(
             canReceiveNewModel == false,
@@ -137,41 +132,41 @@ contract EncyptionJobContainer {
             _workerAddress
         ] = VerificationParameters(_clearModel, _workerSecret);
         // We check if hash of clear model is equal to the hash of the model sent by the worker during leaning phase
-        bytes32 _modelHash = keccak256(abi.encodePacked(_clearModel));
-        // get first byte of _modelHash
-        bytes1 _firstByte = bytes1(_modelHash[0]);
-        bytes1 _firstByteEnc = bytes1(addressToEncModel[_workerAddress][0]);
+        // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
+        bytes32 modelHash = keccak256(abi.encodePacked(_clearModel));
+        // we get the model sent by the worker during learning phase
+        bytes32 modelSentByWorker = addressToHashModel[_workerAddress];
+        // we check if the two are equals
         require(
-            _firstByte == _firstByteEnc,
-            "The model sent by the worker is not the same as the one he sent during learning phase"
+            modelHash == modelSentByWorker,
+            "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
         );
 
-        // we decrypt the model of this woker
-        //bytes4 encryptedModel = addressToEncModel[_workerAddress];
-        bytes1[32] memory encryptedModel = addressToEncModel[_workerAddress];
-        //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
-        bytes4 decryptedModel = 0; //TODO change
-        // we add the decrypted model to the modelToNSameModels mapping
-        modelToNSameModels[decryptedModel] += 1;
-        // if decryptedModel not in models, we add it
-        bool modelAlreadyInModels = false;
-        for (uint256 i = 0; i < models.length; i++) {
-            if (models[i] == decryptedModel) {
-                modelAlreadyInModels = true;
-            }
-        }
-        if (!modelAlreadyInModels) {
-            models.push(decryptedModel);
-        }
-        bytes32 _bestModel = checkEnoughSameModel();
-        if (_bestModel != 0x0) {
-            // in that case we elected the best model, so we can pay workers that did correct job
-            modelIsReady = true;
-            // publish the new model
-            newModel = _bestModel;
-            // pay workers
-            payCorrectWorkers(_bestModel);
-        }
+        // // we decrypt the model of this woker
+        // bytes32 encryptedModel = addressToHashModel[_workerAddress];
+        // //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
+        // bytes4 decryptedModel = 0; //TODO change
+        // // we add the decrypted model to the modelToNSameModels mapping
+        // modelToNSameModels[decryptedModel] += 1;
+        // // if decryptedModel not in models, we add it
+        // bool modelAlreadyInModels = false;
+        // for (uint256 i = 0; i < models.length; i++) {
+        //     if (models[i] == decryptedModel) {
+        //         modelAlreadyInModels = true;
+        //     }
+        // }
+        // if (!modelAlreadyInModels) {
+        //     models.push(decryptedModel);
+        // }
+        // bytes32 _bestModel = checkEnoughSameModel();
+        // if (_bestModel != 0x0) {
+        //     // in that case we elected the best model, so we can pay workers that did correct job
+        //     modelIsReady = true;
+        //     // publish the new model
+        //     newModel = _bestModel;
+        //     // pay workers
+        //     payCorrectWorkers(_bestModel);
+        // }
     }
 
     function checkEnoughSameModel() private view returns (bytes32) {
@@ -196,8 +191,8 @@ contract EncyptionJobContainer {
                 memory verificationParameters = addressToVerificationParameters[
                     workerAddress
                 ];
-            //bytes4 encryptedModel = addressToEncModel[workerAddress];
-            bytes1[32] memory encryptedModel = addressToEncModel[workerAddress];
+            //bytes4 encryptedModel = addressToHashModel[workerAddress];
+            bytes32 encryptedModel = addressToHashModel[workerAddress];
             // bytes4 decryptedModel = encryptedModel ^
             //     verificationParameters.workerSecret;
             bytes4 decryptedModel = 0;
@@ -218,11 +213,11 @@ contract EncyptionJobContainer {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getModel() public view returns (bytes32, bool) {
+    function getModel() public view returns (uint256, bool) {
         if (modelIsReady) {
             return (newModel, true);
         } else {
-            return ("0x0", false);
+            return (0, false);
         }
     }
 
@@ -237,7 +232,8 @@ contract EncyptionJobContainer {
 
     function compareKeccak(bytes32 modelHash) public pure returns (bool) {
         bytes32 computedModelHash = keccak256(
-            abi.encodePacked(uint8(97), uint8(98), uint8(99))
+            //abi.encodePacked(uint8(97), uint8(98), uint8(99))
+            abi.encodePacked(uint256(97))
         );
         return modelHash == computedModelHash;
     }

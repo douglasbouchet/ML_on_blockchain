@@ -14,7 +14,8 @@ class EncryptionWorker:
         self.secret = self.generate_secret()
         # self.secret = Fernet.generate_key()
         self.k = sha3.keccak_256()
-        self.model = [97, 98, 99]
+        #self.model = [97, 98, 99]
+        self.model = [97]
 
     def generate_secret(self) -> bytes:
         """Generate a secret key for the worker
@@ -34,7 +35,7 @@ class EncryptionWorker:
 
         return:
         """
-        print("secret", self.secret)
+        #print("secret", self.secret)
         # convert the model to a byte array
         model_bytes = bytes(model)
         # xor the model using the secret
@@ -45,34 +46,26 @@ class EncryptionWorker:
         return self.k.digest()
 
     def send_encrypted_model(self, good_model=True):
+        model_hash = Web3.solidityKeccak(
+            ["uint256"], self.model).hex()
+        print("model_hash", model_hash)
         # First we compute the model
         model = self.learn_model(good_model)
-        # compute the keccak hash of the model
-        self.k.update(bytes(model))
-        model_keccak = self.k.digest()
-        # encrypt the model using Fernet and the worker's secret
         model_secret_keccak = self.encrypt_model(model)  # bytes[64]
-        print("model_keccal sended = ", model_keccak)
-        res = self.contract.send_encrypted_model(
-            model_keccak, model_secret_keccak, self.address, self.private_key
+        res = self.contract.send_hashed_model(
+            model_hash, model_secret_keccak, self.address, self.private_key
         )
         if len(res) == 2:
             return res[0] == True and res[1] == True
         return False
 
-    def send_encrypted_model_v2(self):
+    def compare_hash(self):
         # == '0x4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45'
-        # model_hash = Web3.solidityKeccak(["uint8", "uint8", "uint8"], self.model).hex()[
-        #     2:
-        # ]
+        # model_hash = Web3.solidityKeccak(["uint8", "uint8", "uint8"], self.model).hex()
         model_hash = Web3.solidityKeccak(
-            ["uint8", "uint8", "uint8"], self.model).hex()
+            ["uint256"], self.model).hex()
         print("model_hash", model_hash)
-        #model_hash_utf_8 = model_hash.encode("utf-8")
-        #print("model_hash_utf_8", model_hash_utf_8)
-        #print("model_hash_utf_8 type:", type(model_hash_utf_8))
         res = self.contract.compare_hash(
-            # model_hash_utf_8,
             model_hash,
             self.address,
             self.private_key

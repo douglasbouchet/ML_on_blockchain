@@ -18,7 +18,7 @@ contract EncryptionJobFinder {
         );
     }
 
-    function getJob() public view returns (int256, uint256) {
+    function getJob() public view returns (uint256, uint256) {
         /**No condition, everyone can claim the job, and reclaim it */
         return jobContainer.getModelAndBatchIndex();
     }
@@ -39,40 +39,29 @@ contract EncryptionJobFinder {
 
     /// @notice send a new encrypted model to the jobContainer
     /// @param workerAddress the address of the worker sending the model
+    /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
     // function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
     function addEncryptedModel(
         address workerAddress,
-        bytes1[32] memory model_keccak,
+        bytes32 modelHash,
         bytes1[32] memory model_secret_keccak
     ) public returns (bool) {
         bool modelAdded = jobContainer.addNewEncryptedModel(
             workerAddress,
-            model_keccak
+            modelHash
         );
-        return modelAdded;
-
         // // if the model is complete, create a new job and push the current one to previousJobs
         // if (jobContainer.getModelIsready()) {
         //     createNewJob();
         // }
+        return modelAdded;
     }
 
-    // function addVerificationParameters(
-    //     address workerAddress,
-    //     int256 workerNonce,
-    //     bytes1[44] memory workerSecret
-    // ) public {
-    //     jobContainer.addVerificationParameters(
-    //         workerAddress,
-    //         workerNonce,
-    //         workerSecret
-    //     );
-    // }
     function addVerificationParameters(
         address workerAddress,
         bytes1[32] memory workerSecret,
-        bytes1[32] memory clearModel
+        uint256 clearModel
     ) public {
         jobContainer.addVerificationParameters(
             workerAddress,
@@ -84,11 +73,11 @@ contract EncryptionJobFinder {
     function getAllPreviousJobsBestModel()
         public
         view
-        returns (bytes32[] memory)
+        returns (uint256[] memory)
     {
-        bytes32[] memory bestModels = new bytes32[](previousJobs.length);
+        uint256[] memory bestModels = new uint256[](previousJobs.length);
         for (uint256 i = 0; i < previousJobs.length; i++) {
-            (bytes32 newModel, bool ready) = previousJobs[i].getModel();
+            (uint256 newModel, bool ready) = previousJobs[i].getModel();
             if (ready) {
                 bestModels[i] = newModel;
             } else {
@@ -104,7 +93,7 @@ contract EncryptionJobFinder {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getFinalModel() public view returns (bytes32, bool) {
+    function getFinalModel() public view returns (uint256, bool) {
         return jobContainer.getModel();
     }
 

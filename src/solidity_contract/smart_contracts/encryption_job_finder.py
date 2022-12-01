@@ -28,7 +28,6 @@ class EncryptionJobFinder(Contract):
         # model_hash should by bytes32 compatible...
         try:
             register_tx = self.contract.functions.compareKeccak(
-                # '0xf005ba11'
                 model_hash
             ).build_transaction(
                 {
@@ -43,8 +42,9 @@ class EncryptionJobFinder(Contract):
             print("Error compare_hash:", e)
             return False
 
-    def send_encrypted_model(
-        self, model_keccak, model_secret_keccak, worker_address, worker_private_key
+    # def send_encrypted_model(
+    def send_hashed_model(
+        self, model_hash, model_secret_keccak, worker_address, worker_private_key
     ):
         """Send the encrypted model to the blockchain
         Args:
@@ -57,18 +57,13 @@ class EncryptionJobFinder(Contract):
         worker_address = Web3.toChecksumAddress(worker_address)
         # convert encrypted model to a byte array of size 140
         # split each byte of the encrypted model into a list of bytes
-        model_keccak = [model_keccak[i: i + 1]
-                        for i in range(0, len(model_keccak), 1)]
         model_secret_keccak = [
             model_secret_keccak[i: i + 1]
             for i in range(0, len(model_secret_keccak), 1)
         ]
-        # print the first byte of the encrypted model
-        print("Inside send_encrypted_model, model_keccak:", model_keccak[0])
-
         try:
             register_tx = self.contract.functions.addEncryptedModel(
-                worker_address, model_keccak, model_secret_keccak
+                worker_address, model_hash, model_secret_keccak
             ).build_transaction(
                 {
                     "gasPrice": 0,

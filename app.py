@@ -163,7 +163,16 @@ def simple_encryption_check():
     # init the workers
     encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
     worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=5)
-    worker_pool[0].send_encrypted_model_v2()
+    worker_pool[0].compare_hash()  # should return true
+    # print("Worker 0 sending model: ", worker_pool[0].send_encrypted_model())
+    # make workers 1 to 3 sends their models
+    for i, worker in enumerate(worker_pool[:3]):
+        res = worker.send_encrypted_model()
+        assert res == True
+        print("Worker {} sending model: ".format(i), res)
+        # send again a model should return false as model is rejected
+        assert worker.send_encrypted_model() == False
+    # now job has received enough models, it shoudn't accept any more models
 
     # for i, worker in enumerate(worker_pool):
     #    print(worker_pool[0].check_can_send_verification_parameters())
