@@ -12,10 +12,12 @@ class EncryptionWorker:
         #self.model = [97, 98, 99]
         self.model = [97]
 
-    def send_encrypted_model(self, good_model=True):
+    # def send_encrypted_model(self, good_model=True):
+    def send_encrypted_model(self, model):
         # model = self.learn_model(good_model)
         # first we learn a new model
-        model = self.model[0]
+        #model = self.model[0]
+        self.model = [model]
         # then we add the int value of worker's address to the model (i.e to prove that the worker
         # is the one who learned the model)
         int_address = int(self.address, 16)

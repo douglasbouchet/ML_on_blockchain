@@ -128,8 +128,8 @@ contract EncyptionJobContainer {
         address _workerAddress,
         uint256 _clearModel
     ) public onlyReceivedModelsAddresses(_workerAddress) {
-        // check that worker has send a model and we don't receive new model anymore
-        if (canSendVerificationParameters(_workerAddress)) {
+        // check that worker has send a model, that don't receive new model anymore and that model is not ready
+        if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
             for (
                 uint256 i = 0;
