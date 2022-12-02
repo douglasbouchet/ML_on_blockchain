@@ -147,9 +147,14 @@ contract EncyptionJobContainer {
             addressToVerificationParameters[
                 _workerAddress
             ] = VerificationParameters(_clearModel, _workerAddress);
-            // We check if hash of clear model is equal to the hash of the model sent by the worker during leaning phase
+            // We check if hash of clear model + worker's address converted to uint256
+            // is equal to the hash of the model sent by the worker during leaning phase
             // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
-            bytes32 modelHash = keccak256(abi.encodePacked(_clearModel));
+            uint256 model_with_public_key = _clearModel +
+                uint256(_workerAddress);
+            bytes32 modelHash = keccak256(
+                abi.encodePacked(model_with_public_key)
+            );
             // we get the model sent by the worker during learning phase
             bytes32 modelSentByWorker = addressToHashModel[_workerAddress];
             // we check if the two are equals

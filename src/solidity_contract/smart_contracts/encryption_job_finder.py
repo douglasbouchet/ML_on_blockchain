@@ -98,11 +98,6 @@ class EncryptionJobFinder(Contract):
         return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
-        # clear_worker_secret = [
-        #    clear_worker_secret[i: i + 1]
-        #    for i in range(0, len(clear_worker_secret), 1)
-        # ]
-        print("Inside send_verifications_parameters, clear_model:", clear_model)
         try:
             register_tx = self.contract.functions.addVerificationParameters(
                 worker_address, clear_model

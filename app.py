@@ -192,17 +192,25 @@ def simple_encryption_check():
 
     # now we send the verification parameters
     for i, worker in enumerate(worker_pool[:2]):
-        res = worker.send_verifications(True)
+        res = worker.send_verifications(good_model=True, good_address=True)
         print("Worker {} sending verification parameters: ".format(i), res)
         assert res == True
 
     # we send a model different that the first one we send, so should be rejected
-    res = worker_pool[2].send_verifications(False)
-    print("Worker {} sending verification parameters: ".format(2), res)
+    res = worker_pool[2].send_verifications(
+        good_model=False, good_address=True)
+    print("Worker {} sending verification parameters with wrong model but good address: ".format(2), res)
     assert res == False
+    res = worker_pool[2].send_verifications(
+        good_model=True, good_address=False)
+    print("Worker {} sending verification parameters with good model but wrong address: ".format(2), res)
+    assert res == False
+    res = worker_pool[2].send_verifications(good_model=True, good_address=True)
+    print("Worker {} sending verification parameters with good model and address: ".format(2), res)
+    assert res == True
 
     for i, worker in enumerate(worker_pool[3:]):
-        res = worker.send_verifications(True)
+        res = worker.send_verifications(good_model=True, good_address=True)
         print("Worker {} sending verification parameters: ".format(i), res)
         assert res == False
 

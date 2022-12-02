@@ -1,5 +1,4 @@
 import sha3
-import os
 from web3 import Web3
 from web3.auto import w3
 
@@ -10,60 +9,19 @@ class EncryptionWorker:
         self.private_key = private_key
         self.contract = contract
         self.id = id
-        # key used for model encryption and verification. Should be used once for each model
-        self.secret = self.generate_secret()
-        # self.secret = Fernet.generate_key()
-        self.k = sha3.keccak_256()
         #self.model = [97, 98, 99]
         self.model = [97]
 
-    def generate_secret(self) -> bytes:
-        """Generate a secret key for the worker
-        The secret key consists of 32 random bytes
-        Returns:
-            bytes: secret key
-        """
-        # generate a random 32 bytes array
-        return os.urandom(32)
-
-    def encrypt_model(self, model) -> bytes:
-        """Encrypt the model using the secret key
-        Model xored with secret as a byte array of size 32.
-        Then compute its Keccak256 hash
-        Args:
-            model(int[32]): model to encrypt
-
-        return:
-        """
-        #print("secret", self.secret)
-        # convert the model to a byte array
-        model_bytes = bytes(model)
-        # xor the model using the secret
-        encrypted_model = bytes(
-            [a ^ b for a, b in zip(model_bytes, self.secret)])
-        # compute the keccak256 hash of the encrypted model
-        self.k.update(encrypted_model)
-        return self.k.digest()
-
     def send_encrypted_model(self, good_model=True):
-
         # model = self.learn_model(good_model)
         # first we learn a new model
         model = self.model[0]
         # then we add the int value of worker's address to the model (i.e to prove that the worker
-        #  is the one who learned the model)
-        #int_address = int(self.address, 16)
-        int_address = 0
-        print("int_address", int_address)
-        print("model:", model)
+        # is the one who learned the model)
+        int_address = int(self.address, 16)
         encrypted_model = [model + int_address]
-        print("encrypted_model", encrypted_model)
         model_hash = Web3.solidityKeccak(
             ["uint256"], encrypted_model).hex()
-        # model_hash = Web3.solidityKeccak(
-        #    ["uint256"], self.model).hex()
-        # print("model_hash", model_hash)
-        # First we compute the model
         res = self.contract.send_hashed_model(
             model_hash, self.address, self.private_key
         )
@@ -81,52 +39,28 @@ class EncryptionWorker:
             model_hash,
             self.address,
             self.private_key
-            # model_keccak, model_secret_keccak, self.address, self.private_key
         )
         print("send_encrypted_model_v2: return value", res)
         return res
-
-    # def send_encrypted_model(self, good_model=True):
-    #     model = self.learn_model(good_model)
-    #     # encrypt the model using Fernet and the worker's secret
-    #     encrypted_model = self.encrypt_model(model)
-    #     #print("encrypted_model", encrypted_model)
-    #     encrypted_model = "".join([str(i) for i in encrypted_model])
-    #     #print("encrypted_model", encrypted_model)
-    #     # convert the encrypted model a bite array
-    #     #encrypted_model = bytes(encrypted_model, 'utf-8')
-    #     encrypted_model = bytes('1111', 'utf-8')
-    #     # convert the model to hexadecimals
-    #     #encrypted_model_hex = Web3.toHex(encrypted_model)
-    #     #print("encrypted_model", encrypted_model)
-    #     res = self.contract.send_encrypted_model(
-    #         encrypted_model, self.address, self.private_key
-    #     )
-    #     if len(res) == 2:
-    #         return (res[0] == True and res[1] == True)
-    #     return False
 
     def check_can_send_verification_parameters(self):
         # check the number of submitted models from the smart contract
         return self.contract.check_can_send_verification_parameters(self.address)
 
-    # def send_verifications(self):
-    #     # send the verifications to the blockchain (self.nounce, self.secret)
-    #     # TODO replace secret by full length
-    #     return self.contract.send_verifications_parameters(
-    #         #self.nounce, bytes(self.secret)[:4], self.address, self.private_key
-    #         0, bytes("sdsdsdsd".encode())[:4], self.address, self.secret
-    #     )
-    # def send_verifications(self, good_model=True) -> bool:
-    def send_verifications(self, good_model):
+    def send_verifications(self, good_model, good_address) -> bool:
+        """Send the verifications to the blockchain
+        The verifications are the nounce and the secret key
+        Args:
+            good_model(bool): If True send correct model, else a model which din't match the one we send before
+            good_address(bool): True if the address is good, False otherwise
+        Returns:
+            bool: True if the transaction was successful, False otherwise
+        """
         #clear_model = self.learn_model(good_model)
-        if good_model:
-            clear_model = self.model[0]
-        else:
-            # we send a model which din't match the one we send before
-            clear_model = 0
+        address = self.address if good_address else "0x0000000000000000000000000000000000000042"  # dummy address
+        clear_model = self.model[0] if good_model else 0
         return self.contract.send_verifications_parameters(
-            clear_model, self.address, self.private_key
+            clear_model, address, self.private_key
         )
         return res
 
@@ -138,13 +72,6 @@ class EncryptionWorker:
             good_model (bool, optional): _description_. Defaults to True.
 
         Returns:
-            str: [1]*32 if good_model is true [0]*32 otherwise
+            int: [1]*32 if good_model is true [0]*32 otherwise
         """
-        if good_model:
-            return [1 for i in range(32)]
-        else:
-            return [0 for i in range(32)]
-        # TODO
-        # generate a 32 bit array of 0s
-        # model = [0 for i in range(32)]
-        # return model
+        return [1 for i in range(32)] if good_model else [0 for i in range(32)]
