@@ -8,8 +8,10 @@ contract EncryptionJobFinder {
     EncyptionJobContainer private jobContainer;
 
     constructor() {
-        uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 5 models
+        //uint256 thresholdForBestModel = 2;
+        //uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 5 models
+        uint256 thresholdForBestModel = 3; // require 3 equals model to validate
+        uint256 thresholdMaxNumberReceivedModels = 6; //stop receiving models when we have 6 models
         jobContainer = new EncyptionJobContainer(
             5, // model weight (TODO change to bytes4)
             0, // batch index

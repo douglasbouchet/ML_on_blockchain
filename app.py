@@ -229,89 +229,48 @@ def simple_encryption_check():
     assert res[0] == 97 and res[1] == True
 
 
-# def simple_learning_scenario():
-#     """
-#     In this scenario we have 6 workers, 3 of them send the same model (97), 2 send a different model (98)
-#     and one send a model (99). Best model should be the one with value 97
-#     """
-#     encrypted_hypervisor = EncryptedHypervisor()
-#     learning_server = FederatingLearningServer(3, 100, 10)
-#     # ------Deploy smart contract---------
-#     encrypted_job_finder = learning_server.deploy_contract(
-#         "encryptionJobFinder", "EncryptionJobFinder"
-#     )
-#     encrypted_hypervisor.contract = encrypted_job_finder
-#     # init the workers
-#     encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
-#     worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=6)
-#     for i, worker in enumerate(worker_pool):
-#         if i < 3:
-#             worker.send_encrypted_model(model=97)
-#         elif i < 5:
-#             worker.send_encrypted_model(model=98)
-#         else:
-#             worker.send_encrypted_model(model=99)
+def simple_learning_scenario():
+    """
+    In this scenario we have 6 workers, 3 of them send the same model (97), 2 send a different model (98)
+    and one send a model (99). Best model should be the one with value 97
+    """
+    encrypted_hypervisor = EncryptedHypervisor()
+    learning_server = FederatingLearningServer(3, 100, 10)
+    # ------Deploy smart contract---------
+    encrypted_job_finder = learning_server.deploy_contract(
+        "encryptionJobFinder", "EncryptionJobFinder"
+    )
+    encrypted_hypervisor.contract = encrypted_job_finder
+    # init the workers
+    encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
+    worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=6)
+    for i, worker in enumerate(worker_pool):
+        if i < 3:
+            assert worker.send_encrypted_model(model=97) == True
+        elif i < 5:
+            assert worker.send_encrypted_model(model=98) == True
+        else:
+            assert worker.send_encrypted_model(model=99) == True
 
+    assert worker_pool[0].check_can_send_verification_parameters() == True
 
-#     # make workers 1 to 3 sends their models
-#     for i, worker in enumerate(worker_pool[:3]):
-#         res = worker.send_encrypted_model()
-#         assert res == True
-#         print("Worker {} sending model: ".format(i), res)
-#         # send again a model should return false as model is rejected
-#         #assert worker.send_encrypted_model() == False
+    # now we send the verification parameters (all workers send the same model they learned with correct address)
+    # we send weights in following order: 97, 97, 98, 99, 98, 97 so we reach the threshold of 3 at the end
+    for i in [0, 1, 3, 5, 4, 2]:
+        assert worker_pool[i].send_verifications(
+            good_model=True, good_address=True) == True
+        # we check if the model is ready
+        print("{} model is ready:{}".format(i,
+                                            encrypted_job_finder.get_model_is_ready()))
 
-#     # we check if we can send the verification parameters
-#     print("can send:", worker_pool[0].check_can_send_verification_parameters())
-#     # now job has received enough models, it shoudn't accept any more models
-#     for i, worker in enumerate(worker_pool[3:]):
-#         res = worker.send_encrypted_model()
-#         assert res == False
-#         print("Worker {} sending model: ".format(i), res)
-
-#     # we check that we can send the verification parameters only for worker who did send a model
-#     for i, worker in enumerate(worker_pool[:3]):
-#         res = worker.check_can_send_verification_parameters()
-#         # print("Worker {} check_can_send_verification_parameters: ".format(i), res)
-#         assert res == True
-#     for i, worker in enumerate(worker_pool[3:]):
-#         res = worker.check_can_send_verification_parameters()
-#         # print("Worker {} check_can_send_verification_parameters: ".format(i), res)
-#         assert res == False
-
-#     # now we send the verification parameters
-#     for i, worker in enumerate(worker_pool[:2]):
-#         res = worker.send_verifications(good_model=True, good_address=True)
-#         print("Worker {} sending verification parameters: ".format(i), res)
-#         assert res == True
-#         print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
-
-#     # we send a model different that the first one we send, so should be rejected
-#     res = worker_pool[2].send_verifications(
-#         good_model=False, good_address=True)
-#     print("Worker {} sending verification parameters with wrong model but good address: ".format(2), res)
-#     assert res == False
-#     res = worker_pool[2].send_verifications(
-#         good_model=True, good_address=False)
-#     print("Worker {} sending verification parameters with good model but wrong address: ".format(2), res)
-#     assert res == False
-#     res = worker_pool[2].send_verifications(good_model=True, good_address=True)
-#     print("Worker {} sending verification parameters with good model and address but enough model received so still deny: ".format(2), res)
-#     assert res == False
-
-#     for i, worker in enumerate(worker_pool[3:]):
-#         res = worker.send_verifications(good_model=True, good_address=True)
-#         print("Worker {} sending verification parameters: ".format(i), res)
-#         assert res == False
-
-#     # we check if the model is ready
-#     res = encrypted_job_finder.get_model_is_ready()
-#     print("model is ready:{}".format(res))
-#     assert res == True
-#     # we check value of the model
-#     res = encrypted_job_finder.get_final_model()
-#     print("model value:{}".format(res))
-#     assert res[0] == 97 and res[1] == True
+    # we check if the model is ready
+    res = encrypted_job_finder.get_model_is_ready()
+    print("model is ready:{}".format(res))
+    assert res == True
+    # we check value of the model
+    res = encrypted_job_finder.get_final_model()
+    print("model value:{}".format(res))
+    assert res[0] == 97 and res[1] == True
 
 
 if __name__ == "__main__":
@@ -320,4 +279,5 @@ if __name__ == "__main__":
     # parallel_learning_main()
     # sequential_learning_main()
     # encrypted_main()
-    simple_encryption_check()
+    # simple_encryption_check()
+    simple_learning_scenario()
