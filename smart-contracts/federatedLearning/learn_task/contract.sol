@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-contract EncyptionJobContainer {
+contract LearnTask {
     struct VerificationParameters {
         uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
         address workerAddress;
@@ -92,18 +92,25 @@ contract EncyptionJobContainer {
     /// @notice each address can send only one model
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
+
     /// @return true if the model was added to the jobContainer, false otherwise
-    function addNewEncryptedModel(address workerAddress, bytes32 modelHash)
+    //function addNewEncryptedModel(address workerAddress, bytes32 modelHash)
+    //    modelOnlySendOnce(workerAddress)
+    //    returns (bool)
+    //{
+    //function addNewEncryptedModel(uint256 workerAddress) public returns (bool) {
+    //function addNewEncryptedModel(uint160 workerAddress) public returns (bool) {
+    function addNewEncryptedModel(uint160 workerAddress, bytes32 modelHash)
         public
-        modelOnlySendOnce(workerAddress)
         returns (bool)
     {
         // if we already received the maximum number of models, we don't accept new ones
         if (!canReceiveNewModel) {
             return false;
         }
-        receivedModelsAddresses.push(workerAddress);
-        addressToHashModel[workerAddress] = modelHash;
+        //address _workerAddress = address(workerAddress); // equivalent to receiving the worker address (checked on remix)
+        // receivedModelsAddresses.push(address(workerAddress));
+        // addressToHashModel[workerAddress] = modelHash; TODO uncomment
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
         // new models
         if (
@@ -253,5 +260,10 @@ contract EncyptionJobContainer {
             abi.encodePacked(uint256(97))
         );
         return modelHash == computedModelHash;
+    }
+
+    /// @notice dummy function to check if diablo is working
+    function testDiablo(int256) public pure returns (bool) {
+        return true;
     }
 }

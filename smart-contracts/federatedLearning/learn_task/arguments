@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+#
+# See: https://docs.soliditylang.org/en/v0.8.11/abi-spec.html
+
+import base64
+import re
+import struct
+import sys
+
+
+counter = 1
+for line in sys.stdin:
+    proto = None
+    delta = None
+
+    # Try to match a addNewEncryptedModel call.
+    # m = re.search('^addNewEncryptedModel\((\d+)\)$', line)
+    m = re.search('^addNewEncryptedModel\(\)$', line)
+    if m:
+        #proto = 'addNewEncryptedModel(uint256)'
+        #proto = 'addNewEncryptedModel(uint160)'
+        #proto = 'addNewEncryptedModel(bytes32)'
+        proto = 'addNewEncryptedModel(uint160,bytes32)'
+        #delta = int (m.group(1))
+        delta = counter
+        counter += 1
+
+    # No match -> this is not a valid call.
+    if not proto:
+        exit(1)
+
+    # Print the function prototype.
+    # Diablo automatically translates it to the function unique id.
+    print(proto)
+
+    # Arguments are passed to diablo as a base64 encoded string.
+
+    # --------uint160 encoding---------
+    # 160 = 20 * 8 -> 16 bytes of padding, 4 bytes of unsigned integer with the actual value
+    # print (base64.b64encode(struct.pack('>16sI', b'\x00' * 16, delta)).decode(
+    #    'ascii'), flush = True)
+
+    # -------bytes32 encoding---------
+    #bytes32_string = b'This is a bytes32 string'
+    #packed_string = struct.pack('>32s', bytes32_string)
+    #encoded_string = base64.b64encode(packed_string).decode('ascii')
+#
+    #print(encoded_string, flush=True)
+    # -------------------------------
+    # bytes32_string = 'This is a bytes32 string'
+    #print(base64.b64encode(bytes32_string.encode('utf-8')).decode('ascii'), flush = True)
+    # -------------------------------
+    # -------uint160 and bytes32 encoding---------
+    bytes32_string = 'This is a bytes32 string'
+    print(base64.b64encode(struct.pack('>28sI', bytes32_string.encode(
+        'ascii'), counter)).decode('ascii'), flush=True)
+
+    # print (base64.b64encode(struct.pack('>28sI', b'\x00' * 28, delta)).decode(
+    #   'ascii'), flush = True)
+    # create a bytes32 value from the string
+    # print (base64.b64encode(struct.pack('>32s', bytes(counter, 'utf-8'))).decode(
+    #    'ascii'), flush = True)
+
+    # Arguments should be encoded in big endian.
+    # We want a 256 signed integer:
+    #   28 bytes of padding
+    #    4 bytes of unsigned integer with the actual value
+    #
+    # print (base64.b64encode(struct.pack('>28sI', b'\x00' * 28, delta)).decode(
+    #    'ascii'), flush = True)
