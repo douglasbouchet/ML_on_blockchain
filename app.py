@@ -195,6 +195,8 @@ def simple_encryption_check():
         res = worker.send_verifications(good_model=True, good_address=True)
         print("Worker {} sending verification parameters: ".format(i), res)
         assert res == True
+        print("model is ready:{}".format(
+            encrypted_job_finder.get_model_is_ready()))
 
     # we send a model different that the first one we send, so should be rejected
     res = worker_pool[2].send_verifications(
@@ -213,6 +215,9 @@ def simple_encryption_check():
         res = worker.send_verifications(good_model=True, good_address=True)
         print("Worker {} sending verification parameters: ".format(i), res)
         assert res == False
+
+    # we check if the model is ready
+    print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
 
     # for i, worker in enumerate(worker_pool):
     #    print(worker_pool[0].check_can_send_verification_parameters())

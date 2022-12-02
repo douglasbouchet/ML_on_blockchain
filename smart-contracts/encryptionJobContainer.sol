@@ -11,8 +11,8 @@ contract EncyptionJobContainer {
     // address of a worker to the parameters used to verify the model and proof it was computed by the worker
     mapping(address => VerificationParameters) addressToVerificationParameters;
 
-    mapping(bytes32 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
-    bytes32[] models; // keep track of each different model we decrypted
+    mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
+    uint256[] models; // keep track of each different model we have seen (models are stored in clear)
 
     uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
     uint256 thresholdMaxNumberReceivedModels;
@@ -162,38 +162,35 @@ contract EncyptionJobContainer {
                 modelHash == modelSentByWorker,
                 "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
             );
-
-            // // we decrypt the model of this woker
-            // bytes32 encryptedModel = addressToHashModel[_workerAddress];
-            // //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
-            // bytes4 decryptedModel = 0; //TODO change
-            // // we add the decrypted model to the modelToNSameModels mapping
-            // modelToNSameModels[decryptedModel] += 1;
-            // // if decryptedModel not in models, we add it
-            // bool modelAlreadyInModels = false;
-            // for (uint256 i = 0; i < models.length; i++) {
-            //     if (models[i] == decryptedModel) {
-            //         modelAlreadyInModels = true;
-            //     }
-            // }
-            // if (!modelAlreadyInModels) {
-            //     models.push(decryptedModel);
-            // }
-            // bytes32 _bestModel = checkEnoughSameModel();
-            // if (_bestModel != 0x0) {
-            //     // in that case we elected the best model, so we can pay workers that did correct job
-            //     modelIsReady = true;
-            //     // publish the new model
-            //     newModel = _bestModel;
-            //     // pay workers
-            //     payCorrectWorkers(_bestModel);
-            // }
+            // now we know the worker did prove that this model was produced by him, we can add it to the received
+            // clear models
+            modelToNSameModels[_clearModel] += 1; //TODO check if ok
+            // check if we already registered this model
+            bool modelAlreadyInModels = false;
+            for (uint256 i = 0; i < models.length; i++) {
+                if (models[i] == _clearModel) {
+                    modelAlreadyInModels = true;
+                }
+            }
+            // if decryptedModel not in models, we add it
+            if (!modelAlreadyInModels) {
+                models.push(_clearModel);
+            }
+            uint256 _bestModel = checkEnoughSameModel();
+            if (_bestModel != 0) {
+                // in that case we elected the best model, so we can pay workers that did correct job
+                modelIsReady = true;
+                // publish the new model
+                newModel = _bestModel;
+                // pay workers
+                //payCorrectWorkers(_bestModel);
+            }
         } else {
             revert("You can't send your verification parameters");
         }
     }
 
-    function checkEnoughSameModel() private view returns (bytes32) {
+    function checkEnoughSameModel() private view returns (uint256) {
         // if one of the model has been seen more than thresholdForBestModel times, we return true
         for (uint256 i = 0; i < models.length; i++) {
             if (modelToNSameModels[models[i]] >= thresholdForBestModel) {
@@ -248,10 +245,6 @@ contract EncyptionJobContainer {
     //------------ Debug functions---------------------------------
     function getModelIsready() public view returns (bool) {
         return modelIsReady;
-    }
-
-    function setModelIsready(bool _modelIsReady) public {
-        modelIsReady = _modelIsReady;
     }
 
     function compareKeccak(bytes32 modelHash) public pure returns (bool) {
