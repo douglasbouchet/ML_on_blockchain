@@ -3,14 +3,16 @@ pragma solidity ^0.7.0;
 
 import "./learnTask.sol";
 
-contract TaskFinder {
-    LearnTask[] public previousJobs;
-    LearnTask private jobContainer;
+contract EncryptionJobFinder {
+    EncyptionJobContainer[] public previousJobs;
+    EncyptionJobContainer private jobContainer;
 
     constructor() {
-        uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 5 models
-        jobContainer = new LearnTask(
+        //uint256 thresholdForBestModel = 2;
+        //uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 5 models
+        uint256 thresholdForBestModel = 3; // require 3 equals model to validate
+        uint256 thresholdMaxNumberReceivedModels = 6; //stop receiving models when we have 6 models
+        jobContainer = new EncyptionJobContainer(
             5, // model weight (TODO change to bytes4)
             0, // batch index
             thresholdForBestModel,
@@ -18,7 +20,7 @@ contract TaskFinder {
         );
     }
 
-    function getJob() public view returns (int256, uint256) {
+    function getJob() public view returns (uint256, uint256) {
         /**No condition, everyone can claim the job, and reclaim it */
         return jobContainer.getModelAndBatchIndex();
     }
@@ -28,8 +30,8 @@ contract TaskFinder {
         previousJobs.push(jobContainer);
         // create a new job TODO dummies value atm, should be getted from fl server
         uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 5;
-        jobContainer = new LearnTask(
+        uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 3 models
+        jobContainer = new EncyptionJobContainer(
             5,
             1,
             thresholdForBestModel,
@@ -39,56 +41,39 @@ contract TaskFinder {
 
     /// @notice send a new encrypted model to the jobContainer
     /// @param workerAddress the address of the worker sending the model
+    /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
     // function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
-    function addEncryptedModel(
-        address workerAddress,
-        bytes1[32] memory model_keccak,
-        bytes1[32] memory model_secret_keccak
-    ) public returns (bool) {
+    function addEncryptedModel(address workerAddress, bytes32 modelHash)
+        public
+        returns (bool)
+    {
         bool modelAdded = jobContainer.addNewEncryptedModel(
             workerAddress,
-            model_keccak
+            modelHash
         );
-        return modelAdded;
-
         // // if the model is complete, create a new job and push the current one to previousJobs
         // if (jobContainer.getModelIsready()) {
         //     createNewJob();
         // }
+        return modelAdded;
     }
 
-    // function addVerificationParameters(
-    //     address workerAddress,
-    //     int256 workerNonce,
-    //     bytes1[44] memory workerSecret
-    // ) public {
-    //     jobContainer.addVerificationParameters(
-    //         workerAddress,
-    //         workerNonce,
-    //         workerSecret
-    //     );
-    // }
     function addVerificationParameters(
         address workerAddress,
-        bytes1[32] memory workerSecret,
-        bytes1[32] memory clearModel
+        uint256 clearModel
     ) public {
-        jobContainer.addVerificationParameters(
-            workerAddress,
-            workerSecret,
-            clearModel
-        );
+        jobContainer.addVerificationParameters(workerAddress, clearModel);
     }
 
     function getAllPreviousJobsBestModel()
         public
         view
-        returns (bytes32[] memory)
+        returns (uint256[] memory)
     {
-        bytes32[] memory bestModels = new bytes32[](previousJobs.length);
+        uint256[] memory bestModels = new uint256[](previousJobs.length);
         for (uint256 i = 0; i < previousJobs.length; i++) {
-            (bytes32 newModel, bool ready) = previousJobs[i].getModel();
+            (uint256 newModel, bool ready) = previousJobs[i].getModel();
             if (ready) {
                 bestModels[i] = newModel;
             } else {
@@ -98,13 +83,17 @@ contract TaskFinder {
         return bestModels;
     }
 
-    function canSendVerificationParameters() public view returns (bool) {
-        return jobContainer.canSendVerificationParameters();
+    function canSendVerificationParameters(address workerAddress)
+        public
+        view
+        returns (bool)
+    {
+        return jobContainer.canSendVerificationParameters(workerAddress);
     }
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getFinalModel() public view returns (bytes32, bool) {
+    function getFinalModel() public view returns (uint256, bool) {
         return jobContainer.getModel();
     }
 
@@ -112,6 +101,14 @@ contract TaskFinder {
 
     function getModelIsready() public view returns (bool) {
         return jobContainer.getModelIsready();
+    }
+
+    function computeKeccak256(bytes1[32] memory clearModel)
+        public
+        view
+        returns (bytes32)
+    {
+        return jobContainer.computeKeccak256(clearModel);
     }
 
     function compareKeccak(bytes32 modelHash) public view returns (bool) {

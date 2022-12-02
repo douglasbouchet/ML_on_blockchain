@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-contract LearnTask {
+contract EncyptionJobContainer {
     struct VerificationParameters {
-        bytes1[32] workerModel; // 32 bytes for the model (will change after to non fixed size)
-        bytes1[32] workerSecret; // 32 bytes worker's secret key (not the private key)
+        uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
+        address workerAddress;
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
-    //mapping(address => bytes4) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
-    mapping(address => bytes1[32]) addressToEncModel; // address of a worker to the encrypted model it sends (32 bits model)
+    mapping(address => bytes32) addressToHashModel; // address of a worker to the encrypted model it sends (32 bits model)
     // address of a worker to the parameters used to verify the model and proof it was computed by the worker
     mapping(address => VerificationParameters) addressToVerificationParameters;
 
-    mapping(bytes32 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
-    bytes32[] models; // keep track of each different model we decrypted
+    mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
+    uint256[] models; // keep track of each different model we have seen (models are stored in clear)
 
     uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
     uint256 thresholdMaxNumberReceivedModels;
@@ -22,9 +21,9 @@ contract LearnTask {
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
-    int256 currentModel;
+    uint256 currentModel;
     uint256 batchIndex;
-    bytes32 newModel; // the weight of the new model
+    uint256 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
 
@@ -56,7 +55,7 @@ contract LearnTask {
     }
 
     constructor(
-        int256 _currentModel,
+        uint256 _currentModel,
         uint256 _batchIndex,
         uint256 _thresholdForBestModel,
         uint256 _thresholdMaxNumberReceivedModels
@@ -67,25 +66,44 @@ contract LearnTask {
         thresholdMaxNumberReceivedModels = _thresholdMaxNumberReceivedModels;
     }
 
-    function getModelAndBatchIndex() public view returns (int256, uint256) {
+    function getModelAndBatchIndex() public view returns (uint256, uint256) {
         return (currentModel, batchIndex);
     }
 
-    function canSendVerificationParameters() public view returns (bool) {
-        return !canReceiveNewModel;
+    /// @notice tell weather a worker can send its verification parameters or not
+    /// @param workerAddress the address of the worker
+    /// @return true if the worker can send its verification parameters, false otherwise
+    function canSendVerificationParameters(address workerAddress)
+        public
+        view
+        returns (bool)
+    {
+        // check if the workerAddress did send a model during learning phase
+        bool workerHasSendModel = false;
+        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
+            if (receivedModelsAddresses[i] == workerAddress) {
+                workerHasSendModel = true;
+            }
+        }
+        return !canReceiveNewModel && workerHasSendModel;
     }
 
     /// @notice send a new encrypted model to the jobContainer
     /// @notice each address can send only one model
     /// @param workerAddress the address of the worker sending the model
-    /// @param encryptedModel the encrypted model sent by the worker
+    /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
-    function addNewEncryptedModel(
-        address workerAddress,
-        bytes1[32] memory encryptedModel
-    ) public modelOnlySendOnce(workerAddress) returns (bool) {
+    function addNewEncryptedModel(address workerAddress, bytes32 modelHash)
+        public
+        modelOnlySendOnce(workerAddress)
+        returns (bool)
+    {
+        // if we already received the maximum number of models, we don't accept new ones
+        if (!canReceiveNewModel) {
+            return false;
+        }
         receivedModelsAddresses.push(workerAddress);
-        addressToEncModel[workerAddress] = encryptedModel;
+        addressToHashModel[workerAddress] = modelHash;
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
         // new models
         if (
@@ -101,90 +119,78 @@ contract LearnTask {
         pure
         returns (bytes32)
     {
-        bytes32 a = bytes32(
-            0x300330ecd127756b824aa13e843cb1f43c473cb22eaf3750d5fb9c99279af8c3
-        );
-        // convert bytes32 to byte1[32]
-        bytes1[32] memory b;
-        for (uint256 i = 0; i < 32; i++) {
-            b[i] = a[i];
-        }
-
         return keccak256(abi.encodePacked(clearModel));
     }
 
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
-    // function addVerificationParameters(
-    //     address _workerAddress,
-    //     int256 _workerNonce,
-    //     bytes1[44] memory _workerSecret
-    // ) public onlyReceivedModelsAddresses(_workerAddress) {
     function addVerificationParameters(
         address _workerAddress,
-        bytes1[32] memory _workerSecret,
-        bytes1[32] memory _clearModel
+        uint256 _clearModel
     ) public onlyReceivedModelsAddresses(_workerAddress) {
-        require(
-            canReceiveNewModel == false,
-            "Can't send verification parameters, not enough models received"
-        );
-        // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
-        for (
-            uint256 i = 0;
-            i < receivedVerificationParametersAddresses.length;
-            i++
-        ) {
-            require(
-                receivedVerificationParametersAddresses[i] != _workerAddress,
-                "You already sent your verification parameters"
-            );
-        }
-
-        // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
-        receivedVerificationParametersAddresses.push(_workerAddress);
-        addressToVerificationParameters[
-            _workerAddress
-        ] = VerificationParameters(_clearModel, _workerSecret);
-        // We check if hash of clear model is equal to the hash of the model sent by the worker during leaning phase
-        bytes32 _modelHash = keccak256(abi.encodePacked(_clearModel));
-        // get first byte of _modelHash
-        bytes1 _firstByte = bytes1(_modelHash[0]);
-        bytes1 _firstByteEnc = bytes1(addressToEncModel[_workerAddress][0]);
-        require(
-            _firstByte == _firstByteEnc,
-            "The model sent by the worker is not the same as the one he sent during learning phase"
-        );
-
-        // we decrypt the model of this woker
-        //bytes4 encryptedModel = addressToEncModel[_workerAddress];
-        bytes1[32] memory encryptedModel = addressToEncModel[_workerAddress];
-        //bytes4 decryptedModel = encryptedModel ^ _workerSecret;
-        bytes4 decryptedModel = 0; //TODO change
-        // we add the decrypted model to the modelToNSameModels mapping
-        modelToNSameModels[decryptedModel] += 1;
-        // if decryptedModel not in models, we add it
-        bool modelAlreadyInModels = false;
-        for (uint256 i = 0; i < models.length; i++) {
-            if (models[i] == decryptedModel) {
-                modelAlreadyInModels = true;
+        // check that worker has send a model, that don't receive new model anymore and that model is not ready
+        if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
+            // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
+            for (
+                uint256 i = 0;
+                i < receivedVerificationParametersAddresses.length;
+                i++
+            ) {
+                require(
+                    receivedVerificationParametersAddresses[i] !=
+                        _workerAddress,
+                    "You already sent your verification parameters"
+                );
             }
-        }
-        if (!modelAlreadyInModels) {
-            models.push(decryptedModel);
-        }
-        bytes32 _bestModel = checkEnoughSameModel();
-        if (_bestModel != 0x0) {
-            // in that case we elected the best model, so we can pay workers that did correct job
-            modelIsReady = true;
-            // publish the new model
-            newModel = _bestModel;
-            // pay workers
-            payCorrectWorkers(_bestModel);
+            // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
+            receivedVerificationParametersAddresses.push(_workerAddress);
+            addressToVerificationParameters[
+                _workerAddress
+            ] = VerificationParameters(_clearModel, _workerAddress);
+            // We check if hash of clear model + worker's address converted to uint256
+            // is equal to the hash of the model sent by the worker during leaning phase
+            // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
+            uint256 model_with_public_key = _clearModel +
+                uint256(_workerAddress);
+            bytes32 modelHash = keccak256(
+                abi.encodePacked(model_with_public_key)
+            );
+            // we get the model sent by the worker during learning phase
+            bytes32 modelSentByWorker = addressToHashModel[_workerAddress];
+            // we check if the two are equals
+            require(
+                modelHash == modelSentByWorker,
+                "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
+            );
+            // now we know the worker did prove that this model was produced by him, we can add it to the received
+            // clear models
+            modelToNSameModels[_clearModel] += 1; //TODO check if ok
+            // check if we already registered this model
+            bool modelAlreadyInModels = false;
+            for (uint256 i = 0; i < models.length; i++) {
+                if (models[i] == _clearModel) {
+                    modelAlreadyInModels = true;
+                }
+            }
+            // if decryptedModel not in models, we add it
+            if (!modelAlreadyInModels) {
+                models.push(_clearModel);
+            }
+            uint256 _bestModel = checkEnoughSameModel();
+            if (_bestModel != 0) {
+                // in that case we elected the best model, so we can pay workers that did correct job
+                modelIsReady = true;
+                // publish the new model
+                newModel = _bestModel;
+                // pay workers
+                //payCorrectWorkers(_bestModel);
+            }
+        } else {
+            revert("You can't send your verification parameters");
         }
     }
 
-    function checkEnoughSameModel() private view returns (bytes32) {
+    function checkEnoughSameModel() private view returns (uint256) {
         // if one of the model has been seen more than thresholdForBestModel times, we return true
         for (uint256 i = 0; i < models.length; i++) {
             if (modelToNSameModels[models[i]] >= thresholdForBestModel) {
@@ -206,8 +212,8 @@ contract LearnTask {
                 memory verificationParameters = addressToVerificationParameters[
                     workerAddress
                 ];
-            //bytes4 encryptedModel = addressToEncModel[workerAddress];
-            bytes1[32] memory encryptedModel = addressToEncModel[workerAddress];
+            //bytes4 encryptedModel = addressToHashModel[workerAddress];
+            bytes32 encryptedModel = addressToHashModel[workerAddress];
             // bytes4 decryptedModel = encryptedModel ^
             //     verificationParameters.workerSecret;
             bytes4 decryptedModel = 0;
@@ -228,11 +234,11 @@ contract LearnTask {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getModel() public view returns (bytes32, bool) {
+    function getModel() public view returns (uint256, bool) {
         if (modelIsReady) {
             return (newModel, true);
         } else {
-            return ("0x0", false);
+            return (0, false);
         }
     }
 
@@ -241,17 +247,10 @@ contract LearnTask {
         return modelIsReady;
     }
 
-    function setModelIsready(bool _modelIsReady) public {
-        modelIsReady = _modelIsReady;
-    }
-
-    function getAddressToEncModelLen() public view returns (uint256) {
-        return receivedModelsAddresses.length;
-    }
-
     function compareKeccak(bytes32 modelHash) public pure returns (bool) {
         bytes32 computedModelHash = keccak256(
-            abi.encodePacked(uint8(97), uint8(98), uint8(99))
+            //abi.encodePacked(uint8(97), uint8(98), uint8(99))
+            abi.encodePacked(uint256(97))
         );
         return modelHash == computedModelHash;
     }
