@@ -4,7 +4,7 @@ pragma solidity ^0.7.0;
 contract EncyptionJobContainer {
     struct VerificationParameters {
         uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
-        bytes1[32] workerSecret; // 32 bytes worker's secret key (not the private key)
+        address workerAddress;
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
     mapping(address => bytes32) addressToHashModel; // address of a worker to the encrypted model it sends (32 bits model)
@@ -126,7 +126,6 @@ contract EncyptionJobContainer {
     /// @notice each address can send only one verification parameters (if has previously sent a model)
     function addVerificationParameters(
         address _workerAddress,
-        bytes1[32] memory _workerSecret,
         uint256 _clearModel
     ) public onlyReceivedModelsAddresses(_workerAddress) {
         // check that worker has send a model and we don't receive new model anymore
@@ -147,7 +146,7 @@ contract EncyptionJobContainer {
             receivedVerificationParametersAddresses.push(_workerAddress);
             addressToVerificationParameters[
                 _workerAddress
-            ] = VerificationParameters(_clearModel, _workerSecret);
+            ] = VerificationParameters(_clearModel, _workerAddress);
             // We check if hash of clear model is equal to the hash of the model sent by the worker during leaning phase
             // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
             bytes32 modelHash = keccak256(abi.encodePacked(_clearModel));

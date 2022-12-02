@@ -46,14 +46,26 @@ class EncryptionWorker:
         return self.k.digest()
 
     def send_encrypted_model(self, good_model=True):
+
+        # model = self.learn_model(good_model)
+        # first we learn a new model
+        model = self.model[0]
+        # then we add the int value of worker's address to the model (i.e to prove that the worker
+        #  is the one who learned the model)
+        #int_address = int(self.address, 16)
+        int_address = 0
+        print("int_address", int_address)
+        print("model:", model)
+        encrypted_model = [model + int_address]
+        print("encrypted_model", encrypted_model)
         model_hash = Web3.solidityKeccak(
-            ["uint256"], self.model).hex()
+            ["uint256"], encrypted_model).hex()
+        # model_hash = Web3.solidityKeccak(
+        #    ["uint256"], self.model).hex()
         # print("model_hash", model_hash)
         # First we compute the model
-        model = self.learn_model(good_model)
-        model_secret_keccak = self.encrypt_model(model)  # bytes[64]
         res = self.contract.send_hashed_model(
-            model_hash, model_secret_keccak, self.address, self.private_key
+            model_hash, self.address, self.private_key
         )
         if len(res) == 2:
             return res[0] == True and res[1] == True
@@ -107,7 +119,6 @@ class EncryptionWorker:
     #     )
     # def send_verifications(self, good_model=True) -> bool:
     def send_verifications(self, good_model):
-        clear_secret = self.secret
         #clear_model = self.learn_model(good_model)
         if good_model:
             clear_model = self.model[0]
@@ -115,7 +126,7 @@ class EncryptionWorker:
             # we send a model which din't match the one we send before
             clear_model = 0
         return self.contract.send_verifications_parameters(
-            clear_secret, clear_model, self.address, self.private_key
+            clear_model, self.address, self.private_key
         )
         return res
 

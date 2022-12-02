@@ -44,26 +44,19 @@ class EncryptionJobFinder(Contract):
 
     # def send_encrypted_model(
     def send_hashed_model(
-        self, model_hash, model_secret_keccak, worker_address, worker_private_key
+        self, encrypted_model_hash, worker_address, worker_private_key
     ):
         """Send the encrypted model to the blockchain
         Args:
-            model_secret_keccak (bytes[]): bytes array of hash of the model xored with the worker secret
-            model_keccak (bytes[]): bytes array of model's hash
-            worker_address (_type_): address of the worker
-            worker_private_key (_type_): private key of the worker
+            encrypted_model_hash (bytes[]): bytes array of hash of the model xored with the worker secret
+            worker_address (str): address of the worker
+            worker_private_key (str): private key of the worker
         """
         # Sanize the worker address
         worker_address = Web3.toChecksumAddress(worker_address)
-        # convert encrypted model to a byte array of size 140
-        # split each byte of the encrypted model into a list of bytes
-        model_secret_keccak = [
-            model_secret_keccak[i: i + 1]
-            for i in range(0, len(model_secret_keccak), 1)
-        ]
         try:
             register_tx = self.contract.functions.addEncryptedModel(
-                worker_address, model_hash, model_secret_keccak
+                worker_address, encrypted_model_hash
             ).build_transaction(
                 {
                     "gasPrice": 0,
@@ -92,7 +85,6 @@ class EncryptionJobFinder(Contract):
     def send_verifications_parameters(
         # self, worker_nounce, worker_secret, worker_address, worker_private_key
         self,
-        clear_worker_secret,
         clear_model,
         worker_address,
         worker_private_key,
@@ -100,21 +92,20 @@ class EncryptionJobFinder(Contract):
         """Send the verification parameters to the blockchain (worker nounce, worker secret)
 
         Args:
-            clear_worker_secret (bytes[]): bytes array of the worker secret
             clear_model (int): the model as an integer (simple atm)
             worker_address (_type_): address of the worker
             worker_private_key (_type_): private key of the worker
         return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
-        clear_worker_secret = [
-            clear_worker_secret[i: i + 1]
-            for i in range(0, len(clear_worker_secret), 1)
-        ]
+        # clear_worker_secret = [
+        #    clear_worker_secret[i: i + 1]
+        #    for i in range(0, len(clear_worker_secret), 1)
+        # ]
         print("Inside send_verifications_parameters, clear_model:", clear_model)
         try:
             register_tx = self.contract.functions.addVerificationParameters(
-                worker_address, clear_worker_secret, clear_model
+                worker_address, clear_model
             ).build_transaction(
                 {
                     "gasPrice": 0,

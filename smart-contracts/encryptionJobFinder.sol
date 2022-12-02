@@ -42,11 +42,10 @@ contract EncryptionJobFinder {
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
     // function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
-    function addEncryptedModel(
-        address workerAddress,
-        bytes32 modelHash,
-        bytes1[32] memory model_secret_keccak
-    ) public returns (bool) {
+    function addEncryptedModel(address workerAddress, bytes32 modelHash)
+        public
+        returns (bool)
+    {
         bool modelAdded = jobContainer.addNewEncryptedModel(
             workerAddress,
             modelHash
@@ -60,14 +59,9 @@ contract EncryptionJobFinder {
 
     function addVerificationParameters(
         address workerAddress,
-        bytes1[32] memory workerSecret,
         uint256 clearModel
     ) public {
-        jobContainer.addVerificationParameters(
-            workerAddress,
-            workerSecret,
-            clearModel
-        );
+        jobContainer.addVerificationParameters(workerAddress, clearModel);
     }
 
     function getAllPreviousJobsBestModel()
