@@ -18,6 +18,7 @@ let:
       number: 1
       name: "learn_task"
 
+
 workloads:
 
   - number: 1
@@ -32,3 +33,10 @@ workloads:
           load:
             0: 10
             1: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            2: 20
+            3: 0

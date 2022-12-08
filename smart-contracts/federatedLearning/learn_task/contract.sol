@@ -263,7 +263,25 @@ contract LearnTask {
     }
 
     /// @notice dummy function to check if diablo is working
-    function testDiablo(int256) public pure returns (bool) {
+    // function testDiablo(int256) public pure returns (bool) {
+    //     return true;
+    // }
+
+    /// @notice dummy function to check if diablo is working
+    function testDiablo(uint160, uint160) public pure returns (bool) {
         return true;
+    }
+
+    // ------------- also dummy methods-------------
+    int256 private count = 0;
+
+    function push(int256 delta) public {
+        count += delta;
+    }
+
+    function pull(int256 delta) public {
+        if (count > delta) {
+            count -= delta;
+        }
     }
 }

@@ -6,65 +6,126 @@ import base64
 import re
 import struct
 import sys
-
-
-counter = 1
-for line in sys.stdin:
-    proto = None
-    delta = None
-
-    # Try to match a addNewEncryptedModel call.
-    # m = re.search('^addNewEncryptedModel\((\d+)\)$', line)
-    m = re.search('^addNewEncryptedModel\(\)$', line)
-    if m:
-        #proto = 'addNewEncryptedModel(uint256)'
-        #proto = 'addNewEncryptedModel(uint160)'
-        #proto = 'addNewEncryptedModel(bytes32)'
-        proto = 'addNewEncryptedModel(uint160,bytes32)'
-        #delta = int (m.group(1))
-        delta = counter
-        counter += 1
-
-    # No match -> this is not a valid call.
-    if not proto:
-        exit(1)
-
-    # Print the function prototype.
-    # Diablo automatically translates it to the function unique id.
-    print(proto)
-
-    # Arguments are passed to diablo as a base64 encoded string.
-
-    # --------uint160 encoding---------
-    # 160 = 20 * 8 -> 16 bytes of padding, 4 bytes of unsigned integer with the actual value
-    # print (base64.b64encode(struct.pack('>16sI', b'\x00' * 16, delta)).decode(
-    #    'ascii'), flush = True)
-
-    # -------bytes32 encoding---------
-    #bytes32_string = b'This is a bytes32 string'
-    #packed_string = struct.pack('>32s', bytes32_string)
-    #encoded_string = base64.b64encode(packed_string).decode('ascii')
+# from src.solidity_contract.encode_args import encode_uint160_as_function_call, encode_uint256_as_function_call,\
+#     encode_bool_as_function_call, encode_bytes32_as_function_call, encode_args_as_function_call
 #
-    #print(encoded_string, flush=True)
-    # -------------------------------
-    # bytes32_string = 'This is a bytes32 string'
-    #print(base64.b64encode(bytes32_string.encode('utf-8')).decode('ascii'), flush = True)
-    # -------------------------------
-    # -------uint160 and bytes32 encoding---------
-    bytes32_string = 'This is a bytes32 string'
-    print(base64.b64encode(struct.pack('>28sI', bytes32_string.encode(
-        'ascii'), counter)).decode('ascii'), flush=True)
+#
+# get_parameter_counter = 0
+# add_new_encryption_model_counter = 0
+# add_verification_parameters_counter = 0
 
-    # print (base64.b64encode(struct.pack('>28sI', b'\x00' * 28, delta)).decode(
-    #   'ascii'), flush = True)
-    # create a bytes32 value from the string
-    # print (base64.b64encode(struct.pack('>32s', bytes(counter, 'utf-8'))).decode(
-    #    'ascii'), flush = True)
 
-    # Arguments should be encoded in big endian.
-    # We want a 256 signed integer:
-    #   28 bytes of padding
-    #    4 bytes of unsigned integer with the actual value
-    #
-    # print (base64.b64encode(struct.pack('>28sI', b'\x00' * 28, delta)).decode(
-    #    'ascii'), flush = True)
+# counter = 1
+for line in sys.stdin:
+    proto = ''
+    arguments = ''
+
+    matched = False
+    # # we set parameter from this file, so we expect no arguments in method received
+    #m = re.search('^push\((\d+)\)$', line)
+    m = re.search('^getModelAndBatchIndex\(\)$', line)
+    if m:
+        proto = 'getModelAndBatchIndex()'
+        #arguments = ''
+        matched = True
+    if not matched:
+        m = re.search('^addNewEncryptedModel\(\)$', line)
+        if m:
+            #proto = 'addNewEncryptedModel(uint160,bytes32)'
+            #proto = 'addNewEncryptedModel(uint160)'
+            #proto = 'addNewEncryptedModel(uint160,bytes32)'
+            proto = 'testDiablo(uint160,uint160)'
+            matched = True
+            arg0 = 1
+            #arg1 = "a" * 32
+            # args = [encode_uint160_as_function_call(
+            #    arg0), encode_bytes32_as_function_call(arg1)]
+            #arguments = encode_args_as_function_call(args)
+            #x = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03'
+            x = arg0.to_bytes(32, byteorder='big')
+            arguments = base64.b64encode(x + x).decode('ascii')
+            # arguments = base64.b64encode(struct.pack(
+            #    '>28sI', b'\x00' * 28, arg0)).decode('ascii')
+        # elif line == 'addNewEncryptedModel()':
+        #     # address and (model+worker public key) hash
+        #     proto = 'addNewEncryptedModel(uint160,bytes32)'
+        #     arg0 = 69
+        #     arg1 = "a" * 32
+        #     args = [encode_uint160_as_function_call(
+        #         arg0), encode_bytes32_as_function_call(arg1)]
+        #     arguments = encode_args_as_function_call(args)
+        # elif line == 'addVerificationParameters()':
+        #     # address and ml model weight
+        #     proto = 'addVerificationParameters(uint160,uint256)'
+        #     arg0 = 69
+        #     arg1 = 1000
+        #     args = [encode_uint160_as_function_call(
+        #         arg0), encode_uint256_as_function_call(arg1)]
+        #     arguments = encode_args_as_function_call(args)
+        # else:
+        #     # the received method name isn't one of the expected ones
+        #     print("Error: invalid method received")
+        #     exit(1)
+
+        # Print the function prototype.
+        # print('getModelAndBatchIndex()')
+    print(proto)
+    # if proto != '':
+    #     print(proto)
+    # else:
+    #     print("The proto is empty, but shouldn't be. Exiting...")
+    #     exit(1)
+
+    # if arguments are provided, print them
+    print(arguments, flush=True)
+    # if arguments != '':
+    #    print(arguments, flush=True)
+
+#bytes32_string = 'This is a bytes32 string'
+# print(base64.b64encode(struct.pack('>28sI', bytes32_string.encode(
+#!/usr/bin/env python3
+#
+# See: https://docs.soliditylang.org/en/v0.8.11/abi-spec.html
+
+# for line in sys.stdin:
+#     proto = None
+#     delta = None
+
+#     # Try to match a push call.
+#     #
+#     m = re.search('^push\((\d+)\)$', line)
+#     if m:
+#         #proto = 'push(int256)'
+#         proto = 'testDiablo()'
+#         delta = int(m.group(1))
+
+#     # Try to match a pull call.
+#     #
+#     m = re.search('^pull\((\d+)\)$', line)
+#     if m:
+#         #proto = 'pull(int256)'
+#         proto = 'testDiablo()'
+#         delta = int(m.group(1))
+
+#     # No match -> this is not a valid call.
+#     #
+#     if not proto:
+#         exit(1)
+
+#     # Print the function prototype.
+#     # Diablo automatically translates it to the function unique id.
+#     #
+#     print(proto)
+#     print("", flush=True)
+#     # Arguments are passed to diablo as a base64 encoded string.
+
+#     # Arguments should be encoded in big endian.
+#     # We want a 256 signed integer:
+#     #   28 bytes of padding
+#     #    4 bytes of unsigned integer with the actual value
+#     #
+#     # print(base64.b64encode(struct.pack('>28sI', b'\x00' * 28, delta)).decode(
+#     #    'ascii'), flush=True)
+x = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03'
+# concatenate x with x
+y = x + x

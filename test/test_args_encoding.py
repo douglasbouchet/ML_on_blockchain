@@ -1,4 +1,3 @@
-from src.modules.federating_learning_server import FederatingLearningServer
 from src.solidity_contract.encode_args import encode_uint160_as_function_call, encode_uint256_as_function_call, encode_bool_as_function_call, encode_bytes32_as_function_call, encode_args_as_function_call
 import sys
 
