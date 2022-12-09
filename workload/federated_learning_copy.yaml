@@ -38,7 +38,7 @@ workloads:
             contract: *contract
             function: "addNewEncryptedModel()"
           load:
-            2: 20
+            2: 10
             3: 0
         - interaction: !invoke
             from: *account
