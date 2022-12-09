@@ -8,11 +8,29 @@ import struct
 import sys
 # from src.solidity_contract.encode_args import encode_uint160_as_function_call, encode_uint256_as_function_call,\
 #     encode_bool_as_function_call, encode_bytes32_as_function_call, encode_args_as_function_call
-#
+# from src.solidity_contract.encode_args import encode_bytes32_as_function_call
 #
 # get_parameter_counter = 0
 # add_new_encryption_model_counter = 0
 # add_verification_parameters_counter = 0
+
+
+def encode_bytes32_as_function_call(value: str) -> str:
+    b = value.encode('utf-8')
+    if len(b) > 32:
+        raise ValueError("The string is too long to be encoded as bytes32.")
+        return None
+    # pad the string with 0s
+    b += b'\x00' * (32 - len(b))
+    return b
+
+
+def encode_uint(value: int) -> str:
+    # if value cannot be represented as uint256, raise an error
+    if value < 0 or value > 2**256 - 1:
+        raise ValueError("The value cannot be represented as uint256.")
+        return None
+    return value.to_bytes(32, byteorder='big')
 
 
 # counter = 1
@@ -34,16 +52,26 @@ for line in sys.stdin:
             #proto = 'addNewEncryptedModel(uint160,bytes32)'
             #proto = 'addNewEncryptedModel(uint160)'
             #proto = 'addNewEncryptedModel(uint160,bytes32)'
-            proto = 'testDiablo(uint160,uint160)'
+            #proto = 'testDiablo(uint160,uint160)'
+            # proto = 'testDiablo(bytes32)'
+            proto = 'testDiablo(uint160,bytes32)'
             matched = True
-            arg0 = 1
-            #arg1 = "a" * 32
+            arg0_value = 3
+            arg0 = encode_uint(arg0_value)
+            arg1 = encode_bytes32_as_function_call('abc')
+            #arg1 = b'abc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             # args = [encode_uint160_as_function_call(
             #    arg0), encode_bytes32_as_function_call(arg1)]
             #arguments = encode_args_as_function_call(args)
-            #x = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03'
-            x = arg0.to_bytes(32, byteorder='big')
-            arguments = base64.b64encode(x + x).decode('ascii')
+            # x = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03'
+            # x = arg0.to_bytes(32, byteorder='big')
+            # x = base64.b64encode(x).decode('ascii')
+            # arguments = base64.b64encode(x + x).decode('ascii')
+            # arguments = base64.b64encode(arg1).decode('ascii') woking for bytes32
+            arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+
+            # convert arg1 to bytes32
+            #arguments = base64.b64encode(struct.pack('>28sI', b'\x00' * 28, arg0)).decode('ascii')
             # arguments = base64.b64encode(struct.pack(
             #    '>28sI', b'\x00' * 28, arg0)).decode('ascii')
         # elif line == 'addNewEncryptedModel()':

@@ -31,10 +31,18 @@ def encode_bool_as_function_call(value: bool) -> str:
     return conv_from_bytes_array_to_hex_string(encoded)
 
 
+# def encode_bytes32_as_function_call(value: str) -> str:
+#    # Encode the function call and return the result
+#    encoded = encode(['bytes32'], [value.encode('utf-8')])
+#    return conv_from_bytes_array_to_hex_string(encoded)
+
 def encode_bytes32_as_function_call(value: str) -> str:
-    # Encode the function call and return the result
-    encoded = encode(['bytes32'], [value.encode('utf-8')])
-    return conv_from_bytes_array_to_hex_string(encoded)
+    b = value.encode('utf-8')
+    if len(b) > 32:
+        raise ValueError("The string is too long to be encoded as bytes32.")
+    # pad the string with 0s
+    b += b'\x00' * (32 - len(b))
+    return b
 
 
 def encode_args_as_function_call(args: list) -> str:
