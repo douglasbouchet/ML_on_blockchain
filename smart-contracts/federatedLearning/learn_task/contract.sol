@@ -135,6 +135,7 @@ contract LearnTask {
         address _workerAddress,
         uint256 _clearModel
     ) public onlyReceivedModelsAddresses(_workerAddress) {
+        // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses

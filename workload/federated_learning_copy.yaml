@@ -40,3 +40,10 @@ workloads:
           load:
             2: 20
             3: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            3: 10
+            4: 0
