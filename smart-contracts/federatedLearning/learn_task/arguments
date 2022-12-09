@@ -100,9 +100,6 @@ for line in sys.stdin:
         m = re.search('^addNewEncryptedModel\(\)$', line)
         if m:
             proto = 'addNewEncryptedModel(uint160,bytes32)'
-            #arg0_value = 3
-            # arg0 = encode_uint(arg0_value)
-            #arg1 = encode_bytes32('abc')
             worker_address = addresses[add_new_encryption_model_counter]
             model_hashed_with_address = add_new_encrypted_model_arg1[add_new_encryption_model_counter]
             arg0 = encode_uint(worker_address)
@@ -113,18 +110,22 @@ for line in sys.stdin:
     if not matched:
         m = re.search('^addVerificationParameters\(\)$', line)
         if m:
-            #proto = 'addVerificationParameters(uint160,uint256)'
-            proto = 'addVerificationParameters(address,uint256)'
+            #proto = 'addVerificationParameters(address,uint256)'
+            proto = 'addVerificationParameters(uint160,uint256)'
             matched = True
-            worker_address = 69
+            #worker_address = 69
+            worker_address = addresses[add_verification_parameters_counter]
             arg0 = encode_uint(worker_address)
-            model_weight = 1000  #  model weight
+            # model_weight = 1000  #  model weight
+            model_weight = model_weights[add_verification_parameters_counter]
             arg1 = encode_uint(model_weight)
             arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+            add_verification_parameters_counter += 1
             matched = True
     if not matched:
         # received line isn't a valid method (check yaml file and smart contract method name)
         exit(1)
 
+    # we can print the fonction and the arguments
     print(proto)
     print(arguments, flush=True)

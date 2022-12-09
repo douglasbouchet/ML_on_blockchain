@@ -132,9 +132,15 @@ contract LearnTask {
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
     function addVerificationParameters(
-        address _workerAddress,
+        //address _workerAddress,
+        uint160 _uintWorkerAddress,
         uint256 _clearModel
-    ) public onlyReceivedModelsAddresses(_workerAddress) {
+    )
+        public
+        //) public onlyReceivedModelsAddresses(_workerAddress) {
+        onlyReceivedModelsAddresses(address(_uintWorkerAddress))
+    {
+        address _workerAddress = address(_uintWorkerAddress);
         // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
