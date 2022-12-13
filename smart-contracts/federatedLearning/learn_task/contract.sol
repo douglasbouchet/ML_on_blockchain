@@ -14,15 +14,18 @@ contract LearnTask {
     mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
     uint256[] models; // keep track of each different model we have seen (models are stored in clear)
 
-    uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
-    uint256 thresholdMaxNumberReceivedModels;
-
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
     uint256 currentModel;
     uint256 batchIndex;
+    uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels;
+    //uint256 currentModel = 134;
+    //uint256 batchIndex = 12;
+    //uint256 thresholdForBestModel = 30;
+    //uint256 thresholdMaxNumberReceivedModels = 50;
     uint256 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -135,11 +138,7 @@ contract LearnTask {
         //address _workerAddress,
         uint160 _uintWorkerAddress,
         uint256 _clearModel
-    )
-        public
-        //) public onlyReceivedModelsAddresses(_workerAddress) {
-        onlyReceivedModelsAddresses(address(_uintWorkerAddress))
-    {
+    ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
         address _workerAddress = address(_uintWorkerAddress);
         // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
         // check that worker has send a model, that don't receive new model anymore and that model is not ready

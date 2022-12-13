@@ -4,15 +4,15 @@ pragma solidity ^0.7.0;
 import "./encryptionJobContainer.sol";
 
 contract EncryptionJobFinder {
-    EncyptionJobContainer[] public previousJobs;
-    EncyptionJobContainer private jobContainer;
+    EncryptionJobContainer[] public previousJobs;
+    EncryptionJobContainer private jobContainer;
 
     constructor() {
         //uint256 thresholdForBestModel = 2;
         //uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 5 models
         uint256 thresholdForBestModel = 3; // require 3 equals model to validate
         uint256 thresholdMaxNumberReceivedModels = 6; //stop receiving models when we have 6 models
-        jobContainer = new EncyptionJobContainer(
+        jobContainer = new EncryptionJobContainer(
             5, // model weight (TODO change to bytes4)
             0, // batch index
             thresholdForBestModel,
@@ -31,7 +31,7 @@ contract EncryptionJobFinder {
         // create a new job TODO dummies value atm, should be getted from fl server
         uint256 thresholdForBestModel = 2;
         uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 3 models
-        jobContainer = new EncyptionJobContainer(
+        jobContainer = new EncryptionJobContainer(
             5,
             1,
             thresholdForBestModel,
@@ -49,7 +49,8 @@ contract EncryptionJobFinder {
         returns (bool)
     {
         bool modelAdded = jobContainer.addNewEncryptedModel(
-            workerAddress,
+            uint160(workerAddress),
+            //workerAddress,
             modelHash
         );
         // // if the model is complete, create a new job and push the current one to previousJobs
@@ -63,7 +64,11 @@ contract EncryptionJobFinder {
         address workerAddress,
         uint256 clearModel
     ) public {
-        jobContainer.addVerificationParameters(workerAddress, clearModel);
+        jobContainer.addVerificationParameters(
+            uint160(workerAddress),
+            //workerAddress,
+            clearModel
+        );
     }
 
     function getAllPreviousJobsBestModel()

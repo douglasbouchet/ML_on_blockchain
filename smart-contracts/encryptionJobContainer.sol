@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-contract EncyptionJobContainer {
+contract EncryptionJobContainer {
     struct VerificationParameters {
         uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
         address workerAddress;
@@ -14,15 +14,18 @@ contract EncyptionJobContainer {
     mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
     uint256[] models; // keep track of each different model we have seen (models are stored in clear)
 
-    uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
-    uint256 thresholdMaxNumberReceivedModels;
-
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
     uint256 currentModel;
     uint256 batchIndex;
+    uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels;
+    //uint256 currentModel = 134;
+    //uint256 batchIndex = 12;
+    //uint256 thresholdForBestModel = 30;
+    //uint256 thresholdMaxNumberReceivedModels = 50;
     uint256 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -93,17 +96,17 @@ contract EncyptionJobContainer {
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
-    function addNewEncryptedModel(address workerAddress, bytes32 modelHash)
+    function addNewEncryptedModel(uint160 workerAddress, bytes32 modelHash)
         public
-        modelOnlySendOnce(workerAddress)
         returns (bool)
     {
         // if we already received the maximum number of models, we don't accept new ones
         if (!canReceiveNewModel) {
             return false;
         }
-        receivedModelsAddresses.push(workerAddress);
-        addressToHashModel[workerAddress] = modelHash;
+        address _workerAddress = address(workerAddress); // equivalent to receiving the worker address (checked on remix)
+        receivedModelsAddresses.push(_workerAddress);
+        addressToHashModel[_workerAddress] = modelHash; // TODO uncomment
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
         // new models
         if (
@@ -122,12 +125,17 @@ contract EncyptionJobContainer {
         return keccak256(abi.encodePacked(clearModel));
     }
 
+    //address _workerAddress,
+
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
     function addVerificationParameters(
-        address _workerAddress,
+        uint160 _uintWorkerAddress,
         uint256 _clearModel
-    ) public onlyReceivedModelsAddresses(_workerAddress) {
+    ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
+        //) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
+        address _workerAddress = address(_uintWorkerAddress);
+        // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
@@ -253,5 +261,30 @@ contract EncyptionJobContainer {
             abi.encodePacked(uint256(97))
         );
         return modelHash == computedModelHash;
+    }
+
+    /// @notice dummy function to check if diablo is working
+    // function testDiablo(int256) public pure returns (bool) {
+    //     return true;
+    // }
+
+    /// @notice dummy function to check if diablo is working
+    //function testDiablo(uint160, uint160) public pure returns (bool) {
+    // function testDiablo(bytes32) public pure returns (bool) {
+    function testDiablo(uint160, bytes32) public pure returns (bool) {
+        return true;
+    }
+
+    // ------------- also dummy methods-------------
+    int256 private count = 0;
+
+    function push(int256 delta) public {
+        count += delta;
+    }
+
+    function pull(int256 delta) public {
+        if (count > delta) {
+            count -= delta;
+        }
     }
 }
