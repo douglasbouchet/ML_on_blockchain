@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-// import "./learnTask.sol";
-import "./learn_task/learnTask.sol";
+import "./learn_task/contract.sol";
 
 contract TaskFinder {
     LearnTask[] public previousJobs;
@@ -50,7 +49,8 @@ contract TaskFinder {
         returns (bool)
     {
         bool modelAdded = jobContainer.addNewEncryptedModel(
-            workerAddress,
+            uint160(workerAddress),
+            //workerAddress,
             modelHash
         );
         // // if the model is complete, create a new job and push the current one to previousJobs
@@ -64,7 +64,11 @@ contract TaskFinder {
         address workerAddress,
         uint256 clearModel
     ) public {
-        jobContainer.addVerificationParameters(workerAddress, clearModel);
+        jobContainer.addVerificationParameters(
+            uint160(workerAddress),
+            //workerAddress,
+            clearModel
+        );
     }
 
     function getAllPreviousJobsBestModel()

@@ -1,6 +1,4 @@
-import sha3
 from web3 import Web3
-from web3.auto import w3
 
 
 class EncryptionWorker:
@@ -9,14 +7,13 @@ class EncryptionWorker:
         self.private_key = private_key
         self.contract = contract
         self.id = id
-        #self.model = [97, 98, 99]
+        # self.model = [97, 98, 99]
         self.model = [97]
 
     # def send_encrypted_model(self, good_model=True):
     def send_encrypted_model(self, model):
-        # model = self.learn_model(good_model)
         # first we learn a new model
-        #model = self.model[0]
+        # model = self.model[0]
         self.model = [model]
         # then we add the int value of worker's address to the model (i.e to prove that the worker
         # is the one who learned the model)
@@ -25,10 +22,10 @@ class EncryptionWorker:
         model_hash = Web3.solidityKeccak(
             ["uint256"], encrypted_model).hex()
         res = self.contract.send_hashed_model(
-            model_hash, self.address, self.private_key
+            model_hash, int_address, self.private_key
         )
         if len(res) == 2:
-            return res[0] == True and res[1] == True
+            return res[0] is True and res[1] is True
         return False
 
     def compare_hash(self):
@@ -45,7 +42,7 @@ class EncryptionWorker:
         print("send_encrypted_model_v2: return value", res)
         return res
 
-    def check_can_send_verification_parameters(self):
+    def check_can_send_verification_parameters(self) -> bool:
         # check the number of submitted models from the smart contract
         return self.contract.check_can_send_verification_parameters(self.address)
 
@@ -58,13 +55,12 @@ class EncryptionWorker:
         Returns:
             bool: True if the transaction was successful, False otherwise
         """
-        #clear_model = self.learn_model(good_model)
-        address = self.address if good_address else "0x0000000000000000000000000000000000000042"  # dummy address
+        address = int(self.address, 16) if good_address else int(
+            "0x0000000000000000000000000000000000000042", 16)  # dummy address
         clear_model = self.model[0] if good_model else 0
         return self.contract.send_verifications_parameters(
             clear_model, address, self.private_key
         )
-        return res
 
     def learn_model(self, good_model=True):
         """Learn a new model

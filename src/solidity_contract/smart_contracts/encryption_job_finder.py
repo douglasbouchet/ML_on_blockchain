@@ -23,9 +23,6 @@ class EncryptionJobFinder(Contract):
 
     def compare_hash(self, model_hash, worker_address, worker_private_key):
         worker_address = Web3.toChecksumAddress(worker_address)
-        # model_keccak = [model_keccak[i:i + 1]
-        #                for i in range(0, len(model_keccak), 1)]
-        # model_hash should by bytes32 compatible...
         try:
             register_tx = self.contract.functions.compareKeccak(
                 model_hash
@@ -49,7 +46,7 @@ class EncryptionJobFinder(Contract):
         """Send the encrypted model to the blockchain
         Args:
             encrypted_model_hash (bytes[]): bytes array of hash of the model xored with the worker secret
-            worker_address (str): address of the worker
+            worker_address (int): address of the worker, converted to int
             worker_private_key (str): private key of the worker
         """
         # Sanize the worker address
@@ -83,7 +80,6 @@ class EncryptionJobFinder(Contract):
         return self.contract.functions.canSendVerificationParameters(Web3.toChecksumAddress(worker_address)).call()
 
     def send_verifications_parameters(
-        # self, worker_nounce, worker_secret, worker_address, worker_private_key
         self,
         clear_model,
         worker_address,
@@ -93,8 +89,8 @@ class EncryptionJobFinder(Contract):
 
         Args:
             clear_model (int): the model as an integer (simple atm)
-            worker_address (_type_): address of the worker
-            worker_private_key (_type_): private key of the worker
+            worker_address (int): address of the worker, converted to int
+            worker_private_key (str): private key of the worker
         return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
@@ -108,7 +104,7 @@ class EncryptionJobFinder(Contract):
                     "nonce": self.web3.eth.get_transaction_count(worker_address),
                 }
             )
-            tx_receipt = super().sign_txs_and_send_it(worker_private_key, register_tx)
+            _ = super().sign_txs_and_send_it(worker_private_key, register_tx)
         except Exception as e:
             print("Error sending verification parameters:", e)
             return False
@@ -155,6 +151,7 @@ class EncryptionJobFinder(Contract):
             ret = w3.eth.call(replay_tx, tx.blockNumber - 1)
             return self.parse_send_encrypted_model(ret)
         except Exception as e:
+            print("Error replaying transaction:", e)
             return False
 
     def get_final_model(self):

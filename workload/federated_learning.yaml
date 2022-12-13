@@ -18,6 +18,7 @@ let:
       number: 1
       name: "learn_task"
 
+
 workloads:
 
   - number: 1
@@ -30,5 +31,19 @@ workloads:
             contract: *contract
             function: "getModelAndBatchIndex()"
           load:
-            0: 10
-            1: 0
+            0: 2000
+            10: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            0: 1000
+            20: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            20: 1000
+            40: 0

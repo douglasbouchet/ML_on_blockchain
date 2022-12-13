@@ -4,7 +4,7 @@
 
 import base64
 import re
-import struct
+# import struct
 import sys
 from secrets import token_bytes
 from coincurve import PublicKey
@@ -77,7 +77,9 @@ def compute_add_new_encrypted_model_hash(n_workers: int, addresses, model_weight
     return [Web3.solidityKeccak(["uint256"], [addresses[i] + model_weights[i]]).hex() for i in range(n_workers)]
 
 
-n_workers = 10
+# n_workers = 10
+# n_workers = 3000
+n_workers = 20000
 addresses = generate_addresses(n_workers)
 model_weights = compute_model_weight(n_workers)
 add_new_encrypted_model_arg1 = compute_add_new_encrypted_model_hash(
@@ -110,10 +112,10 @@ for line in sys.stdin:
     if not matched:
         m = re.search('^addVerificationParameters\(\)$', line)
         if m:
-            #proto = 'addVerificationParameters(address,uint256)'
+            # proto = 'addVerificationParameters(address,uint256)'
             proto = 'addVerificationParameters(uint160,uint256)'
             matched = True
-            #worker_address = 69
+            # worker_address = 69
             worker_address = addresses[add_verification_parameters_counter]
             arg0 = encode_uint(worker_address)
             # model_weight = 1000  #  model weight
