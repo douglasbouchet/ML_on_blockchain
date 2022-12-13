@@ -13,3 +13,8 @@ repos:
     hooks:
     -   id: pycln
         args: [--config=pyproject.toml]
+
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.9.0
+    hooks:
+    -   id: python-use-type-annotations
