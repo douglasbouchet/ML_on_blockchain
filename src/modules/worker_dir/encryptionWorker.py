@@ -7,11 +7,14 @@ class EncryptionWorker:
         self.private_key = private_key
         self.contract = contract
         self.id = id
-        # self.model = [97, 98, 99]
-        self.model = [97]
 
-    # def send_encrypted_model(self, good_model=True):
-    def send_encrypted_model(self, model):
+    def send_encrypted_model(self, model: int) -> bool:
+        """Send the encrypted model to the blockchain
+        Args:
+            model (int): encrypted model
+        Returns:
+            bool: True if the transaction was successful, False otherwise
+        """
         # first we learn a new model
         # model = self.model[0]
         self.model = [model]
