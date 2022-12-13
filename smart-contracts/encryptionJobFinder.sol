@@ -43,13 +43,13 @@ contract EncryptionJobFinder {
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
-    // function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
-    function addEncryptedModel(address workerAddress, bytes32 modelHash)
+    //function addEncryptedModel(address workerAddress, bytes32 modelHash)
+    function addEncryptedModel(uint160 workerAddress, bytes32 modelHash)
         public
         returns (bool)
     {
         bool modelAdded = jobContainer.addNewEncryptedModel(
-            uint160(workerAddress),
+            workerAddress,
             //workerAddress,
             modelHash
         );
@@ -61,12 +61,13 @@ contract EncryptionJobFinder {
     }
 
     function addVerificationParameters(
-        address workerAddress,
+        //address workerAddress,
+        uint160 workerAddress,
         uint256 clearModel
     ) public {
         jobContainer.addVerificationParameters(
-            uint160(workerAddress),
-            //workerAddress,
+            //uint160(workerAddress),
+            workerAddress,
             clearModel
         );
     }

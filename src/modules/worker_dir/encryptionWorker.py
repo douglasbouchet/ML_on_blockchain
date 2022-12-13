@@ -18,11 +18,12 @@ class EncryptionWorker:
         # then we add the int value of worker's address to the model (i.e to prove that the worker
         # is the one who learned the model)
         int_address = int(self.address, 16)
+        address = self.address
         encrypted_model = [model + int_address]
         model_hash = Web3.solidityKeccak(
             ["uint256"], encrypted_model).hex()
         res = self.contract.send_hashed_model(
-            model_hash, int_address, self.private_key
+            model_hash, address, self.private_key
         )
         if len(res) == 2:
             return res[0] is True and res[1] is True
@@ -55,8 +56,7 @@ class EncryptionWorker:
         Returns:
             bool: True if the transaction was successful, False otherwise
         """
-        address = int(self.address, 16) if good_address else int(
-            "0x0000000000000000000000000000000000000042", 16)  # dummy address
+        address = self.address if good_address else "0x0000000000000000000000000000000000000042"  # dummy address
         clear_model = self.model[0] if good_model else 0
         return self.contract.send_verifications_parameters(
             clear_model, address, self.private_key

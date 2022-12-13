@@ -46,14 +46,14 @@ class EncryptionJobFinder(Contract):
         """Send the encrypted model to the blockchain
         Args:
             encrypted_model_hash (bytes[]): bytes array of hash of the model xored with the worker secret
-            worker_address (int): address of the worker, converted to int
+            worker_address (str): address of the worker
             worker_private_key (str): private key of the worker
         """
         # Sanize the worker address
         worker_address = Web3.toChecksumAddress(worker_address)
         try:
             register_tx = self.contract.functions.addEncryptedModel(
-                worker_address, encrypted_model_hash
+                int(worker_address, 16), encrypted_model_hash
             ).build_transaction(
                 {
                     "gasPrice": 0,
@@ -89,14 +89,14 @@ class EncryptionJobFinder(Contract):
 
         Args:
             clear_model (int): the model as an integer (simple atm)
-            worker_address (int): address of the worker, converted to int
+            worker_address (str): address of the worker
             worker_private_key (str): private key of the worker
         return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
         try:
             register_tx = self.contract.functions.addVerificationParameters(
-                worker_address, clear_model
+                int(worker_address, 16), clear_model
             ).build_transaction(
                 {
                     "gasPrice": 0,
