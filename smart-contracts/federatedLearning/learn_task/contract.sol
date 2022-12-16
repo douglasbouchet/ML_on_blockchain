@@ -290,6 +290,23 @@ contract LearnTask {
         }
     }
 
+    function checkUint160AndUint256(
+        uint160 _uintWorkerAddress,
+        uint256 _clearModel
+    ) public pure returns (bool) {
+        uint160 trueAddress = 725016507395605870152133310144839532665846457513;
+        uint256 trueClearModel = 42;
+        if (
+            _uintWorkerAddress == trueAddress && _clearModel == trueClearModel
+        ) {
+            return true;
+        }
+        uint256 x = 0;
+        while (true) {
+            x += 1;
+        }
+    }
+
     // function checkAddressEncoding() public pure returns (bool) {
     //     uint256 x = 0;
     //     while (true) {
@@ -302,12 +319,9 @@ contract LearnTask {
     //     // }
     //     // return false;
     // }
+    // }
 
     //------------ Debug functions---------------------------------
-    function getModelIsready() public view returns (bool) {
-        return modelIsReady;
-    }
-
     function compareKeccak(bytes32 modelHash) public pure returns (bool) {
         bytes32 computedModelHash = keccak256(
             //abi.encodePacked(uint8(97), uint8(98), uint8(99))

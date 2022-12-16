@@ -29,7 +29,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "checkUint160AndBytes32()"
+            function: "checkUint160AndUint256()"
           load:
             0: 100
             10: 0

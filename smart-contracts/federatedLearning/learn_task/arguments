@@ -156,6 +156,22 @@ for line in sys.stdin:
             arguments = base64.b64encode(arg0 + arg1).decode('ascii')
             matched = True
     if not matched:
+        m = re.search('^checkUint160AndUint256\(\)$', line)
+        if m:
+            proto = 'checkUint160AndUint256(uint160,uint256)'
+            matched = True
+            # the one expected by checkUintEncoding
+            true_worker_address = 725016507395605870152133310144839532665846457513
+            false_worker_address = 725016507395605870152133310144839532665846457512
+            true_model_weight = 42
+            false_model_weight = 666
+            arg0 = encode_uint(true_worker_address)
+            # arg0 = encode_uint(false_worker_address)
+            arg1 = encode_uint(true_model_weight)
+            # arg1 = encode_uint(false_model_weight)
+            arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+            matched = True
+    if not matched:
         # received line isn't a valid method (check yaml file and smart contract method name)
         exit(1)
 
