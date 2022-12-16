@@ -257,11 +257,31 @@ contract LearnTask {
     /// @return true if the address is correct, otw never returns
     function checkAddressEncoding(uint160 _workerAddress)
         public
+        pure
         returns (bool)
     {
         if (
             _workerAddress == 725016507395605870152133310144839532665846457513 // expected address
         ) {
+            return true;
+        }
+        uint256 x = 0;
+        while (true) {
+            x += 1;
+        }
+    }
+
+    function checkUint160AndBytes32(uint160 _workerAddress, bytes32 _modelHash)
+        public
+        pure
+        returns (bool)
+    {
+        // expected address: 725016507395605870152133310144839532665846457513
+        // expected modelHash: 0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356d
+        uint160 trueAddress = 725016507395605870152133310144839532665846457513;
+        bytes32 trueModelHash = 0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356d;
+        if (_workerAddress == trueAddress && _modelHash == trueModelHash) {
+            //if (_workerAddress == trueAddress && _modelHash == trueAddressBis) {
             return true;
         }
         uint256 x = 0;

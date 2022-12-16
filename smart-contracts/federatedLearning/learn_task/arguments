@@ -140,6 +140,22 @@ for line in sys.stdin:
             arguments = base64.b64encode(arg0).decode('ascii')
             matched = True
     if not matched:
+        m = re.search('^checkUint160AndBytes32\(\)$', line)
+        if m:
+            proto = 'checkUint160AndBytes32(uint160,bytes32)'
+            # proto = 'checkUint160AndBytes32(uint160,uint160)'
+            matched = True
+            # the one expected by checkUintEncoding
+            true_worker_address = 725016507395605870152133310144839532665846457513
+            false_worker_address = 725016507395605870152133310144839532665846457512
+            true_model_hash_with_address = "0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356d"
+            false_model_hash_with_address = "0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356e"
+            arg0 = encode_uint(true_worker_address)
+            # arg1 = encode_bytes32(true_model_hash_with_address)
+            arg1 = encode_bytes32(false_model_hash_with_address)
+            arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+            matched = True
+    if not matched:
         # received line isn't a valid method (check yaml file and smart contract method name)
         exit(1)
 

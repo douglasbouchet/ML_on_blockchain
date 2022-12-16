@@ -255,20 +255,39 @@ contract EncryptionJobContainer {
     /// @notice function to check if the address are correctly sent as uint160
     /// @notice if the argument isn't correct, we go into an infinite loop, which will cause diablo to never commit
     /// @param _workerAddress the address of the worker as an uint160
-    /// @return true if the address is correctly encoded as uint160 and false otherwise
+    /// @return true if the address is correct, otw never returns
     function checkAddressEncoding(uint160 _workerAddress)
         public
         pure
         returns (bool)
     {
-        // true_address as uint160
-        uint160 true_address = 725016507395605870152133310144839532665846457513;
-        if (_workerAddress == true_address) {
+        if (
+            _workerAddress == 725016507395605870152133310144839532665846457513 // expected address
+        ) {
             return true;
         }
-        //else go into infinite loop
-        while (true) {}
-        return false;
+        uint256 x = 0;
+        while (true) {
+            x += 1;
+        }
+    }
+
+    function checkUint160AndBytes32(uint160 _workerAddress, bytes32 _modelHash)
+        public
+        pure
+        returns (bool)
+    {
+        // expected address: 725016507395605870152133310144839532665846457513
+        // expected modelHash: 0x0a3acd277e8fd4d05446ed4d5d0eeb24e5381a20c7425fbb268461e164f59992
+        uint160 trueAddress = 725016507395605870152133310144839532665846457513;
+        bytes32 trueModelHash = 0x0a3acd277e8fd4d05446ed4d5d0eeb24e5381a20c7425fbb268461e164f59992;
+        if (_workerAddress == trueAddress && _modelHash == trueModelHash) {
+            return true;
+        }
+        uint256 x = 0;
+        while (true) {
+            x += 1;
+        }
     }
 
     //------------ Debug functions---------------------------------

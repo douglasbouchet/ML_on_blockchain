@@ -29,7 +29,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "checkAddressEncoding()"
+            function: "checkUint160AndBytes32()"
           load:
             0: 100
             10: 0

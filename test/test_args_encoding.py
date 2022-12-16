@@ -101,6 +101,12 @@ def test_uint_encoding():
     assert learn_task.check_address_encoding(
         address_from_generate_addresses) is True
 
-    # now we send a wrong address, and we expect the function to loop
-    assert learn_task.check_address_encoding(
-        address_from_generate_addresses + 1) is False
+    # checking "addNewEncryptedModel" function
+    worker_address = address_from_generate_addresses
+    model_hashed_with_address = "0x0a3acd277e8fd4d05446ed4d5d0eeb24e5381a20c7425fbb268461e164f59992"
+    print("worker_address: ", worker_address)
+    print("model_hashed_with_address: ", model_hashed_with_address)
+
+    assert learn_task.check_uint160_bytes32_encoding(
+        worker_address, model_hashed_with_address) is True
+    print("all good")
