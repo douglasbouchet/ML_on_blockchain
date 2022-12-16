@@ -77,8 +77,6 @@ def compute_add_new_encrypted_model_hash(n_workers: int, addresses, model_weight
     return [Web3.solidityKeccak(["uint256"], [addresses[i] + model_weights[i]]).hex() for i in range(n_workers)]
 
 
-# n_workers = 10
-# n_workers = 3000
 n_workers = 20000
 addresses = generate_addresses(n_workers)
 model_weights = compute_model_weight(n_workers)
@@ -107,6 +105,7 @@ for line in sys.stdin:
             arg0 = encode_uint(worker_address)
             arg1 = encode_bytes32(model_hashed_with_address)
             arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+            # if commented, always use the same worker
             add_new_encryption_model_counter += 1
             matched = True
     if not matched:
@@ -122,7 +121,23 @@ for line in sys.stdin:
             model_weight = model_weights[add_verification_parameters_counter]
             arg1 = encode_uint(model_weight)
             arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+            # if commented, always use the same worker
             add_verification_parameters_counter += 1
+            matched = True
+    if not matched:
+        # in that case we are checking if the arguments are correct (i.e we expect infinite loop if args no corrects)
+        m = re.search('^checkAddressEncoding\(\)$', line)
+        if m:
+            # proto = 'addVerificationParameters(address,uint256)'
+            proto = 'checkAddressEncoding(uint160)'
+            # proto = 'checkAddressEncoding()'
+            matched = True
+            # the one expected by checkAddressEncoding
+            true_worker_address = 725016507395605870152133310144839532665846457513
+            false_worker_address = 725016507395605870152133310144839532665846457512
+            arg0 = encode_uint(true_worker_address)
+            # arg0 = encode_uint(false_worker_address)
+            arguments = base64.b64encode(arg0).decode('ascii')
             matched = True
     if not matched:
         # received line isn't a valid method (check yaml file and smart contract method name)

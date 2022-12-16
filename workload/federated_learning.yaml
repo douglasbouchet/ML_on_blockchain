@@ -29,21 +29,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "getModelAndBatchIndex()"
+            function: "checkAddressEncoding()"
           load:
-            0: 2000
+            0: 100
             10: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            0: 1000
-            20: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParameters()"
-          load:
-            20: 1000
-            40: 0

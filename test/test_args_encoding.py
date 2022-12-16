@@ -1,75 +1,106 @@
-from src.solidity_contract.encode_args import encode_uint160_as_function_call, encode_uint256_as_function_call, encode_bool_as_function_call, encode_bytes32_as_function_call, encode_args_as_function_call
+from src.modules.federating_learning_server import FederatingLearningServer
 import sys
+from secrets import token_bytes
+from coincurve import PublicKey
+from sha3 import keccak_256
+from web3 import Web3
 
 sys.path.append("/home/user/ml_on_blockchain")
 
 
-def test_uint160_encoding():
-    value = 69
-    # this is expecected value for uint160
-    true_value = "0x0000000000000000000000000000000000000000000000000000000000000045"
-    encoded_value = encode_uint160_as_function_call(value)
-    assert encoded_value == true_value
-    value = 6518
-    # this is expecected value for uint160
-    true_value = "0x0000000000000000000000000000000000000000000000000000000000001976"
-    encoded_value = encode_uint160_as_function_call(value)
-    assert encoded_value == true_value
-    # generate the maximum value for uint160
-    value = 2 ** 160 - 1
-    # this is expecected value for uint160
-    true_value = "0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff"
-    encoded_value = encode_uint160_as_function_call(value)
-    assert encoded_value == true_value
+def encode_bytes32(value: str) -> str:
+    b = value[2:].encode('utf-8')
+    # check if the string is too long
+    if len(b)/2 > 32.0:
+        raise ValueError("The string is too long to be encoded as bytes32.")
+        return None
+    # pad the string with 0s
+    b += b'\x00' * (32 - len(b))
+    return b
 
 
-def test_uint256_encoding():
-    value = 69
-    # this is expecected value for uint256
-    true_value = "0x0000000000000000000000000000000000000000000000000000000000000045"
-    encoded_value = encode_uint256_as_function_call(value)
-    assert encoded_value == true_value
+def encode_uint(value: int) -> str:
+    # if value cannot be represented as uint256, raise an error
+    if value < 0 or value > 2**256 - 1:
+        raise ValueError("The value cannot be represented as uint256.")
+        return None
+    return value.to_bytes(32, byteorder='big')
 
 
-def test_bool_encoding():
-    value = True
-    # this is expecected value for true bool
-    true_value = "0x0000000000000000000000000000000000000000000000000000000000000001"
-    encoded_value = encode_bool_as_function_call(value)
-    assert encoded_value == true_value
-    value = False
-    # this is expecected value for false bool
-    true_value = "0x0000000000000000000000000000000000000000000000000000000000000000"
-    encoded_value = encode_bool_as_function_call(value)
-    assert encoded_value == true_value
+def generate_addresses(n_workers: int):
+    """Generate valid ethereum addresses.
+
+    Args:
+        n_workers (int): number of addresses to generate
+    Returns:
+        int[]: the addresses are already converted to int
+    """
+    addresses = []
+    for i in range(n_workers):
+        private_key = keccak_256(token_bytes(32)).digest()
+        public_key = PublicKey.from_valid_secret(
+            private_key).format(compressed=False)[1:]
+        addr = keccak_256(public_key).digest()[-20:]
+        addresses.append(int(addr.hex(), 16))
+    return addresses
 
 
-def test_bytes32_encoding():
-    # generate a bytes string of length 32
-    value = "a" * 32
-    # generate me a string of length 32 consisting of 0x61
-    true_value = "0x" + "61" * 32
-    encoded_value = encode_bytes32_as_function_call(value)
-    assert encoded_value == true_value
+def compute_model_weight(n_workers: int):
+    """Generate an array of model weights.
+
+    Args:
+        n_workers (int): number of workers
+
+    Returns:
+        List[int]: the array of model hashes
+    """
+    # weights are good(42) for 4/5 of workers and 1/5 of workers are malicious(666)
+    return [42 if i % 5 != 0 else 666 for i in range(n_workers)]
 
 
-def test_encode_args_as_function_call():
-    # this should correctly encode multiple arguments
-    # start with simple uint160, then uint160
-    args = [69, 420]
-    true_value = "0x0000000000000000000000000000000000000000000000000000000000000045"
-    true_value += "00000000000000000000000000000000000000000000000000000000000001a4"
-    # encode each argument separately
-    args = [encode_uint160_as_function_call(arg) for arg in args]
-    encoded_value = encode_args_as_function_call(args)
-    assert encoded_value == true_value
-    # check uint32,bool with (69, True)
-    args = [69, True]
-    true_value = "0x0000000000000000000000000000000000000000000000000000000000000045"
-    true_value += "0000000000000000000000000000000000000000000000000000000000000001"
-    # encode each argument separately
-    arg0 = encode_uint256_as_function_call(args[0])
-    arg1 = encode_bool_as_function_call(args[1])
-    args = [arg0, arg1]
-    encoded_value = encode_args_as_function_call(args)
-    assert encoded_value == true_value
+def compute_add_new_encrypted_model_hash(n_workers: int, addresses, model_weights):
+    """Generate an array of model hashes. Model hashed is obtained by
+    adding worker address (as an int) to model weight.
+
+    Args:
+        n_workers (int): number of workers
+        addresses (int[]): array of worker addresses
+        model_weights (int[]): array of model weights
+
+    Returns:
+        List[str]: the array of model hashes
+    """
+    return [Web3.solidityKeccak(["uint256"], [addresses[i] + model_weights[i]]).hex() for i in range(n_workers)]
+
+
+def test_uint_encoding():
+    n_workers = 2
+    addresses = generate_addresses(n_workers)
+    model_weights = compute_model_weight(n_workers)
+    add_new_encrypted_model_arg1 = compute_add_new_encrypted_model_hash(
+        n_workers, addresses, model_weights)
+    add_new_encryption_model_counter = 0
+    add_verification_parameters_counter = 0
+
+    learning_server = FederatingLearningServer(3, 100, 10)
+    learn_task = learning_server.deploy_contract(
+        "encryptionJobContainer", "EncryptionJobContainer"
+    )
+
+    # some original address from yaml file
+    yaml_add = "ad8c4637330e8eab5eadbbda59910a9d926274b2"
+    # this one was generate by a previous run of the code, but we need the value harcoded in the smart contract
+    address_from_generate_addresses = 725016507395605870152133310144839532665846457513
+    yaml_add_int = int(yaml_add, 16)
+    # check that all addresses are valid
+    for i in range(n_workers):
+        assert Web3.isAddress(hex(addresses[i]))
+
+    assert Web3.isAddress(hex(addresses[0]))
+
+    assert learn_task.check_address_encoding(
+        address_from_generate_addresses) is True
+
+    # now we send a wrong address, and we expect the function to loop
+    assert learn_task.check_address_encoding(
+        address_from_generate_addresses + 1) is False

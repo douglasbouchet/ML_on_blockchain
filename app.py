@@ -361,6 +361,6 @@ if __name__ == "__main__":
     # parallel_learning_main()
     # sequential_learning_main()
     # encrypted_main()
-    # simple_encryption_check()
+    simple_encryption_check()
     # simple_learning_scenario()
-    multiple_learn_tasks_scenario()
+    # multiple_learn_tasks_scenario()

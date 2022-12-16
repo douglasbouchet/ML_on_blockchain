@@ -11,12 +11,13 @@ contract EncryptionJobFinder {
     uint256 thresholdMaxNumberReceivedModels = 6; //stop receiving models when we have 6 models
 
     constructor() {
-        jobContainer = new EncryptionJobContainer(
-            5, // model weight (TODO change to bytes4)
-            0, // batch index
-            thresholdForBestModel,
-            thresholdMaxNumberReceivedModels
-        );
+        jobContainer = new EncryptionJobContainer();
+        // jobContainer = new EncryptionJobContainer(
+        //     5, // model weight (TODO change to bytes4)
+        //     0, // batch index
+        //     thresholdForBestModel,
+        //     thresholdMaxNumberReceivedModels
+        // );
     }
 
     function getJob() public view returns (uint256, uint256) {
@@ -28,12 +29,13 @@ contract EncryptionJobFinder {
         // push current job to previousJobs
         previousJobs.push(jobContainer);
         // create a new job TODO dummies value atm, should be getted from fl server
-        jobContainer = new EncryptionJobContainer(
-            5,
-            1,
-            thresholdForBestModel,
-            thresholdMaxNumberReceivedModels
-        );
+        jobContainer = new EncryptionJobContainer();
+        // jobContainer = new EncryptionJobContainer(
+        //     5,
+        //     1,
+        //     thresholdForBestModel,
+        //     thresholdMaxNumberReceivedModels
+        // );
     }
 
     /// @notice send a new encrypted model to the jobContainer

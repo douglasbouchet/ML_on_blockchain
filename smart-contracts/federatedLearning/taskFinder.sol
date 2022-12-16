@@ -7,11 +7,10 @@ contract TaskFinder {
     LearnTask[] public previousJobs;
     LearnTask private jobContainer;
 
+    uint256 thresholdForBestModel = 3; // require 3 equals model to validate
+    uint256 thresholdMaxNumberReceivedModels = 6; //stop receiving models when we have 6 models
+
     constructor() {
-        //uint256 thresholdForBestModel = 2;
-        //uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 5 models
-        uint256 thresholdForBestModel = 3; // require 3 equals model to validate
-        uint256 thresholdMaxNumberReceivedModels = 6; //stop receiving models when we have 6 models
         jobContainer = new LearnTask(
             5, // model weight (TODO change to bytes4)
             0, // batch index
@@ -29,8 +28,6 @@ contract TaskFinder {
         // push current job to previousJobs
         previousJobs.push(jobContainer);
         // create a new job TODO dummies value atm, should be getted from fl server
-        uint256 thresholdForBestModel = 2;
-        uint256 thresholdMaxNumberReceivedModels = 3; //stop receiving models when we have 3 models
         jobContainer = new LearnTask(
             5,
             1,
@@ -43,32 +40,26 @@ contract TaskFinder {
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
-    // function addEncryptedModel(address workerAddress, bytes4 encryptedModel)
-    function addEncryptedModel(address workerAddress, bytes32 modelHash)
+    function addEncryptedModel(uint160 workerAddress, bytes32 modelHash)
         public
         returns (bool)
     {
+        // if the model is complete, create a new job and push the current one to previousJobs
+        if (jobContainer.getModelIsready()) {
+            createNewJob();
+        }
         bool modelAdded = jobContainer.addNewEncryptedModel(
-            uint160(workerAddress),
-            //workerAddress,
+            workerAddress,
             modelHash
         );
-        // // if the model is complete, create a new job and push the current one to previousJobs
-        // if (jobContainer.getModelIsready()) {
-        //     createNewJob();
-        // }
         return modelAdded;
     }
 
     function addVerificationParameters(
-        address workerAddress,
+        uint160 workerAddress,
         uint256 clearModel
     ) public {
-        jobContainer.addVerificationParameters(
-            uint160(workerAddress),
-            //workerAddress,
-            clearModel
-        );
+        jobContainer.addVerificationParameters(workerAddress, clearModel);
     }
 
     function getAllPreviousJobsBestModel()

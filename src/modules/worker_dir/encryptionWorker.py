@@ -33,10 +33,11 @@ class EncryptionWorker:
         return False
 
     def compare_hash(self):
+        model = [97]
         # == '0x4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45'
         # model_hash = Web3.solidityKeccak(["uint8", "uint8", "uint8"], self.model).hex()
         model_hash = Web3.solidityKeccak(
-            ["uint256"], self.model).hex()
+            ["uint256"], model).hex()
         print("model_hash", model_hash)
         res = self.contract.compare_hash(
             model_hash,

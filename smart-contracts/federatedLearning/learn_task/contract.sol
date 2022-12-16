@@ -18,14 +18,14 @@ contract LearnTask {
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
-    uint256 currentModel;
-    uint256 batchIndex;
-    uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
-    uint256 thresholdMaxNumberReceivedModels;
-    //uint256 currentModel = 134;
-    //uint256 batchIndex = 12;
-    //uint256 thresholdForBestModel = 30;
-    //uint256 thresholdMaxNumberReceivedModels = 50;
+    // uint256 currentModel;
+    // uint256 batchIndex;
+    // uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
+    // uint256 thresholdMaxNumberReceivedModels;
+    uint256 currentModel = 134;
+    uint256 batchIndex = 12;
+    uint256 thresholdForBestModel = 15000;
+    uint256 thresholdMaxNumberReceivedModels = 7500;
     uint256 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -57,17 +57,17 @@ contract LearnTask {
         _;
     }
 
-    constructor(
-        uint256 _currentModel,
-        uint256 _batchIndex,
-        uint256 _thresholdForBestModel,
-        uint256 _thresholdMaxNumberReceivedModels
-    ) {
-        currentModel = _currentModel;
-        batchIndex = _batchIndex;
-        thresholdForBestModel = _thresholdForBestModel;
-        thresholdMaxNumberReceivedModels = _thresholdMaxNumberReceivedModels;
-    }
+    // constructor(
+    //     uint256 _currentModel,
+    //     uint256 _batchIndex,
+    //     uint256 _thresholdForBestModel,
+    //     uint256 _thresholdMaxNumberReceivedModels
+    // ) {
+    //     currentModel = _currentModel;
+    //     batchIndex = _batchIndex;
+    //     thresholdForBestModel = _thresholdForBestModel;
+    //     thresholdMaxNumberReceivedModels = _thresholdMaxNumberReceivedModels;
+    // }
 
     function getModelAndBatchIndex() public view returns (uint256, uint256) {
         return (currentModel, batchIndex);
@@ -95,14 +95,7 @@ contract LearnTask {
     /// @notice each address can send only one model
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
-
     /// @return true if the model was added to the jobContainer, false otherwise
-    //function addNewEncryptedModel(address workerAddress, bytes32 modelHash)
-    //    modelOnlySendOnce(workerAddress)
-    //    returns (bool)
-    //{
-    //function addNewEncryptedModel(uint256 workerAddress) public returns (bool) {
-    //function addNewEncryptedModel(uint160 workerAddress) public returns (bool) {
     function addNewEncryptedModel(uint160 workerAddress, bytes32 modelHash)
         public
         returns (bool)
@@ -111,9 +104,9 @@ contract LearnTask {
         if (!canReceiveNewModel) {
             return false;
         }
-        //address _workerAddress = address(workerAddress); // equivalent to receiving the worker address (checked on remix)
-        // receivedModelsAddresses.push(address(workerAddress));
-        // addressToHashModel[workerAddress] = modelHash; TODO uncomment
+        address _workerAddress = address(workerAddress); // equivalent to receiving the worker address (checked on remix)
+        receivedModelsAddresses.push(_workerAddress);
+        addressToHashModel[_workerAddress] = modelHash; // TODO uncomment
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
         // new models
         if (
@@ -132,10 +125,11 @@ contract LearnTask {
         return keccak256(abi.encodePacked(clearModel));
     }
 
+    //address _workerAddress,
+
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
     function addVerificationParameters(
-        //address _workerAddress,
         uint160 _uintWorkerAddress,
         uint256 _clearModel
     ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
@@ -254,6 +248,40 @@ contract LearnTask {
             return (0, false);
         }
     }
+
+    // ------------- argument checking methods-------------
+
+    /// @notice function to check if the address are correctly sent as uint160
+    /// @notice if the argument isn't correct, we go into an infinite loop, which will cause diablo to never commit
+    /// @param _workerAddress the address of the worker as an uint160
+    /// @return true if the address is correct, otw never returns
+    function checkAddressEncoding(uint160 _workerAddress)
+        public
+        returns (bool)
+    {
+        if (
+            _workerAddress == 725016507395605870152133310144839532665846457513 // expected address
+        ) {
+            return true;
+        }
+        uint256 x = 0;
+        while (true) {
+            x += 1;
+        }
+    }
+
+    // function checkAddressEncoding() public pure returns (bool) {
+    //     uint256 x = 0;
+    //     while (true) {
+    //         x += 1;
+    //     }
+    //     // true_address as uint160
+    //     // uint160 true_address = 725016507395605870152133310144839532665846457513;
+    //     // if (_workerAddress == true_address) {
+    //     //     return true;
+    //     // }
+    //     // return false;
+    // }
 
     //------------ Debug functions---------------------------------
     function getModelIsready() public view returns (bool) {

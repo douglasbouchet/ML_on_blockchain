@@ -1,11 +1,12 @@
 # from src.modules.helper import read_addresses_and_keys_from_yaml, get_data
-from src.modules.helper import *
+from src.modules.helper import Helper, get_data
 from src.solidity_contract.contract import Contract
 from src.solidity_contract.deploy import deploy_smart_contract
 from src.solidity_contract.smart_contracts.job_finder import JobFinder
 from src.solidity_contract.smart_contracts.fragmented_job_finder import (
-    FragmentedJobFinder,
+    FragmentedJobFinder
 )
+from src.solidity_contract.smart_contracts.encryption_job_container import EncryptionJobContainer
 from src.solidity_contract.smart_contracts.encryption_job_finder import (
     EncryptionJobFinder,
 )
@@ -47,6 +48,8 @@ class FederatingLearningServer:
             return FragmentedJobFinder(contract_name, contract_adress, abi, bytecode)
         elif contract_name == "EncryptionJobFinder":
             return EncryptionJobFinder(contract_name, contract_adress, abi, bytecode)
+        elif contract_name == "EncryptionJobContainer":
+            return EncryptionJobContainer(contract_name, contract_adress, abi, bytecode)
         else:
             return Contract(contract_name, contract_adress, abi, bytecode)
 
@@ -78,7 +81,7 @@ class FederatingLearningServer:
 
         # we start by checking if new workers have registered to the learning
         # if yes, we add them to the list of available workers
-        workers_addresses = read_worker_addresses_from_smart_contract(contract)
+        workers_addresses = Helper().read_worker_addresses_from_smart_contract(contract)
         # add each address not in workers_addresses inside workers_addresses and available_workers
         for address in workers_addresses:
             if address not in self.workers_addresses:
