@@ -1,0 +1,9 @@
+interface: "ethereum"
+
+parameters:
+  confirm: polltx
+  prepare: signature
+
+endpoints:
+
+  - addresses:

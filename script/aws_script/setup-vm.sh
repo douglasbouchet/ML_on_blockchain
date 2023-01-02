@@ -27,7 +27,7 @@ fi
 timeout=5 # if the connection is not established within 5 seconds, exit with an error message
 
 for var in "$@" # read the list of ip addresses
-do
+
     # Use scp to copy the file to the remote IP address, and exit with an error message if nothing happens after 5 seconds
     if ! scp -o ConnectTimeout=$timeout workload.yaml user@$var:~; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: user@$var is reachable."
