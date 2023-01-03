@@ -5,18 +5,20 @@ read -p "Enter a scenario name: " scenario
 
 echo "Scenario: $scenario"
 
-num_workers=1
+num_workers=5
 
 # Iterate 5 times
-# for i in {1..3}; do
-for i in {1..1}; do
-
+for i in {1..15}; do
+# for i in {1..5}; do
+# for i in {1..1}; do
     # Multiply the variable by 10
-    num_workers=$((num_workers * 10))
+    # num_workers=$((num_workers * 10))
+    num_workers=$((num_workers * 2))
     echo "Testing blockchain with $num_workers workers"
     # create file names as number_of_workers and scenario (to save results)
-    file_name="$scenario"_"$num_workers"_workers
-    touch res/$file_name.txt
+    file_name="$num_workers"_workers
+    mkdir res/$scenario
+    touch res/$scenario/$file_name.txt
     # create the workload.yaml file for the given number of workers and upload it
     echo "Creating workload for $num_workers workers"
     # call the script create_workload.sh with the number of workers as argument
@@ -36,7 +38,7 @@ for i in {1..1}; do
     wait
     # copy the results from the primary to the local machine
     scp user@dclbigmem.epfl.ch:out.txt res/
-    mv res/out.txt res/$file_name.txt
+    mv res/out.txt res/$scenario/$file_name.txt
     echo -e "\n"
 
     # kill the blockchain: close all geth instances in parallel
