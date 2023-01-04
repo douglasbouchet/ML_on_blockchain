@@ -32,11 +32,11 @@ timeout=5 # if the connection is not established within 5 seconds, exit with an 
 
 # copy smart contract folder to primary i.e should result in ubuntu@$1:contracts
 ssh ubuntu@$1 'mkdir -p contracts'
-if ! scp -o ConnectTimeout=$timeout smart-contracts/federatedLearning/learn_task/arguments ubuntu@$1:~/contracts; then
+if ! scp -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/arguments ubuntu@$1:~/contracts; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$1 is reachable."
       exit 1
 fi
-if ! scp -o ConnectTimeout=$timeout smart-contracts/federatedLearning/learn_task/contract.sol ubuntu@$1:~/contracts; then
+if ! scp -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/contract.sol ubuntu@$1:~/contracts; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$1 is reachable."
       exit 1
 fi
