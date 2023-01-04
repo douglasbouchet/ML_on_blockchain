@@ -7,7 +7,6 @@ then
     exit 1
 fi
 
-
 # create the setup.yaml file for the given ip addresses
 ./create_setup.sh @
 
@@ -17,6 +16,11 @@ then
     echo "Error: setup.yaml file not found"
     exit 1
 fi
+
+# generate the workload.yaml file
+read -p "Generating workload, enter nb of workers: " n_workers
+./create_workload.sh $n_workers
+
 # check that workload.yaml exists
 if [ ! -f workload.yaml ]
 then
@@ -26,7 +30,7 @@ fi
 
 timeout=5 # if the connection is not established within 5 seconds, exit with an error message
 
-for var in "$@" # read the list of ip addresses
+for var in "$@";do # read the list of ip addresses
 
     # Use scp to copy the file to the remote IP address, and exit with an error message if nothing happens after 5 seconds
     if ! scp -o ConnectTimeout=$timeout workload.yaml user@$var:~; then

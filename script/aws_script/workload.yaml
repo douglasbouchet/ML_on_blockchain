@@ -1,1 +1,42 @@
-I'm a stupid yaml file
+let:
+  - !loop &account
+    sample: !account
+      number: 100
+      stake: 10000000
+  - !loop &any_location
+    sample: !location
+      - ".*"
+  - !loop &any_endpoint
+    sample: !endpoint
+      - ".*"
+  - &contract
+    sample: !contract
+      number: 1
+      name: "learn_task"
+workloads:
+  - number: 1
+    client:
+      location: *any_location
+      view: *any_endpoint
+      behavior:
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "getModelAndBatchIndex()"
+          load:
+            0: 10
+            10: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            0: 10
+            10: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            10: 10
+            20: 0
