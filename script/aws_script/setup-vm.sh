@@ -30,6 +30,17 @@ fi
 
 timeout=5 # if the connection is not established within 5 seconds, exit with an error message
 
+# copy smart contract folder to primary i.e should result in user@$1:contracts
+ssh user@$1 'mkdir -p contracts'
+if ! scp -o ConnectTimeout=$timeout smart-contracts/federatedLearning/learn_task/arguments user@$1:~/contracts; then
+      echo "Error: scp failed to connect within $timeout seconds. Verify that address: user@$1 is reachable."
+      exit 1
+fi
+if ! scp -o ConnectTimeout=$timeout smart-contracts/federatedLearning/learn_task/contract.sol user@$1:~/contracts; then
+      echo "Error: scp failed to connect within $timeout seconds. Verify that address: user@$1 is reachable."
+      exit 1
+fi
+
 for var in "$@";do # read the list of ip addresses
 
     # Use scp to copy the file to the remote IP address, and exit with an error message if nothing happens after 5 seconds
