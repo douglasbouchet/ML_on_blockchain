@@ -34,12 +34,12 @@ EOF
 # Add the list of IP addresses with port numbers to the yaml file
 for address in "${addresses[@]}"
 do
-    echo "      - $address" >> config.yaml
+    echo "      - $address" >> setup.yaml
 done
 
 # Add the tags to the yaml file
-echo "    tags:" >> config.yaml
-echo "      - vm-dclbigmem-1" >> config.yaml
-echo "      - c5.xlarge" >> config.yaml
+echo "    tags:" >> setup.yaml
+echo "      - vm-dclbigmem-1" >> setup.yaml
+echo "      - c5.xlarge" >> setup.yaml
 
-echo "Yaml file created: config.yaml"
+echo "Yaml file created: setup.yaml"

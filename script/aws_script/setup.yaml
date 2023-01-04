@@ -7,3 +7,10 @@ parameters:
 endpoints:
 
   - addresses:
+      - 192.168.201.3:3000
+      - 192.168.201.4:3000
+      - 192.168.201.5:3000
+      - 192.168.201.6:3000
+    tags:
+      - vm-dclbigmem-1
+      - c5.xlarge
