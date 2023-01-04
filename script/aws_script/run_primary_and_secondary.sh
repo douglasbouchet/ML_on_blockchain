@@ -33,5 +33,5 @@ scp user@$1:out.txt res/
 mv res/out.txt res/$scenario/$file_name.txt
 echo -e "\n"
 
-# end machine:
+# end machine: see if sufficient to just kill all geth processes
 # TODO
