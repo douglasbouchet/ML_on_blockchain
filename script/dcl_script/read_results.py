@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 waiting_times = []
 percentages_committed = []
 n_txs = []
-scenario = "power_2"
+scenario = "power_2_bis"
 # workers = [10 * pow(10, i) for i in range(4)]
-workers = [10 * pow(2, i) for i in range(14)]
+workers = [10 * pow(2, i) for i in range(16)]
 
 i = 0
 for n_workers in workers:
