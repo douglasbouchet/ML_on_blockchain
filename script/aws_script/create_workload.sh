@@ -11,7 +11,7 @@ cat <<EOF > workload.yaml
 let:
   - !loop &account
     sample: !account
-      number: 100
+      number: 50
       stake: 10000000
   - !loop &any_location
     sample: !location

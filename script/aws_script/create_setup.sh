@@ -8,8 +8,8 @@ then
     exit 1
 fi
 
-# Set the port number to 3000
-port=3000
+# Set the port number to 9000 (3k not working)
+port=9000
 
 # Initialize the list of IP addresses with port numbers
 addresses=()
@@ -23,7 +23,6 @@ cat > setup.yaml <<EOF
 interface: "ethereum"
 
 parameters:
-  confirm: polltx
   prepare: signature
 
 endpoints:
@@ -39,7 +38,6 @@ done
 
 # Add the tags to the yaml file
 echo "    tags:" >> setup.yaml
-echo "      - vm-dclbigmem-1" >> setup.yaml
 echo "      - c5.xlarge" >> setup.yaml
 
 echo "Yaml file created: setup.yaml"
