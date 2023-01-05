@@ -52,4 +52,4 @@ workloads:
             20: 0
 EOF
 
-echo "Workload file created: workload.yaml"
+echo "workload.yaml file created"

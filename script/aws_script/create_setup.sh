@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Check that at least one IP address has been provided as an argument
+# Check that at least one IP address has been provided as an argument. These IP's are the IP's of the nodes
 if [ $# -lt 1 ]
 then
     echo "Error: No IP addresses provided"
@@ -40,4 +40,4 @@ done
 echo "    tags:" >> setup.yaml
 echo "      - c5.xlarge" >> setup.yaml
 
-echo "Yaml file created: setup.yaml"
+echo "setup.yaml file created"
