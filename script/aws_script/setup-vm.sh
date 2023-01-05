@@ -19,7 +19,7 @@ fi
 
 # generate the workload.yaml file
 read -p "Generating workload, enter nb of workers: " n_workers
-./create_workload.sh $n_workers
+# ./create_workload.sh $n_workers
 
 # check that workload.yaml exists
 if [ ! -f workload.yaml ]
@@ -30,16 +30,29 @@ fi
 
 timeout=5 # if the connection is not established within 5 seconds, exit with an error message
 
+# TODO add conda env for primary node
+# ---- on local machine
+# conda env export > environment.yml
+# scp environment.yml ubuntu@$1:~
+#-------------- # on remote machine
+# wget https://repo.anaconda.com/archive/Anaconda3-2022.05-Linux-x86_64.sh
+# bash Anaconda3-2022.05-Linux-x86_64.sh
+# source ~/.bashrc
+# conda env create -f environment.yml -name base
+#------------
 # copy smart contract folder to primary i.e should result in ubuntu@$1:contracts
-ssh ubuntu@$1 'mkdir -p contracts'
-if ! scp -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/arguments ubuntu@$1:~/contracts; then
+ssh ubuntu@$1 'mkdir -p contracts/learn_task'
+if ! scp -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/arguments ubuntu@$1:~/contracts/learn_task; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$1 is reachable."
       exit 1
 fi
-if ! scp -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/contract.sol ubuntu@$1:~/contracts; then
+if ! scp -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/contract.sol ubuntu@$1:~/contracts/learn_task; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$1 is reachable."
       exit 1
 fi
+
+# install required python packages to run arguments on primary
+ssh ubuntu@$1 'pip3 install coincurve && pip3 install pysha3'
 
 for var in "$@";do # read the list of ip addresses
 
