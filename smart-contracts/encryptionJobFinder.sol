@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
+pragma experimental ABIEncoderV2;
 
 import "./encryptionJobContainer.sol";
 
@@ -21,12 +22,6 @@ contract EncryptionJobFinder {
         previousJobs.push(jobContainer);
         // create a new job TODO dummies value atm, should be getted from fl server
         jobContainer = new EncryptionJobContainer();
-        // jobContainer = new EncryptionJobContainer(
-        //     5,
-        //     1,
-        //     thresholdForBestModel,
-        //     thresholdMaxNumberReceivedModels
-        // );
     }
 
     /// @notice send a new encrypted model to the jobContainer
@@ -50,26 +45,26 @@ contract EncryptionJobFinder {
 
     function addVerificationParameters(
         uint160 workerAddress,
-        //uint256 clearModel,
         uint256[] memory clearModel
     ) public {
-        // uint256 elem = clearModel[0];
         jobContainer.addVerificationParameters(workerAddress, clearModel);
-        // jobContainer.addVerificationParameters(workerAddress, elem);
     }
 
     function getAllPreviousJobsBestModel()
         public
         view
-        returns (uint256[] memory)
+        returns (uint256[][] memory)
     {
-        uint256[] memory bestModels = new uint256[](previousJobs.length);
+        // create a dynamic array of 2 dimension to store the best models
+        uint256[][] memory bestModels = new uint256[][](previousJobs.length);
+        // uint256[] memory bestModels = new uint256[](previousJobs.length);
         for (uint256 i = 0; i < previousJobs.length; i++) {
-            (uint256 newModel, bool ready) = previousJobs[i].getModel();
+            (uint256[] memory newModel, bool ready) = previousJobs[i]
+                .getModel();
             if (ready) {
                 bestModels[i] = newModel;
             } else {
-                bestModels[i] = 0;
+                bestModels[i] = new uint256[](0);
             }
         }
         return bestModels;
@@ -85,7 +80,7 @@ contract EncryptionJobFinder {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getFinalModel() public view returns (uint256, bool) {
+    function getFinalModel() public view returns (uint256[] memory, bool) {
         return jobContainer.getModel();
     }
 

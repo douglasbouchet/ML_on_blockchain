@@ -3,7 +3,8 @@ pragma solidity ^0.7.0;
 
 contract EncryptionJobContainer {
     struct VerificationParameters {
-        uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
+        uint256[] workerModel; // store weights of the model
+        //uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
         address workerAddress;
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
@@ -11,8 +12,12 @@ contract EncryptionJobContainer {
     // address of a worker to the parameters used to verify the model and proof it was computed by the worker
     mapping(address => VerificationParameters) addressToVerificationParameters;
 
-    mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
-    uint256[] models; // keep track of each different model we have seen (models are stored in clear)
+    // mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
+    // for each model, record how many times we have seen it. In solidity we can't use a dynamic array as a key
+    // for a mapping, so we use hash of the model as a key
+    mapping(bytes32 => uint256) modelToNSameModels;
+    // uint256[] models; // keep track of each different model we have seen (models are stored in clear)
+    uint256[][] models; // keep track of each different model we have seen (models are stored in clear)
 
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
@@ -22,7 +27,8 @@ contract EncryptionJobContainer {
     uint256 batchIndex = 12;
     uint256 thresholdForBestModel = 2; // number of equal models needed to be considered as the best one.
     uint256 thresholdMaxNumberReceivedModels = 3;
-    uint256 newModel; // the weight of the new model
+    // uint256 newModel; // the weight of the new model
+    uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
 
@@ -116,9 +122,9 @@ contract EncryptionJobContainer {
     function addVerificationParameters(
         uint160 _uintWorkerAddress,
         // uint256 _clearModel
-        uint256[] memory _clearModell
+        uint256[] memory _clearModel
     ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
-        uint256 _clearModel = _clearModell[0];
+        // uint256 _clearModel = _clearModell[0];
         address _workerAddress = address(_uintWorkerAddress);
         // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
@@ -143,8 +149,17 @@ contract EncryptionJobContainer {
             // We check if hash of clear model + worker's address converted to uint256
             // is equal to the hash of the model sent by the worker during leaning phase
             // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
-            uint256 model_with_public_key = _clearModel +
-                uint256(_workerAddress);
+            // uint256 model_with_public_key = _clearModel +
+            //     uint256(_workerAddress);
+            // add uint256(_workerAddress) to each element of _clearModel
+            uint256[] memory model_with_public_key = new uint256[](
+                _clearModel.length
+            );
+            for (uint256 i = 0; i < _clearModel.length; i++) {
+                model_with_public_key[i] =
+                    _clearModel[i] +
+                    uint256(_workerAddress);
+            }
             bytes32 modelHash = keccak256(
                 abi.encodePacked(model_with_public_key)
             );
@@ -157,11 +172,27 @@ contract EncryptionJobContainer {
             );
             // now we know the worker did prove that this model was produced by him, we can add it to the received
             // clear models
-            modelToNSameModels[_clearModel] += 1; //TODO check if ok
+            // modelToNSameModels[_clearModel] += 1; //TODO check if ok
+            setValueModelToNSameModels(
+                _clearModel,
+                getValueModelToNSameModels(_clearModel) + 1
+            );
             // check if we already registered this model
             bool modelAlreadyInModels = false;
+            uint256 clearModelLen = _clearModel.length;
             for (uint256 i = 0; i < models.length; i++) {
-                if (models[i] == _clearModel) {
+                if (models[i].length != clearModelLen) {
+                    // in that case, we cannot already have this model in models
+                    continue;
+                }
+                // we check if the two models are equals
+                bool modelsAreEquals = true;
+                for (uint256 j = 0; j < clearModelLen; j++) {
+                    if (models[i][j] != _clearModel[j]) {
+                        modelsAreEquals = false;
+                    }
+                }
+                if (modelsAreEquals) {
                     modelAlreadyInModels = true;
                 }
             }
@@ -169,8 +200,10 @@ contract EncryptionJobContainer {
             if (!modelAlreadyInModels) {
                 models.push(_clearModel);
             }
-            uint256 _bestModel = checkEnoughSameModel();
-            if (_bestModel != 0) {
+            // uint256 _bestModel = checkEnoughSameModel();
+            uint256[] memory _bestModel = checkEnoughSameModel();
+            if (_bestModel.length != 0) {
+                // if (_bestModel != 0) {
                 // in that case we elected the best model, so we can pay workers that did correct job
                 modelIsReady = true;
                 // publish the new model
@@ -183,14 +216,18 @@ contract EncryptionJobContainer {
         }
     }
 
-    function checkEnoughSameModel() private view returns (uint256) {
+    function checkEnoughSameModel() private view returns (uint256[] memory) {
         // if one of the model has been seen more than thresholdForBestModel times, we return true
         for (uint256 i = 0; i < models.length; i++) {
-            if (modelToNSameModels[models[i]] >= thresholdForBestModel) {
+            // if (modelToNSameModels[models[i]] >= thresholdForBestModel) {
+            if (
+                getValueModelToNSameModels(models[i]) >= thresholdForBestModel
+            ) {
                 return models[i];
             }
         }
-        return 0x0;
+        // return an empty dynamic array
+        return new uint256[](0);
     }
 
     function payCorrectWorkers(bytes32 correctModel) private view {
@@ -227,11 +264,12 @@ contract EncryptionJobContainer {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getModel() public view returns (uint256, bool) {
+    function getModel() public view returns (uint256[] memory, bool) {
         if (modelIsReady) {
             return (newModel, true);
         } else {
-            return (0, false);
+            // return (0, false);
+            return (new uint256[](0), false);
         }
     }
 
@@ -308,6 +346,27 @@ contract EncryptionJobContainer {
     // }
     function getModelIsready() public view returns (bool) {
         return modelIsReady;
+    }
+
+    //------------Helper functions---------------------------------
+    /// @notice update the value of the modelToNSameModels
+    /// @param key the key of the model
+    /// @param value the value to set
+    function setValueModelToNSameModels(uint256[] memory key, uint256 value)
+        public
+    {
+        modelToNSameModels[bytes32(keccak256(abi.encodePacked(key)))] = value;
+    }
+
+    /// @notice get the value of the modelToNSameModels
+    /// @param key the key of the model
+    /// @return the value of the modelToNSameModels
+    function getValueModelToNSameModels(uint256[] memory key)
+        public
+        view
+        returns (uint256)
+    {
+        return modelToNSameModels[bytes32(keccak256(abi.encodePacked(key)))];
     }
 
     //------------ Debug functions---------------------------------

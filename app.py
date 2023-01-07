@@ -434,7 +434,7 @@ def variable_model_complexity():
     # we check value of the model
     res = encrypted_job_finder.get_final_model()
     print("model value:{}".format(res))
-    assert res[0] == 97 and res[1] is True
+    assert res[0][0] == 97 and res[1] is True
 
 
 if __name__ == "__main__":
