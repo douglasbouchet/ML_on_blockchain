@@ -96,7 +96,7 @@ class EncryptionJobFinder(Contract):
         worker_address = Web3.toChecksumAddress(worker_address)
         try:
             register_tx = self.contract.functions.addVerificationParameters(
-                int(worker_address, 16), [clear_model]
+                int(worker_address, 16), clear_model
             ).build_transaction(
                 {
                     "gasPrice": 0,

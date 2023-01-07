@@ -25,8 +25,8 @@ contract EncryptionJobContainer {
 
     uint256 currentModel = 134;
     uint256 batchIndex = 12;
-    uint256 thresholdForBestModel = 2; // number of equal models needed to be considered as the best one.
-    uint256 thresholdMaxNumberReceivedModels = 3;
+    uint256 thresholdForBestModel = 3; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels = 6;
     // uint256 newModel; // the weight of the new model
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
