@@ -223,18 +223,28 @@ def multiple_learn_tasks_scenario():
     # init the workers
     encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
     worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=6)
+    good_model_round_0 = [1000, 232, 231, 12321, 3, 232, 1, 12331, 7753, 9834]
+    bad_model_0_round_0 = [98, 97, 98, 9, 10, 11, 999999]
+    bad_model_1_round_0 = [99, 97, 98]
+    good_model_round_1 = [1000, 230, 231, 12321, 4, 232, 1, 12331, 7753, 11111]
+    bad_model_0_round_1 = [4, 97, 98, 232]
+    bad_model_1_round_1 = [99]
     for i, worker in enumerate(worker_pool):
         if i < 3:
-            assert worker.send_encrypted_model(model=97) is True
+            assert worker.send_encrypted_model(
+                model=good_model_round_0) is True
         elif i < 5:
-            assert worker.send_encrypted_model(model=98) is True
+            assert worker.send_encrypted_model(
+                model=bad_model_0_round_0) is True
         else:
-            assert worker.send_encrypted_model(model=99) is True
+            assert worker.send_encrypted_model(
+                model=bad_model_1_round_0) is True
 
     assert worker_pool[0].check_can_send_verification_parameters() is True
 
     # now we send the verification parameters (all workers send the same model they learned with correct address)
-    # we send weights in following order: 97, 97, 98, 99, 98, 97 so we reach the threshold of 3 at the end
+    # we send weights in following order: good_model_round_0, good_model_round_0, bad_model_0_round_0,
+    # bad_model_1_round_0, bad_model_0_round_0, good_model_round_0 so we reach the threshold of 3 at the end
     for i in [0, 1, 3, 5, 4, 2]:
         assert worker_pool[i].send_verifications(
             good_model=True, good_address=True) is True
@@ -249,7 +259,7 @@ def multiple_learn_tasks_scenario():
     # we check value of the model
     res = encrypted_job_finder.get_final_model()
     print("model value:{}".format(res))
-    assert res[0] == 97 and res[1] is True
+    assert res[0] == good_model_round_0 and res[1] is True
 
     # now we do another learning task with 3 workers sending 98, 2 sending 97 and 1 sending 99. Best model should be 98
     # keep 2 worker from previous pool
@@ -258,11 +268,14 @@ def multiple_learn_tasks_scenario():
 
     for i, worker in enumerate(worker_pool):
         if i < 3:
-            assert worker.send_encrypted_model(model=98) is True
+            assert worker.send_encrypted_model(
+                model=good_model_round_1) is True
         elif i < 5:
-            assert worker.send_encrypted_model(model=99) is True
+            assert worker.send_encrypted_model(
+                model=bad_model_0_round_1) is True
         else:
-            assert worker.send_encrypted_model(model=100) is True
+            assert worker.send_encrypted_model(
+                model=bad_model_1_round_1) is True
 
     assert worker_pool[0].check_can_send_verification_parameters() is True
 
@@ -281,7 +294,7 @@ def multiple_learn_tasks_scenario():
     # we check value of the model
     res = encrypted_job_finder.get_final_model()
     print("model value:{}".format(res))
-    assert res[0] == 98 and res[1] is True
+    assert res[0] == good_model_round_1 and res[1] is True
 
 
 def variable_model_complexity():
@@ -374,5 +387,5 @@ if __name__ == "__main__":
     # sequential_learning_main()
     # encrypted_main()
     # variable_model_complexity()
-    simple_learning_scenario()
-    # multiple_learn_tasks_scenario()
+    # simple_learning_scenario()
+    multiple_learn_tasks_scenario()
