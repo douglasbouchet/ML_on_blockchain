@@ -7,24 +7,26 @@ class EncryptionWorker:
         self.private_key = private_key
         self.contract = contract
         self.id = id
+        self.model = None
 
-    def send_encrypted_model(self, model: int) -> bool:
+    def send_encrypted_model(self, model: [int]) -> bool:
         """Send the encrypted model to the blockchain
         Args:
-            model (int): encrypted model
+            model ([int]): model's weights
         Returns:
             bool: True if the transaction was successful, False otherwise
         """
         # first we learn a new model
         # model = self.model[0]
-        self.model = [model]
+        self.model = model
         # then we add the int value of worker's address to the model (i.e to prove that the worker
         # is the one who learned the model)
         int_address = int(self.address, 16)
         address = self.address
-        encrypted_model = [model + int_address]
+        # encrypted_model = [model + int_address]
+        encrypted_model = [weight + int_address for weight in self.model]
         model_hash = Web3.solidityKeccak(
-            ["uint256"], encrypted_model).hex()
+            ["uint256[]"], [encrypted_model]).hex()
         res = self.contract.send_hashed_model(
             model_hash, address, self.private_key
         )

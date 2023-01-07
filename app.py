@@ -371,8 +371,8 @@ def variable_model_complexity():
     # init the workers
     encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
     worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=5)
-    good_model = 97
-    wrong_model = 98
+    good_model = [97]
+    wrong_model = [98]
     worker_pool[0].compare_hash()  # should return true
     # make workers 1 to 3 sends their models
     for i, worker in enumerate(worker_pool[:3]):
