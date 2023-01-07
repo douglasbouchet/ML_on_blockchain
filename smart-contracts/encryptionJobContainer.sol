@@ -18,14 +18,10 @@ contract EncryptionJobContainer {
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
-    // uint256 currentModel;
-    // uint256 batchIndex;
-    // uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
-    // uint256 thresholdMaxNumberReceivedModels;
     uint256 currentModel = 134;
     uint256 batchIndex = 12;
-    uint256 thresholdForBestModel = 5;
-    uint256 thresholdMaxNumberReceivedModels = 10;
+    uint256 thresholdForBestModel = 2; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels = 3;
     uint256 newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -56,18 +52,6 @@ contract EncryptionJobContainer {
         require(!workerHasSendModel, "The worker already sent a model");
         _;
     }
-
-    // constructor(
-    //     uint256 _currentModel,
-    //     uint256 _batchIndex,
-    //     uint256 _thresholdForBestModel,
-    //     uint256 _thresholdMaxNumberReceivedModels
-    // ) {
-    //     currentModel = _currentModel;
-    //     batchIndex = _batchIndex;
-    //     thresholdForBestModel = _thresholdForBestModel;
-    //     thresholdMaxNumberReceivedModels = _thresholdMaxNumberReceivedModels;
-    // }
 
     function getModelAndBatchIndex() public view returns (uint256, uint256) {
         return (currentModel, batchIndex);
@@ -131,9 +115,10 @@ contract EncryptionJobContainer {
     /// @notice each address can send only one verification parameters (if has previously sent a model)
     function addVerificationParameters(
         uint160 _uintWorkerAddress,
-        uint256 _clearModel
+        // uint256 _clearModel
+        uint256[] memory _clearModell
     ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
-        //) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
+        uint256 _clearModel = _clearModell[0];
         address _workerAddress = address(_uintWorkerAddress);
         // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
@@ -280,7 +265,7 @@ contract EncryptionJobContainer {
         // expected address: 725016507395605870152133310144839532665846457513
         // expected modelHash: 0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356d
         uint160 trueAddress = 725016507395605870152133310144839532665846457513;
-        bytes32 trueModelHash = 0x0a3acd277e8fd4d05446ed4d5d0eeb24e5381a20c7425fbb268461e164f59992;
+        bytes32 trueModelHash = 0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356d;
         if (_workerAddress == trueAddress && _modelHash == trueModelHash) {
             //if (_workerAddress == trueAddress && _modelHash == trueAddressBis) {
             return true;
@@ -291,11 +276,41 @@ contract EncryptionJobContainer {
         }
     }
 
-    //------------ Debug functions---------------------------------
+    function checkUint160AndUint256(
+        uint160 _uintWorkerAddress,
+        uint256 _clearModel
+    ) public pure returns (bool) {
+        uint160 trueAddress = 725016507395605870152133310144839532665846457513;
+        uint256 trueClearModel = 42;
+        if (
+            _uintWorkerAddress == trueAddress && _clearModel == trueClearModel
+        ) {
+            return true;
+        }
+        uint256 x = 0;
+        while (true) {
+            x += 1;
+        }
+    }
+
+    // function checkAddressEncoding() public pure returns (bool) {
+    //     uint256 x = 0;
+    //     while (true) {
+    //         x += 1;
+    //     }
+    //     // true_address as uint160
+    //     // uint160 true_address = 725016507395605870152133310144839532665846457513;
+    //     // if (_workerAddress == true_address) {
+    //     //     return true;
+    //     // }
+    //     // return false;
+    // }
+    // }
     function getModelIsready() public view returns (bool) {
         return modelIsReady;
     }
 
+    //------------ Debug functions---------------------------------
     function compareKeccak(bytes32 modelHash) public pure returns (bool) {
         bytes32 computedModelHash = keccak256(
             //abi.encodePacked(uint8(97), uint8(98), uint8(99))

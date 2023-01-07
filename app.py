@@ -355,12 +355,95 @@ def multiple_learn_tasks_scenario():
     assert res[0] == 98 and res[1] is True
 
 
+def variable_model_complexity():
+    """In this scenario we test the functionality of the contract when the model complexity is not constant
+    This correspond to sending different number of weights to the contract
+    Use thresholdForBestModel = 2;
+    thresholdMaxNumberReceivedModels = 3;
+    """
+    encrypted_hypervisor = EncryptedHypervisor()
+    learning_server = FederatingLearningServer(3, 100, 10)
+    # ------Deploy smart contract---------
+    encrypted_job_finder = learning_server.deploy_contract(
+        "encryptionJobFinder", "EncryptionJobFinder"
+    )
+    encrypted_hypervisor.contract = encrypted_job_finder
+    # init the workers
+    encrypted_hypervisor.create_encrypted_workers(number_of_workers=999)
+    worker_pool = encrypted_hypervisor.select_worker_pool(pool_size=5)
+    good_model = 97
+    wrong_model = 98
+    worker_pool[0].compare_hash()  # should return true
+    # make workers 1 to 3 sends their models
+    for i, worker in enumerate(worker_pool[:3]):
+        res = worker.send_encrypted_model(good_model)
+        assert res is True
+        print("Worker {} sending model: ".format(i), res)
+        # send again a model should return false as model is rejected
+        # assert worker.send_encrypted_model() == False
+
+    # we check if we can send the verification parameters
+    print("can send:", worker_pool[0].check_can_send_verification_parameters())
+    # now job has received enough models, it shoudn't accept any more models
+    for i, worker in enumerate(worker_pool[3:]):
+        res = worker.send_encrypted_model(wrong_model)
+        assert res is False
+        print("Worker {} sending model: ".format(i), res)
+
+    # we check that we can send the verification parameters only for worker who did send a model
+    for i, worker in enumerate(worker_pool[:3]):
+        res = worker.check_can_send_verification_parameters()
+        # print("Worker {} check_can_send_verification_parameters: ".format(i), res)
+        assert res is True
+    for i, worker in enumerate(worker_pool[3:]):
+        res = worker.check_can_send_verification_parameters()
+        # print("Worker {} check_can_send_verification_parameters: ".format(i), res)
+        assert res is False
+
+    # now we send the verification parameters
+    for i, worker in enumerate(worker_pool[:2]):
+        res = worker.send_verifications(good_model=True, good_address=True)
+        print("Worker {} sending verification parameters: ".format(i), res)
+        assert res is True
+        print("model is ready:{}".format(
+            encrypted_job_finder.get_model_is_ready()))
+
+    # we send a model different that the first one we send, so should be rejected
+    res = worker_pool[2].send_verifications(
+        good_model=False, good_address=True)
+    print("Worker {} sending verification parameters with wrong model but good address: ".format(2), res)
+    assert res is False
+    res = worker_pool[2].send_verifications(
+        good_model=True, good_address=False)
+    print("Worker {} sending verification parameters with good model but wrong address: ".format(2), res)
+    assert res is False
+    res = worker_pool[2].send_verifications(good_model=True, good_address=True)
+    print("Worker {} sending verification parameters with good model and address but enough model received so still\
+         deny: ".format(2), res)
+    assert res is False
+
+    for i, worker in enumerate(worker_pool[3:]):
+        res = worker.send_verifications(good_model=True, good_address=True)
+        print("Worker {} sending verification parameters: ".format(i), res)
+        assert res is False
+
+    # we check if the model is ready
+    res = encrypted_job_finder.get_model_is_ready()
+    print("model is ready:{}".format(res))
+    assert res is True
+    # we check value of the model
+    res = encrypted_job_finder.get_final_model()
+    print("model value:{}".format(res))
+    assert res[0] == 97 and res[1] is True
+
+
 if __name__ == "__main__":
     # basic_main()
     # hypervisor_based_main()
     # parallel_learning_main()
     # sequential_learning_main()
     # encrypted_main()
-    simple_encryption_check()
+    # simple_encryption_check()
     # simple_learning_scenario()
     # multiple_learn_tasks_scenario()
+    variable_model_complexity()

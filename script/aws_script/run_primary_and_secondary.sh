@@ -12,7 +12,7 @@ read -p "Enter a scenario name: " scenario
 read -p "Enter the number of workers: " num_workers
 
 echo "Scenario: $scenario"
-echo "Number of workers: $scenario"
+echo "Number of workers: $num_workers"
 
 # setup file for results
 file_name="$num_workers"_workers

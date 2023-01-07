@@ -7,17 +7,8 @@ contract EncryptionJobFinder {
     EncryptionJobContainer[] public previousJobs;
     EncryptionJobContainer private jobContainer;
 
-    uint256 thresholdForBestModel = 3; // require 3 equals model to validate
-    uint256 thresholdMaxNumberReceivedModels = 6; //stop receiving models when we have 6 models
-
     constructor() {
         jobContainer = new EncryptionJobContainer();
-        // jobContainer = new EncryptionJobContainer(
-        //     5, // model weight (TODO change to bytes4)
-        //     0, // batch index
-        //     thresholdForBestModel,
-        //     thresholdMaxNumberReceivedModels
-        // );
     }
 
     function getJob() public view returns (uint256, uint256) {
@@ -59,9 +50,12 @@ contract EncryptionJobFinder {
 
     function addVerificationParameters(
         uint160 workerAddress,
-        uint256 clearModel
+        //uint256 clearModel,
+        uint256[] memory clearModel
     ) public {
+        // uint256 elem = clearModel[0];
         jobContainer.addVerificationParameters(workerAddress, clearModel);
+        // jobContainer.addVerificationParameters(workerAddress, elem);
     }
 
     function getAllPreviousJobsBestModel()
