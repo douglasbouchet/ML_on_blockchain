@@ -10,6 +10,7 @@ from secrets import token_bytes
 from coincurve import PublicKey
 from sha3 import keccak_256
 from web3 import Web3
+from eth_abi import encode_abi
 
 
 def encode_bytes32(value: str) -> str:
@@ -29,6 +30,15 @@ def encode_uint(value: int) -> str:
         raise ValueError("The value cannot be represented as uint256.")
         return None
     return value.to_bytes(32, byteorder='big')
+
+
+def encode_uint256_array(array):
+    # First, we need to encode the length of the array
+    encoded_length = encode_int(len(array))
+    # Next, we need to encode each element of the array
+    encoded_elements = b''.join([encode_int(x) for x in array])
+    # Finally, we concatenate the encoded length and encoded elements to get the final result
+    return encoded_length + encoded_elements
 
 
 def generate_addresses(n_workers: int):
@@ -170,6 +180,18 @@ for line in sys.stdin:
             arg1 = encode_uint(true_model_weight)
             # arg1 = encode_uint(false_model_weight)
             arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+            matched = True
+    if not matched:
+        m = re.search('^checkDynamicUint256Array\(\)$', line)
+        if m:
+            proto = 'checkDynamicUint256Array(uint256[])'
+            true_array = [1, 2, 3, 4, 5]
+            false_array_0 = [1, 2, 3, 4, 6]
+            false_array_1 = [1, 2, 3, 3, 5]
+            # encoded_array = encode_abi(['int256[]'], [true_array])
+            # encoded_array = encode_abi(['int256[]'], [false_array_0])
+            encoded_array = encode_abi(['int256[]'], [false_array_1])
+            arguments = base64.b64encode(encoded_array).decode('ascii')
             matched = True
     if not matched:
         # received line isn't a valid method (check yaml file and smart contract method name)

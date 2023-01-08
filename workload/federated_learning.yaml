@@ -29,7 +29,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "checkUint160AndUint256()"
+            function: "checkDynamicUint256Array()"
           load:
             0: 100
             10: 0

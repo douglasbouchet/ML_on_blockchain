@@ -3,7 +3,7 @@ pragma solidity ^0.7.0;
 
 contract LearnTask {
     struct VerificationParameters {
-        uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
+        uint256[] workerModel; // store weights of the model
         address workerAddress;
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
@@ -11,22 +11,22 @@ contract LearnTask {
     // address of a worker to the parameters used to verify the model and proof it was computed by the worker
     mapping(address => VerificationParameters) addressToVerificationParameters;
 
-    mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
-    uint256[] models; // keep track of each different model we have seen (models are stored in clear)
+    // for each model, record how many times we have seen it. In solidity we can't use a dynamic array as a key
+    // for a mapping, so we use hash of the model as a key
+    mapping(bytes32 => uint256) modelToNSameModels;
+    // uint256[] models; // keep track of each different model we have seen (models are stored in clear)
+    uint256[][] models; // keep track of each different model we have seen (models are stored in clear)
 
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
-    // uint256 currentModel;
-    // uint256 batchIndex;
-    // uint256 thresholdForBestModel; // number of equal models needed to be considered as the best one.
-    // uint256 thresholdMaxNumberReceivedModels;
     uint256 currentModel = 134;
     uint256 batchIndex = 12;
-    uint256 thresholdForBestModel = 15000;
-    uint256 thresholdMaxNumberReceivedModels = 7500;
-    uint256 newModel; // the weight of the new model
+    uint256 nWorkers = 10;
+    uint256 thresholdForBestModel = nWorkers / 2; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
+    uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
 
@@ -56,18 +56,6 @@ contract LearnTask {
         require(!workerHasSendModel, "The worker already sent a model");
         _;
     }
-
-    // constructor(
-    //     uint256 _currentModel,
-    //     uint256 _batchIndex,
-    //     uint256 _thresholdForBestModel,
-    //     uint256 _thresholdMaxNumberReceivedModels
-    // ) {
-    //     currentModel = _currentModel;
-    //     batchIndex = _batchIndex;
-    //     thresholdForBestModel = _thresholdForBestModel;
-    //     thresholdMaxNumberReceivedModels = _thresholdMaxNumberReceivedModels;
-    // }
 
     function getModelAndBatchIndex() public view returns (uint256, uint256) {
         return (currentModel, batchIndex);
@@ -131,10 +119,9 @@ contract LearnTask {
     /// @notice each address can send only one verification parameters (if has previously sent a model)
     function addVerificationParameters(
         uint160 _uintWorkerAddress,
-        uint256 _clearModel
+        uint256[] memory _clearModel
     ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
         address _workerAddress = address(_uintWorkerAddress);
-        // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
@@ -157,8 +144,15 @@ contract LearnTask {
             // We check if hash of clear model + worker's address converted to uint256
             // is equal to the hash of the model sent by the worker during leaning phase
             // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
-            uint256 model_with_public_key = _clearModel +
-                uint256(_workerAddress);
+            uint256[] memory model_with_public_key = new uint256[](
+                _clearModel.length
+            );
+            // add uint256(_workerAddress) to each element of _clearModel
+            for (uint256 i = 0; i < _clearModel.length; i++) {
+                model_with_public_key[i] =
+                    _clearModel[i] +
+                    uint256(_workerAddress);
+            }
             bytes32 modelHash = keccak256(
                 abi.encodePacked(model_with_public_key)
             );
@@ -169,13 +163,27 @@ contract LearnTask {
                 modelHash == modelSentByWorker,
                 "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
             );
-            // now we know the worker did prove that this model was produced by him, we can add it to the received
-            // clear models
-            modelToNSameModels[_clearModel] += 1; //TODO check if ok
+            // worker proved is did work to send its model, we can add it to the received clear models
+            setValueModelToNSameModels(
+                _clearModel,
+                getValueModelToNSameModels(_clearModel) + 1
+            );
             // check if we already registered this model
             bool modelAlreadyInModels = false;
+            uint256 clearModelLen = _clearModel.length;
             for (uint256 i = 0; i < models.length; i++) {
-                if (models[i] == _clearModel) {
+                if (models[i].length != clearModelLen) {
+                    // in that case, we cannot already have this model in models
+                    continue;
+                }
+                // we check if the two models are equals
+                bool modelsAreEquals = true;
+                for (uint256 j = 0; j < clearModelLen; j++) {
+                    if (models[i][j] != _clearModel[j]) {
+                        modelsAreEquals = false;
+                    }
+                }
+                if (modelsAreEquals) {
                     modelAlreadyInModels = true;
                 }
             }
@@ -183,8 +191,8 @@ contract LearnTask {
             if (!modelAlreadyInModels) {
                 models.push(_clearModel);
             }
-            uint256 _bestModel = checkEnoughSameModel();
-            if (_bestModel != 0) {
+            uint256[] memory _bestModel = checkEnoughSameModel();
+            if (_bestModel.length != 0) {
                 // in that case we elected the best model, so we can pay workers that did correct job
                 modelIsReady = true;
                 // publish the new model
@@ -197,14 +205,17 @@ contract LearnTask {
         }
     }
 
-    function checkEnoughSameModel() private view returns (uint256) {
+    function checkEnoughSameModel() private view returns (uint256[] memory) {
         // if one of the model has been seen more than thresholdForBestModel times, we return true
         for (uint256 i = 0; i < models.length; i++) {
-            if (modelToNSameModels[models[i]] >= thresholdForBestModel) {
+            if (
+                getValueModelToNSameModels(models[i]) >= thresholdForBestModel
+            ) {
                 return models[i];
             }
         }
-        return 0x0;
+        // return an empty dynamic array
+        return new uint256[](0);
     }
 
     function payCorrectWorkers(bytes32 correctModel) private view {
@@ -241,11 +252,11 @@ contract LearnTask {
 
     /// @notice function to get the model
     /// @return the model's weights or empty array along with a boolean indicating if the model is valid
-    function getModel() public view returns (uint256, bool) {
+    function getModel() public view returns (uint256[] memory, bool) {
         if (modelIsReady) {
             return (newModel, true);
         } else {
-            return (0, false);
+            return (new uint256[](0), false);
         }
     }
 
@@ -290,6 +301,33 @@ contract LearnTask {
         }
     }
 
+    function checkDynamicUint256Array(uint256[] memory testArray)
+        public
+        pure
+        returns (bool)
+    {
+        uint256[] memory trueArray = new uint256[](5);
+        for (uint256 i = 0; i < testArray.length; i++) {
+            trueArray[i] = i + 1;
+        }
+        if (testArray.length != trueArray.length) {
+            uint256 x = 0;
+            while (true) {
+                x += 1;
+            }
+        } else {
+            for (uint256 i = 0; i < testArray.length; i++) {
+                if (testArray[i] != trueArray[i]) {
+                    uint256 x = 0;
+                    while (true) {
+                        x += 1;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
     function checkUint160AndUint256(
         uint160 _uintWorkerAddress,
         uint256 _clearModel
@@ -307,19 +345,30 @@ contract LearnTask {
         }
     }
 
-    // function checkAddressEncoding() public pure returns (bool) {
-    //     uint256 x = 0;
-    //     while (true) {
-    //         x += 1;
-    //     }
-    //     // true_address as uint160
-    //     // uint160 true_address = 725016507395605870152133310144839532665846457513;
-    //     // if (_workerAddress == true_address) {
-    //     //     return true;
-    //     // }
-    //     // return false;
-    // }
-    // }
+    function getModelIsready() public view returns (bool) {
+        return modelIsReady;
+    }
+
+    //------------Helper functions---------------------------------
+    /// @notice update the value of the modelToNSameModels
+    /// @param key the key of the model
+    /// @param value the value to set
+    function setValueModelToNSameModels(uint256[] memory key, uint256 value)
+        public
+    {
+        modelToNSameModels[bytes32(keccak256(abi.encodePacked(key)))] = value;
+    }
+
+    /// @notice get the value of the modelToNSameModels
+    /// @param key the key of the model
+    /// @return the value of the modelToNSameModels
+    function getValueModelToNSameModels(uint256[] memory key)
+        public
+        view
+        returns (uint256)
+    {
+        return modelToNSameModels[bytes32(keccak256(abi.encodePacked(key)))];
+    }
 
     //------------ Debug functions---------------------------------
     function compareKeccak(bytes32 modelHash) public pure returns (bool) {
@@ -328,30 +377,5 @@ contract LearnTask {
             abi.encodePacked(uint256(97))
         );
         return modelHash == computedModelHash;
-    }
-
-    /// @notice dummy function to check if diablo is working
-    // function testDiablo(int256) public pure returns (bool) {
-    //     return true;
-    // }
-
-    /// @notice dummy function to check if diablo is working
-    //function testDiablo(uint160, uint160) public pure returns (bool) {
-    // function testDiablo(bytes32) public pure returns (bool) {
-    function testDiablo(uint160, bytes32) public pure returns (bool) {
-        return true;
-    }
-
-    // ------------- also dummy methods-------------
-    int256 private count = 0;
-
-    function push(int256 delta) public {
-        count += delta;
-    }
-
-    function pull(int256 delta) public {
-        if (count > delta) {
-            count -= delta;
-        }
     }
 }
