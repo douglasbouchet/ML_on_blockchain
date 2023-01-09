@@ -29,7 +29,21 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "checkDynamicUint256Array()"
+            function: "getModelAndBatchIndex()"
           load:
             0: 100
-            10: 0
+            5: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            0: 100
+            5: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            7: 100
+            12: 0

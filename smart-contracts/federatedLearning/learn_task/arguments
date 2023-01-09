@@ -67,22 +67,10 @@ def compute_model_weight(n_workers: int, model_length: int) -> [int]:
         model_length (int): how much weights are in the model that is learned.
 
     Returns:
-        List[int]: the array of model hashes
+        [int]: the array of model weights
     """
     # weights are good(42) for 4/5 of workers and 1/5 of workers are malicious(666)
-    return [42 if i % 5 != 0 else 666 for i in range(n_workers)]
-# def compute_model_weight(n_workers: int, model_length: int) -> [int]:
-#     """Generate an array of model weights.
-
-#     Args:
-#         n_workers (int): number of workers
-#         model_length (int): how much weights are in the model that is learned.
-
-#     Returns:
-#         List[int]: the array of model hashes
-#     """
-#     # weights are good(42) for 4/5 of workers and 1/5 of workers are malicious(666)
-#     return [[42] * model_length if i % 5 != 0 else [666] * model_length for i in range(n_workers)]
+    return [[42] * model_length if i % 5 != 0 else [666] * model_length for i in range(n_workers)]
 
 
 def compute_add_new_encrypted_model_hash(n_workers: int, addresses, model_weights):
@@ -95,9 +83,16 @@ def compute_add_new_encrypted_model_hash(n_workers: int, addresses, model_weight
         model_weights (int[]): array of model weights
 
     Returns:
-        List[str]: the array of model hashes
+        str[]: the array of model hashes
     """
-    return [Web3.solidityKeccak(["uint256"], [addresses[i] + model_weights[i]]).hex() for i in range(n_workers)]
+    model_hashes = []
+    for i in range(n_workers):
+        worker_address = addresses[i]
+        encrypted_model = [
+            weight + worker_address for weight in model_weights[i]]
+        model_hashes.append(Web3.solidityKeccak(
+            ["uint256[]"], [encrypted_model]).hex())
+    return model_hashes
 
 
 n_workers = 20000
@@ -135,16 +130,12 @@ for line in sys.stdin:
     if not matched:
         m = re.search('^addVerificationParameters\(\)$', line)
         if m:
-            # proto = 'addVerificationParameters(address,uint256)'
-            proto = 'addVerificationParameters(uint160,uint256)'
-            matched = True
-            # worker_address = 69
+            proto = 'addVerificationParameters(uint256[])'
             worker_address = addresses[add_verification_parameters_counter]
-            arg0 = encode_uint(worker_address)
-            # model_weight = 1000  #  model weight
-            model_weight = model_weights[add_verification_parameters_counter]
-            arg1 = encode_uint(model_weight)
-            arguments = base64.b64encode(arg0 + arg1).decode('ascii')
+            worker_weights = model_weights[add_verification_parameters_counter]
+            encoded_array = encode_abi(
+                ['int256[]'], [[worker_address] + worker_weights])
+            arguments = base64.b64encode(encoded_array).decode('ascii')
             # if commented, always use the same worker
             add_verification_parameters_counter += 1
             matched = True
@@ -152,9 +143,7 @@ for line in sys.stdin:
         # in that case we are checking if the arguments are correct (i.e we expect infinite loop if args no corrects)
         m = re.search('^checkAddressEncoding\(\)$', line)
         if m:
-            # proto = 'addVerificationParameters(address,uint256)'
             proto = 'checkAddressEncoding(uint160)'
-            # proto = 'checkAddressEncoding()'
             matched = True
             # the one expected by checkAddressEncoding
             true_worker_address = 725016507395605870152133310144839532665846457513
