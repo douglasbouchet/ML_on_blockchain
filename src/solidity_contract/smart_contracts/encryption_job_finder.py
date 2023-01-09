@@ -94,9 +94,11 @@ class EncryptionJobFinder(Contract):
         return: true if the transaction is successful false otherwise
         """
         worker_address = Web3.toChecksumAddress(worker_address)
+        # add the worker address to the clear model inside a new array (as expected by the smart contract)
+        array = [int(worker_address, 16)] + clear_model
         try:
             register_tx = self.contract.functions.addVerificationParameters(
-                int(worker_address, 16), clear_model
+                array
             ).build_transaction(
                 {
                     "gasPrice": 0,

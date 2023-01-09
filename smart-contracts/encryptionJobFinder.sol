@@ -43,11 +43,8 @@ contract EncryptionJobFinder {
         return modelAdded;
     }
 
-    function addVerificationParameters(
-        uint160 workerAddress,
-        uint256[] memory clearModel
-    ) public {
-        jobContainer.addVerificationParameters(workerAddress, clearModel);
+    function addVerificationParameters(uint256[] memory array) public {
+        jobContainer.addVerificationParameters(array);
     }
 
     function getAllPreviousJobsBestModel()

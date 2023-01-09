@@ -329,20 +329,21 @@ def variable_model_complexity():
     # now job has received enough models, it shoudn't accept any more models
     for i, worker in enumerate(worker_pool[3:]):
         res = worker.send_encrypted_model(wrong_model)
+        print("Worker {} sending model: ".format(i + 3), res)
         assert res is False
-        print("Worker {} sending model: ".format(i), res)
 
     # we check that we can send the verification parameters only for worker who did send a model
     for i, worker in enumerate(worker_pool[:3]):
         res = worker.check_can_send_verification_parameters()
-        # print("Worker {} check_can_send_verification_parameters: ".format(i), res)
+        print("Worker {} check_can_send_verification_parameters: ".format(i), res)
         assert res is True
     for i, worker in enumerate(worker_pool[3:]):
         res = worker.check_can_send_verification_parameters()
-        # print("Worker {} check_can_send_verification_parameters: ".format(i), res)
+        print("Worker {} check_can_send_verification_parameters: ".format(i + 3), res)
         assert res is False
 
     # now we send the verification parameters
+    print("sending verification parameters")
     for i, worker in enumerate(worker_pool[:2]):
         res = worker.send_verifications(good_model=True, good_address=True)
         print("Worker {} sending verification parameters: ".format(i), res)

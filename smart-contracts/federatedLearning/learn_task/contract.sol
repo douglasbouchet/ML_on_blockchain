@@ -24,8 +24,10 @@ contract LearnTask {
     uint256 currentModel = 134;
     uint256 batchIndex = 12;
     uint256 nWorkers = 10;
-    uint256 thresholdForBestModel = nWorkers / 2; // number of equal models needed to be considered as the best one.
-    uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
+    //uint256 thresholdForBestModel = nWorkers / 2; // number of equal models needed to be considered as the best one.
+    uint256 thresholdForBestModel = 3; // number of equal models needed to be considered as the best one.
+    //uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
+    uint256 thresholdMaxNumberReceivedModels = 6; // maximum number of models we can receive before we compute the best model
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -117,11 +119,17 @@ contract LearnTask {
 
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
-    function addVerificationParameters(
-        uint160 _uintWorkerAddress,
-        uint256[] memory _clearModel
-    ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
-        address _workerAddress = address(_uintWorkerAddress);
+    /// @param array the array containing the verification parameters. By convention, the first element of the array
+    /// is the address of worker encoded as uint160. Remaining elements are models' weights
+    function addVerificationParameters(uint256[] memory array)
+        public
+        onlyReceivedModelsAddresses(address(uint160(array[0])))
+    {
+        address _workerAddress = address(uint160(array[0]));
+        uint256[] memory clearModel = new uint256[](array.length - 1);
+        for (uint256 i = 1; i < array.length; ++i) {
+            clearModel[i - 1] = array[i];
+        }
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
@@ -140,17 +148,17 @@ contract LearnTask {
             receivedVerificationParametersAddresses.push(_workerAddress);
             addressToVerificationParameters[
                 _workerAddress
-            ] = VerificationParameters(_clearModel, _workerAddress);
+            ] = VerificationParameters(clearModel, _workerAddress);
             // We check if hash of clear model + worker's address converted to uint256
             // is equal to the hash of the model sent by the worker during leaning phase
             // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
             uint256[] memory model_with_public_key = new uint256[](
-                _clearModel.length
+                clearModel.length
             );
-            // add uint256(_workerAddress) to each element of _clearModel
-            for (uint256 i = 0; i < _clearModel.length; i++) {
+            // add uint256(_workerAddress) to each element of clearModel
+            for (uint256 i = 0; i < clearModel.length; i++) {
                 model_with_public_key[i] =
-                    _clearModel[i] +
+                    clearModel[i] +
                     uint256(_workerAddress);
             }
             bytes32 modelHash = keccak256(
@@ -165,12 +173,12 @@ contract LearnTask {
             );
             // worker proved is did work to send its model, we can add it to the received clear models
             setValueModelToNSameModels(
-                _clearModel,
-                getValueModelToNSameModels(_clearModel) + 1
+                clearModel,
+                getValueModelToNSameModels(clearModel) + 1
             );
             // check if we already registered this model
             bool modelAlreadyInModels = false;
-            uint256 clearModelLen = _clearModel.length;
+            uint256 clearModelLen = clearModel.length;
             for (uint256 i = 0; i < models.length; i++) {
                 if (models[i].length != clearModelLen) {
                     // in that case, we cannot already have this model in models
@@ -179,7 +187,7 @@ contract LearnTask {
                 // we check if the two models are equals
                 bool modelsAreEquals = true;
                 for (uint256 j = 0; j < clearModelLen; j++) {
-                    if (models[i][j] != _clearModel[j]) {
+                    if (models[i][j] != clearModel[j]) {
                         modelsAreEquals = false;
                     }
                 }
@@ -189,7 +197,7 @@ contract LearnTask {
             }
             // if decryptedModel not in models, we add it
             if (!modelAlreadyInModels) {
-                models.push(_clearModel);
+                models.push(clearModel);
             }
             uint256[] memory _bestModel = checkEnoughSameModel();
             if (_bestModel.length != 0) {

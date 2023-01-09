@@ -64,7 +64,7 @@ class EncryptionWorker:
         """
         address = self.address if good_address else "0x0000000000000000000000000000000000000042"  # dummy address
         # clear_model = self.model[0] if good_model else 0
-        clear_model = self.model if good_model else [0]
+        clear_model = self.model if good_model else [0] * len(self.model)
         return self.contract.send_verifications_parameters(
             clear_model, address, self.private_key
         )

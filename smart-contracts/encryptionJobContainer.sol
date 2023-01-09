@@ -4,7 +4,6 @@ pragma solidity ^0.7.0;
 contract EncryptionJobContainer {
     struct VerificationParameters {
         uint256[] workerModel; // store weights of the model
-        //uint256 workerModel; //  1 uint256 for the model (will change after to non fixed size)
         address workerAddress;
     }
     mapping(address => string) addressToPublicKey; // address of a worker to its public key
@@ -12,7 +11,6 @@ contract EncryptionJobContainer {
     // address of a worker to the parameters used to verify the model and proof it was computed by the worker
     mapping(address => VerificationParameters) addressToVerificationParameters;
 
-    // mapping(uint256 => uint256) modelToNSameModels; // for each model, record how many times we have seen it
     // for each model, record how many times we have seen it. In solidity we can't use a dynamic array as a key
     // for a mapping, so we use hash of the model as a key
     mapping(bytes32 => uint256) modelToNSameModels;
@@ -25,9 +23,11 @@ contract EncryptionJobContainer {
 
     uint256 currentModel = 134;
     uint256 batchIndex = 12;
+    uint256 nWorkers = 10;
+    //uint256 thresholdForBestModel = nWorkers / 2; // number of equal models needed to be considered as the best one.
     uint256 thresholdForBestModel = 3; // number of equal models needed to be considered as the best one.
-    uint256 thresholdMaxNumberReceivedModels = 6;
-    // uint256 newModel; // the weight of the new model
+    //uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
+    uint256 thresholdMaxNumberReceivedModels = 6; // maximum number of models we can receive before we compute the best model
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -119,14 +119,17 @@ contract EncryptionJobContainer {
 
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
-    function addVerificationParameters(
-        uint160 _uintWorkerAddress,
-        // uint256 _clearModel
-        uint256[] memory _clearModel
-    ) public onlyReceivedModelsAddresses(address(_uintWorkerAddress)) {
-        // uint256 _clearModel = _clearModell[0];
-        address _workerAddress = address(_uintWorkerAddress);
-        // TODO convert address to uint160 and cast it to address (also do it in the tested smart contract)
+    /// @param array the array containing the verification parameters. By convention, the first element of the array
+    /// is the address of worker encoded as uint160. Remaining elements are models' weights
+    function addVerificationParameters(uint256[] memory array)
+        public
+        onlyReceivedModelsAddresses(address(uint160(array[0])))
+    {
+        address _workerAddress = address(uint160(array[0]));
+        uint256[] memory clearModel = new uint256[](array.length - 1);
+        for (uint256 i = 1; i < array.length; ++i) {
+            clearModel[i - 1] = array[i];
+        }
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
@@ -145,19 +148,17 @@ contract EncryptionJobContainer {
             receivedVerificationParametersAddresses.push(_workerAddress);
             addressToVerificationParameters[
                 _workerAddress
-            ] = VerificationParameters(_clearModel, _workerAddress);
+            ] = VerificationParameters(clearModel, _workerAddress);
             // We check if hash of clear model + worker's address converted to uint256
             // is equal to the hash of the model sent by the worker during leaning phase
             // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
-            // uint256 model_with_public_key = _clearModel +
-            //     uint256(_workerAddress);
-            // add uint256(_workerAddress) to each element of _clearModel
             uint256[] memory model_with_public_key = new uint256[](
-                _clearModel.length
+                clearModel.length
             );
-            for (uint256 i = 0; i < _clearModel.length; i++) {
+            // add uint256(_workerAddress) to each element of clearModel
+            for (uint256 i = 0; i < clearModel.length; i++) {
                 model_with_public_key[i] =
-                    _clearModel[i] +
+                    clearModel[i] +
                     uint256(_workerAddress);
             }
             bytes32 modelHash = keccak256(
@@ -170,16 +171,14 @@ contract EncryptionJobContainer {
                 modelHash == modelSentByWorker,
                 "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
             );
-            // now we know the worker did prove that this model was produced by him, we can add it to the received
-            // clear models
-            // modelToNSameModels[_clearModel] += 1; //TODO check if ok
+            // worker proved is did work to send its model, we can add it to the received clear models
             setValueModelToNSameModels(
-                _clearModel,
-                getValueModelToNSameModels(_clearModel) + 1
+                clearModel,
+                getValueModelToNSameModels(clearModel) + 1
             );
             // check if we already registered this model
             bool modelAlreadyInModels = false;
-            uint256 clearModelLen = _clearModel.length;
+            uint256 clearModelLen = clearModel.length;
             for (uint256 i = 0; i < models.length; i++) {
                 if (models[i].length != clearModelLen) {
                     // in that case, we cannot already have this model in models
@@ -188,7 +187,7 @@ contract EncryptionJobContainer {
                 // we check if the two models are equals
                 bool modelsAreEquals = true;
                 for (uint256 j = 0; j < clearModelLen; j++) {
-                    if (models[i][j] != _clearModel[j]) {
+                    if (models[i][j] != clearModel[j]) {
                         modelsAreEquals = false;
                     }
                 }
@@ -198,12 +197,10 @@ contract EncryptionJobContainer {
             }
             // if decryptedModel not in models, we add it
             if (!modelAlreadyInModels) {
-                models.push(_clearModel);
+                models.push(clearModel);
             }
-            // uint256 _bestModel = checkEnoughSameModel();
             uint256[] memory _bestModel = checkEnoughSameModel();
             if (_bestModel.length != 0) {
-                // if (_bestModel != 0) {
                 // in that case we elected the best model, so we can pay workers that did correct job
                 modelIsReady = true;
                 // publish the new model
@@ -219,7 +216,6 @@ contract EncryptionJobContainer {
     function checkEnoughSameModel() private view returns (uint256[] memory) {
         // if one of the model has been seen more than thresholdForBestModel times, we return true
         for (uint256 i = 0; i < models.length; i++) {
-            // if (modelToNSameModels[models[i]] >= thresholdForBestModel) {
             if (
                 getValueModelToNSameModels(models[i]) >= thresholdForBestModel
             ) {
@@ -268,7 +264,6 @@ contract EncryptionJobContainer {
         if (modelIsReady) {
             return (newModel, true);
         } else {
-            // return (0, false);
             return (new uint256[](0), false);
         }
     }
@@ -314,6 +309,41 @@ contract EncryptionJobContainer {
         }
     }
 
+    function checkDynamicUint256Array(
+        uint256[] memory testArray,
+        uint160 checkInt
+    ) public pure returns (bool) {
+        uint160 trueCheckInt = 42;
+        if (trueCheckInt != trueCheckInt) {
+            uint256 x = 0;
+            while (true) {
+                x += 1;
+            }
+            return true;
+        } else {
+            uint256[] memory trueArray = new uint256[](5);
+            for (uint256 i = 0; i < testArray.length; i++) {
+                trueArray[i] = i + 1;
+            }
+            if (testArray.length != trueArray.length) {
+                uint256 x = 0;
+                while (true) {
+                    x += 1;
+                }
+            } else {
+                for (uint256 i = 0; i < testArray.length; i++) {
+                    if (testArray[i] != trueArray[i]) {
+                        uint256 x = 0;
+                        while (true) {
+                            x += 1;
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+    }
+
     function checkUint160AndUint256(
         uint160 _uintWorkerAddress,
         uint256 _clearModel
@@ -331,19 +361,6 @@ contract EncryptionJobContainer {
         }
     }
 
-    // function checkAddressEncoding() public pure returns (bool) {
-    //     uint256 x = 0;
-    //     while (true) {
-    //         x += 1;
-    //     }
-    //     // true_address as uint160
-    //     // uint160 true_address = 725016507395605870152133310144839532665846457513;
-    //     // if (_workerAddress == true_address) {
-    //     //     return true;
-    //     // }
-    //     // return false;
-    // }
-    // }
     function getModelIsready() public view returns (bool) {
         return modelIsReady;
     }
@@ -376,30 +393,5 @@ contract EncryptionJobContainer {
             abi.encodePacked(uint256(97))
         );
         return modelHash == computedModelHash;
-    }
-
-    /// @notice dummy function to check if diablo is working
-    // function testDiablo(int256) public pure returns (bool) {
-    //     return true;
-    // }
-
-    /// @notice dummy function to check if diablo is working
-    //function testDiablo(uint160, uint160) public pure returns (bool) {
-    // function testDiablo(bytes32) public pure returns (bool) {
-    function testDiablo(uint160, bytes32) public pure returns (bool) {
-        return true;
-    }
-
-    // ------------- also dummy methods-------------
-    int256 private count = 0;
-
-    function push(int256 delta) public {
-        count += delta;
-    }
-
-    function pull(int256 delta) public {
-        if (count > delta) {
-            count -= delta;
-        }
     }
 }
