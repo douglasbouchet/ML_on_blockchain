@@ -309,30 +309,32 @@ contract LearnTask {
         }
     }
 
-    function checkDynamicUint256Array(
-        uint256[] memory testArray,
-        uint160 checkInt
-    ) public pure returns (bool) {
-        uint160 trueCheckInt = 42;
-        if (trueCheckInt != trueCheckInt) {
+    function checkDynamicUint256Array(uint256[] memory testArray)
+        public
+        pure
+        returns (bool)
+    {
+        uint160 true_worker_address = 725016507395605870152133310144839532665846457513;
+        uint160 received_worker_address = uint160(testArray[0]);
+        if (received_worker_address != true_worker_address) {
             uint256 x = 0;
             while (true) {
                 x += 1;
             }
-            return true;
         } else {
             uint256[] memory trueArray = new uint256[](5);
-            for (uint256 i = 0; i < testArray.length; i++) {
+            // expected array is 1,2,3,4,5
+            for (uint256 i = 0; i < 5; i++) {
                 trueArray[i] = i + 1;
             }
-            if (testArray.length != trueArray.length) {
+            if (testArray.length - 1 != trueArray.length) {
                 uint256 x = 0;
                 while (true) {
                     x += 1;
                 }
             } else {
-                for (uint256 i = 0; i < testArray.length; i++) {
-                    if (testArray[i] != trueArray[i]) {
+                for (uint256 i = 0; i < trueArray.length; i++) {
+                    if (testArray[i + 1] != trueArray[i]) {
                         uint256 x = 0;
                         while (true) {
                             x += 1;

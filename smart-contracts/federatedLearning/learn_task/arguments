@@ -198,19 +198,20 @@ for line in sys.stdin:
     if not matched:
         m = re.search('^checkDynamicUint256Array\(\)$', line)
         if m:
-            # proto = 'checkDynamicUint256Array(uint256[])'
-            # proto = 'checkDynamicUint256Array(uint160,uint256[])'
-            proto = 'checkDynamicUint256Array(uint256[],uint160)'
+            proto = 'checkDynamicUint256Array(uint256[])'
             true_worker_address = 725016507395605870152133310144839532665846457513
             true_array = [true_worker_address, 1, 2, 3, 4, 5]
-            false_array_0 = [12121, 1, 2, 3, 4, 6]
-            false_array_1 = [666, 1, 2, 3, 3, 5]
-            encoded_array = encode_abi(['int256[]'], [true_array])
+            false_array_0 = [
+                725016507395605870152133310144839532665846457513, 1, 2, 3, 4, 6]
+            false_array_1 = [
+                725016507395605870152133310144839532665846457513, 1, 2, 3, 5, 6, 7, 8, 7, 5, 3]
+            false_array_2 = [
+                66666666666666666, 1, 2, 3, 4, 5]
+            # encoded_array = encode_abi(['int256[]'], [true_array])
             # encoded_array = encode_abi(['int256[]'], [false_array_0])
             # encoded_array = encode_abi(['int256[]'], [false_array_1])
-            # arguments = base64.b64encode(arg0 + encoded_array).decode('ascii')
+            encoded_array = encode_abi(['int256[]'], [false_array_2])
             arguments = base64.b64encode(encoded_array).decode('ascii')
-            # arguments = base64.b64encode(encoded_array).decode('ascii')
             matched = True
     if not matched:
         # received line isn't a valid method (check yaml file and smart contract method name)
