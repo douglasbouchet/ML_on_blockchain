@@ -19,7 +19,7 @@ do
 done
 
 # Create the yaml file
-cat > setup.yaml <<EOF
+cat > generated/setup.yaml <<EOF
 interface: "ethereum"
 
 parameters:
@@ -33,11 +33,11 @@ EOF
 # Add the list of IP addresses with port numbers to the yaml file
 for address in "${addresses[@]}"
 do
-    echo "      - $address" >> setup.yaml
+    echo "      - $address" >> generated/setup.yaml
 done
 
 # Add the tags to the yaml file
-echo "    tags:" >> setup.yaml
-echo "      - c5.xlarge" >> setup.yaml
+echo "    tags:" >> generated/setup.yaml
+echo "      - c5.xlarge" >> generated/setup.yaml
 
 echo "setup.yaml file created"

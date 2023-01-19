@@ -1,17 +1,23 @@
 #!/bin/bash
 
 # this script expect the number of workers as argument
+if [ $# -ne 1 ]; then
+    echo "Wrong number of arguments"
+    echo "Usage: $0 <number of workers>"
+    exit 1
+fi
+
 n_workers=$1
 # we divide the number of workers by 10 to get number of call to smart contract to make per second
 n_calls_per_second=$((n_workers/10))
 echo "Number of workers: $n_workers"
 echo "Number of calls per second: $n_calls_per_second"
 
-cat <<EOF > workload.yaml
+cat <<EOF > generated/workload.yaml
 let:
   - !loop &account
     sample: !account
-      number: 50
+      number: 100
       stake: 10000000
   - !loop &any_location
     sample: !location
@@ -48,8 +54,6 @@ workloads:
             contract: *contract
             function: "addVerificationParameters()"
           load:
-            10: $n_calls_per_second
-            20: 0
+            15: $n_calls_per_second
+            25: 0
 EOF
-
-echo "workload.yaml file created"

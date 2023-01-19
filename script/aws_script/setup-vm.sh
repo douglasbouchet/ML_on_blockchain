@@ -1,14 +1,14 @@
 #!/bin/sh
 # Check that at least one IP address has been provided as an argument
-if [ $# -lt 1 ]
+if [ $# -lt 2 ]
 then
     echo "Error: No IP addresses provided"
-    echo "Call example: ./setup-vm.sh 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
+    echo "Call example: ./setup-vm.sh <redundancy> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
     exit 1
 fi
 
 # create the setup.yaml file for the given ip addresses
-# ./create_setup.sh @
+./create_setup.sh echo "${@:2}"
 
 # check that the setup.yaml file has been created
 if [ ! -f setup.yaml ]
