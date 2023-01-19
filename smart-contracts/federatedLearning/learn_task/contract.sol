@@ -14,7 +14,6 @@ contract LearnTask {
     // for each model, record how many times we have seen it. In solidity we can't use a dynamic array as a key
     // for a mapping, so we use hash of the model as a key
     mapping(bytes32 => uint256) modelToNSameModels;
-    // uint256[] models; // keep track of each different model we have seen (models are stored in clear)
     uint256[][] models; // keep track of each different model we have seen (models are stored in clear)
 
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
@@ -23,11 +22,9 @@ contract LearnTask {
 
     uint256 currentModel = 134;
     uint256 batchIndex = 12;
-    uint256 nWorkers = 10;
-    //uint256 thresholdForBestModel = nWorkers / 2; // number of equal models needed to be considered as the best one.
-    uint256 thresholdForBestModel = 3; // number of equal models needed to be considered as the best one.
-    //uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
-    uint256 thresholdMaxNumberReceivedModels = 6; // maximum number of models we can receive before we compute the best model
+    uint256 nWorkers = 640;
+    uint256 thresholdForBestModel = 160 ; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels = 320; // maximum number of models we can receive before we compute the best model
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;

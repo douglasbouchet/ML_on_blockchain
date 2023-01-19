@@ -95,7 +95,7 @@ def compute_add_new_encrypted_model_hash(n_workers: int, addresses, model_weight
     return model_hashes
 
 
-n_workers = 20000
+n_workers = 100000
 model_length = 10  # how much weights are in the model that is learned.
 addresses = generate_addresses(n_workers)
 model_weights = compute_model_weight(n_workers, model_length)
