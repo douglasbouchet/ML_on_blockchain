@@ -1,7 +1,19 @@
+#!/bin/bash
+
+# this script expect the number of workers, as well as redundancy of the model computations as argument
+# redundancy means how many workers answers we will wait before aggregating the results
+n_workers=$1
+redundancy=$2
+thresholdForBestModel=$((redundancy / 2))
+echo "Number of workers: $n_workers"
+echo "Number of workers to ask: $redundancy"
+echo "Threshold for best model: $thresholdForBestModel"
+
+cat <<EOF > generated/contract.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-contract EncryptionJobContainer {
+contract LearnTask {
     struct VerificationParameters {
         uint256[] workerModel; // store weights of the model
         address workerAddress;
@@ -14,9 +26,7 @@ contract EncryptionJobContainer {
     // for each model, record how many times we have seen it. In solidity we can't use a dynamic array as a key
     // for a mapping, so we use hash of the model as a key
     mapping(bytes32 => uint256) modelToNSameModels;
-    // uint256[] models; // keep track of each different model we have seen (models are stored in clear)
     uint256[][] models; // keep track of each different model we have seen (models are stored in clear)
-    uint256 nModels = 0; // number of different models we have seen
 
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
@@ -24,11 +34,9 @@ contract EncryptionJobContainer {
 
     uint256 currentModel = 134;
     uint256 batchIndex = 12;
-    uint256 nWorkers = 10;
-    //uint256 thresholdForBestModel = nWorkers / 2; // number of equal models needed to be considered as the best one.
-    uint256 thresholdForBestModel = 3; // number of equal models needed to be considered as the best one.
-    //uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
-    uint256 thresholdMaxNumberReceivedModels = 6; // maximum number of models we can receive before we compute the best model
+    uint256 nWorkers = $n_workers;
+    uint256 thresholdForBestModel = $thresholdForBestModel ; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels = $redundancy; // maximum number of models we can receive before we compute the best model
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -199,7 +207,6 @@ contract EncryptionJobContainer {
             // if decryptedModel not in models, we add it
             if (!modelAlreadyInModels) {
                 models.push(clearModel);
-                nModels += 1;
             }
             uint256[] memory _bestModel = checkEnoughSameModel();
             if (_bestModel.length != 0) {
@@ -270,34 +277,6 @@ contract EncryptionJobContainer {
         }
     }
 
-    /// @notice reset the contract for a new task
-    function resetForNewTask() public {
-        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
-            delete addressToHashModel[receivedModelsAddresses[i]];
-            delete addressToVerificationParameters[receivedModelsAddresses[i]];
-        }
-        for (
-            uint256 i = 0;
-            i < receivedVerificationParametersAddresses.length;
-            i++
-        ) {
-            delete addressToVerificationParameters[
-                receivedVerificationParametersAddresses[i]
-            ];
-        }
-        for (uint256 i = 0; i < nModels; i++) {
-            bytes32 modelHash = bytes32(keccak256(abi.encodePacked(models[i])));
-            delete modelToNSameModels[modelHash];
-        }
-        nModels = 0;
-        delete receivedModelsAddresses;
-        delete receivedVerificationParametersAddresses;
-        delete models;
-        delete newModel;
-        modelIsReady = false;
-        canReceiveNewModel = true;
-    }
-
     // ------------- argument checking methods-------------
 
     /// @notice function to check if the address are correctly sent as uint160
@@ -339,30 +318,32 @@ contract EncryptionJobContainer {
         }
     }
 
-    function checkDynamicUint256Array(
-        uint256[] memory testArray,
-        uint160 checkInt
-    ) public pure returns (bool) {
-        uint160 trueCheckInt = 42;
-        if (trueCheckInt != trueCheckInt) {
+    function checkDynamicUint256Array(uint256[] memory testArray)
+        public
+        pure
+        returns (bool)
+    {
+        uint160 true_worker_address = 725016507395605870152133310144839532665846457513;
+        uint160 received_worker_address = uint160(testArray[0]);
+        if (received_worker_address != true_worker_address) {
             uint256 x = 0;
             while (true) {
                 x += 1;
             }
-            return true;
         } else {
             uint256[] memory trueArray = new uint256[](5);
-            for (uint256 i = 0; i < testArray.length; i++) {
+            // expected array is 1,2,3,4,5
+            for (uint256 i = 0; i < 5; i++) {
                 trueArray[i] = i + 1;
             }
-            if (testArray.length != trueArray.length) {
+            if (testArray.length - 1 != trueArray.length) {
                 uint256 x = 0;
                 while (true) {
                     x += 1;
                 }
             } else {
-                for (uint256 i = 0; i < testArray.length; i++) {
-                    if (testArray[i] != trueArray[i]) {
+                for (uint256 i = 0; i < trueArray.length; i++) {
+                    if (testArray[i + 1] != trueArray[i]) {
                         uint256 x = 0;
                         while (true) {
                             x += 1;
@@ -425,3 +406,5 @@ contract EncryptionJobContainer {
         return modelHash == computedModelHash;
     }
 }
+
+EOF
