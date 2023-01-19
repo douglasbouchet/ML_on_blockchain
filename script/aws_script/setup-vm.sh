@@ -3,28 +3,41 @@
 if [ $# -lt 2 ]
 then
     echo "Error: No IP addresses provided"
-    echo "Call example: ./setup-vm.sh <redundancy> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
+    echo "Call example: ./setup-vm.sh <number of workers> <redundancy> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
     exit 1
 fi
+
+n_workers="$1"
+redundancy="$2"
+shift 2
 
 # create the setup.yaml file for the given ip addresses
-./create_setup.sh echo "${@:2}"
+./create_setup.sh "$@"
 
 # check that the setup.yaml file has been created
-if [ ! -f setup.yaml ]
+if [ ! -f generated/setup.yaml ]
 then
-    echo "Error: setup.yaml file not found"
+    echo "Error: generated/setup.yaml file not found"
     exit 1
 fi
 
-# generate the workload.yaml file
-read -p "Generating workload, enter nb of workers: " n_workers
+echo "Generating workload for: " n_workers
 ./create_workload.sh $n_workers
 
 # check that workload.yaml exists
-if [ ! -f workload.yaml ]
+if [ ! -f generated/workload.yaml ]
 then
-    echo "Error: workload.yaml file not found"
+    echo "Error: generated/workload.yaml file not found"
+    exit 1
+fi
+
+echo "Generating smart contract with redundancy: " redundancy
+./create_smartcontract.sh $redundancy
+
+# check that workload.yaml exists
+if [ ! -f generated/contract.sol ]
+then
+    echo "Error: generated/contract.sol file not found"
     exit 1
 fi
 
@@ -46,12 +59,11 @@ fi
 for var in "$@";do # read the list of ip addresses
 
     # Use scp to copy the file to the remote IP address, and exit with an error message if nothing happens after 5 seconds
-    if ! scp -o ConnectTimeout=$timeout workload.yaml ubuntu@$var:~; then
+    if ! scp -o ConnectTimeout=$timeout generated/workload.yaml ubuntu@$var:~; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$var is reachable."
       exit 1
     fi
-    echo "sent workload.yaml to ubuntu@$var"
-    if ! scp -o ConnectTimeout=$timeout setup.yaml ubuntu@$var:~; then
+    if ! scp -o ConnectTimeout=$timeout generated/setup.yaml ubuntu@$var:~; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$var is reachable."
       exit 1
     fi
