@@ -16,6 +16,7 @@ contract EncryptionJobContainer {
     mapping(bytes32 => uint256) modelToNSameModels;
     // uint256[] models; // keep track of each different model we have seen (models are stored in clear)
     uint256[][] models; // keep track of each different model we have seen (models are stored in clear)
+    uint256 nModels = 0; // number of different models we have seen
 
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
@@ -198,6 +199,7 @@ contract EncryptionJobContainer {
             // if decryptedModel not in models, we add it
             if (!modelAlreadyInModels) {
                 models.push(clearModel);
+                nModels += 1;
             }
             uint256[] memory _bestModel = checkEnoughSameModel();
             if (_bestModel.length != 0) {
@@ -266,6 +268,34 @@ contract EncryptionJobContainer {
         } else {
             return (new uint256[](0), false);
         }
+    }
+
+    /// @notice reset the contract for a new task
+    function resetForNewTask() public {
+        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
+            delete addressToHashModel[receivedModelsAddresses[i]];
+            delete addressToVerificationParameters[receivedModelsAddresses[i]];
+        }
+        for (
+            uint256 i = 0;
+            i < receivedVerificationParametersAddresses.length;
+            i++
+        ) {
+            delete addressToVerificationParameters[
+                receivedVerificationParametersAddresses[i]
+            ];
+        }
+        for (uint256 i = 0; i < nModels; i++) {
+            bytes32 modelHash = bytes32(keccak256(abi.encodePacked(models[i])));
+            delete modelToNSameModels[modelHash];
+        }
+        nModels = 0;
+        delete receivedModelsAddresses;
+        delete receivedVerificationParametersAddresses;
+        delete models;
+        delete newModel;
+        modelIsReady = false;
+        canReceiveNewModel = true;
     }
 
     // ------------- argument checking methods-------------

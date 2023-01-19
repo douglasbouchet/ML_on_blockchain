@@ -81,6 +81,11 @@ contract EncryptionJobFinder {
         return jobContainer.getModel();
     }
 
+    /// @notice reset the contract for a new task
+    function resetForNewTask() public {
+        jobContainer.resetForNewTask();
+    }
+
     // ----------- DEBUG FUNCTIONS -------------
 
     function getModelIsready() public view returns (bool) {
