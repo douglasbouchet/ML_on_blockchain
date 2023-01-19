@@ -2,3 +2,4 @@ __pycache__
 .vscode/
 script/dcl_script/res
 script/aws_script/res
+script/aws_script/generated
