@@ -35,7 +35,8 @@ def basic_main():
     # contract = learning_server.deploy_contract("register", "Register")
     # contract = learning_server.deploy_contract("fragmentedJobFinder", "FragmentedJobFinder")
     contract = learning_server.deploy_contract(
-        "encryptionJobFinder", "EncryptionJobFinder")
+        "encryptionJobFinder", "EncryptionJobFinder"
+    )
     # print("Initial number of workers:", contract.get_number_of_workers())
     # ------Register worker to server-----
     # basic_worker.register_to_learning(contract.contract_address, contract.abi)
@@ -87,12 +88,10 @@ def parallel_learning_main():
 
     parallel_hypervisor.perform_one_process_step(get_processes)
     print("get parameters finished")
-    fake_learn_processess = parallel_hypervisor.create_fake_learn_process(
-        worker_pool)
+    fake_learn_processess = parallel_hypervisor.create_fake_learn_process(worker_pool)
     parallel_hypervisor.perform_one_process_step(fake_learn_processess)
     print("learn finished")
-    send_processes = parallel_hypervisor.create_send_weights_process(
-        worker_pool)
+    send_processes = parallel_hypervisor.create_send_weights_process(worker_pool)
     parallel_hypervisor.perform_one_process_step(send_processes)
     print("send parameters finished")
 
@@ -136,18 +135,22 @@ def encrypted_main():
     wrong_model = 98
 
     for i, worker in enumerate(worker_pool[:3]):
-        print("worker {} send encrypted model return {}".format(
-            i, worker.send_encrypted_model(good_model)))
+        print(
+            "worker {} send encrypted model return {}".format(
+                i, worker.send_encrypted_model(good_model)
+            )
+        )
         print(worker_pool[0].check_can_send_verification_parameters())
         if i == 0:
             #  this should throw an error as not enough models were sent
-            print("Worker 0 send veritication parameters return:",
-                  worker_pool[0].send_verifications(good_model=True))
+            print(
+                "Worker 0 send veritication parameters return:",
+                worker_pool[0].send_verifications(good_model=True),
+            )
     # make the workers send their verifications parameters
     for i, worker in enumerate(worker_pool):
         print("worker {} send verification parameters ".format(i))
-        print("model is ready:{}".format(
-            encrypted_job_finder.get_model_is_ready()))
+        print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
         worker.send_verifications(good_model=True)
     # after all workers send their verifications, the server should have decrypted the model
     print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
@@ -187,11 +190,14 @@ def simple_learning_scenario():
     # now we send the verification parameters (all workers send the same model they learned with correct address)
     # we send weights in following order: good_model, good_model, bad_model_0, bad_model_1, bad_model_0, good_model so we reach the threshold of 3 at the end
     for i in [0, 1, 3, 5, 4, 2]:
-        assert worker_pool[i].send_verifications(
-            good_model=True, good_address=True) is True
+        assert (
+            worker_pool[i].send_verifications(good_model=True, good_address=True)
+            is True
+        )
         # we check if the model is ready
-        print("{} model is ready:{}".format(i,
-                                            encrypted_job_finder.get_model_is_ready()))
+        print(
+            "{} model is ready:{}".format(i, encrypted_job_finder.get_model_is_ready())
+        )
 
     # we check if the model is ready
     res = encrypted_job_finder.get_model_is_ready()
@@ -231,14 +237,11 @@ def multiple_learn_tasks_scenario():
     bad_model_1_round_1 = [99]
     for i, worker in enumerate(worker_pool):
         if i < 3:
-            assert worker.send_encrypted_model(
-                model=good_model_round_0) is True
+            assert worker.send_encrypted_model(model=good_model_round_0) is True
         elif i < 5:
-            assert worker.send_encrypted_model(
-                model=bad_model_0_round_0) is True
+            assert worker.send_encrypted_model(model=bad_model_0_round_0) is True
         else:
-            assert worker.send_encrypted_model(
-                model=bad_model_1_round_0) is True
+            assert worker.send_encrypted_model(model=bad_model_1_round_0) is True
 
     assert worker_pool[0].check_can_send_verification_parameters() is True
 
@@ -246,11 +249,14 @@ def multiple_learn_tasks_scenario():
     # we send weights in following order: good_model_round_0, good_model_round_0, bad_model_0_round_0,
     # bad_model_1_round_0, bad_model_0_round_0, good_model_round_0 so we reach the threshold of 3 at the end
     for i in [0, 1, 3, 5, 4, 2]:
-        assert worker_pool[i].send_verifications(
-            good_model=True, good_address=True) is True
+        assert (
+            worker_pool[i].send_verifications(good_model=True, good_address=True)
+            is True
+        )
         # we check if the model is ready
-        print("{} model is ready:{}".format(i,
-                                            encrypted_job_finder.get_model_is_ready()))
+        print(
+            "{} model is ready:{}".format(i, encrypted_job_finder.get_model_is_ready())
+        )
 
     # we check if the model is ready
     res = encrypted_job_finder.get_model_is_ready()
@@ -261,6 +267,9 @@ def multiple_learn_tasks_scenario():
     print("model value:{}".format(res))
     assert res[0] == good_model_round_0 and res[1] is True
 
+    # reset the smart contract for a new learn task
+    encrypted_job_finder.
+
     # now we do another learning task with 3 workers sending 98, 2 sending 97 and 1 sending 99. Best model should be 98
     # keep 2 worker from previous pool
     # we select a different worker pool for this learning task
@@ -268,24 +277,24 @@ def multiple_learn_tasks_scenario():
 
     for i, worker in enumerate(worker_pool):
         if i < 3:
-            assert worker.send_encrypted_model(
-                model=good_model_round_1) is True
+            assert worker.send_encrypted_model(model=good_model_round_1) is True
         elif i < 5:
-            assert worker.send_encrypted_model(
-                model=bad_model_0_round_1) is True
+            assert worker.send_encrypted_model(model=bad_model_0_round_1) is True
         else:
-            assert worker.send_encrypted_model(
-                model=bad_model_1_round_1) is True
+            assert worker.send_encrypted_model(model=bad_model_1_round_1) is True
 
     assert worker_pool[0].check_can_send_verification_parameters() is True
 
     # now we send the verification parameters (all workers send the same model they learned with correct address)
     for i in [0, 1, 3, 5, 4, 2]:
-        assert worker_pool[i].send_verifications(
-            good_model=True, good_address=True) is True
+        assert (
+            worker_pool[i].send_verifications(good_model=True, good_address=True)
+            is True
+        )
         # we check if the model is ready
-        print("{} model is ready:{}".format(i,
-                                            encrypted_job_finder.get_model_is_ready()))
+        print(
+            "{} model is ready:{}".format(i, encrypted_job_finder.get_model_is_ready())
+        )
 
     # we check if the model is ready
     res = encrypted_job_finder.get_model_is_ready()
@@ -348,21 +357,33 @@ def variable_model_complexity():
         res = worker.send_verifications(good_model=True, good_address=True)
         print("Worker {} sending verification parameters: ".format(i), res)
         assert res is True
-        print("model is ready:{}".format(
-            encrypted_job_finder.get_model_is_ready()))
+        print("model is ready:{}".format(encrypted_job_finder.get_model_is_ready()))
 
     # we send a model different that the first one we send, so should be rejected
-    res = worker_pool[2].send_verifications(
-        good_model=False, good_address=True)
-    print("Worker {} sending verification parameters with wrong model but good address: ".format(2), res)
+    res = worker_pool[2].send_verifications(good_model=False, good_address=True)
+    print(
+        "Worker {} sending verification parameters with wrong model but good address: ".format(
+            2
+        ),
+        res,
+    )
     assert res is False
-    res = worker_pool[2].send_verifications(
-        good_model=True, good_address=False)
-    print("Worker {} sending verification parameters with good model but wrong address: ".format(2), res)
+    res = worker_pool[2].send_verifications(good_model=True, good_address=False)
+    print(
+        "Worker {} sending verification parameters with good model but wrong address: ".format(
+            2
+        ),
+        res,
+    )
     assert res is False
     res = worker_pool[2].send_verifications(good_model=True, good_address=True)
-    print("Worker {} sending verification parameters with good model and address but enough model received so still\
-         deny: ".format(2), res)
+    print(
+        "Worker {} sending verification parameters with good model and address but enough model received so still\
+         deny: ".format(
+            2
+        ),
+        res,
+    )
     assert res is False
 
     for i, worker in enumerate(worker_pool[3:]):

@@ -77,7 +77,9 @@ class EncryptionJobFinder(Contract):
             boolean: true if the worker can send the verification parameters false otherwise
         """
         # TODO check
-        return self.contract.functions.canSendVerificationParameters(Web3.toChecksumAddress(worker_address)).call()
+        return self.contract.functions.canSendVerificationParameters(
+            Web3.toChecksumAddress(worker_address)
+        ).call()
 
     def send_verifications_parameters(
         self,
@@ -159,6 +161,9 @@ class EncryptionJobFinder(Contract):
     def get_final_model(self):
         return self.contract.functions.getFinalModel().call()
 
+    def reset_learn_task(self):
+        return self.contract.functions.resetLearnTask().call()
+
     # -----------------Debug functions-----------------
     def get_received_models(self):
         return self.contract.functions.getReceivedModels().call()
@@ -167,8 +172,7 @@ class EncryptionJobFinder(Contract):
         return self.contract.functions.getModelIsready().call()
 
     def get_keccak(self, clear_model):
-        clear_model = [clear_model[i: i + 1]
-                       for i in range(0, len(clear_model), 1)]
+        clear_model = [clear_model[i : i + 1] for i in range(0, len(clear_model), 1)]
         ret = self.contract.functions.computeKeccak256(clear_model).call()
         # parse the ret to get the hash
         return self.contract.web3.codec.decode_single("bytes32", ret)

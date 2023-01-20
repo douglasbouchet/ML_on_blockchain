@@ -82,8 +82,8 @@ contract EncryptionJobFinder {
     }
 
     /// @notice reset the contract for a new task
-    function resetForNewTask() public {
-        jobContainer.resetForNewTask();
+    function resetLearnTask() public {
+        jobContainer.resetLearnTask();
     }
 
     // ----------- DEBUG FUNCTIONS -------------

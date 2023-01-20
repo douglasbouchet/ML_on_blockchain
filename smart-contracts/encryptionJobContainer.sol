@@ -271,7 +271,7 @@ contract EncryptionJobContainer {
     }
 
     /// @notice reset the contract for a new task
-    function resetForNewTask() public {
+    function resetLearnTask() public {
         for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
             delete addressToHashModel[receivedModelsAddresses[i]];
             delete addressToVerificationParameters[receivedModelsAddresses[i]];
@@ -289,11 +289,10 @@ contract EncryptionJobContainer {
             bytes32 modelHash = bytes32(keccak256(abi.encodePacked(models[i])));
             delete modelToNSameModels[modelHash];
         }
-        nModels = 0;
-        delete receivedModelsAddresses;
-        delete receivedVerificationParametersAddresses;
-        delete models;
-        delete newModel;
+        models = new uint256[][](0);
+        receivedModelsAddresses = new address[](0);
+        receivedVerificationParametersAddresses = new address[](0);
+        newModel = new uint256[](0);
         modelIsReady = false;
         canReceiveNewModel = true;
     }
