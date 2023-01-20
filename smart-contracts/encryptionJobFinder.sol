@@ -32,10 +32,6 @@ contract EncryptionJobFinder {
         public
         returns (bool)
     {
-        // if the model is complete, create a new job and push the current one to previousJobs
-        if (jobContainer.getModelIsready()) {
-            createNewJob();
-        }
         bool modelAdded = jobContainer.addNewEncryptedModel(
             workerAddress,
             modelHash

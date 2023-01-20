@@ -16,6 +16,7 @@ contract LearnTask {
     mapping(bytes32 => uint256) modelToNSameModels;
     // uint256[] models; // keep track of each different model we have seen (models are stored in clear)
     uint256[][] models; // keep track of each different model we have seen (models are stored in clear)
+    uint256 nModels = 0; // number of different models we have seen
 
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
@@ -83,6 +84,7 @@ contract LearnTask {
 
     /// @notice send a new encrypted model to the jobContainer
     /// @notice each address can send only one model
+    /// @notice also reset the learn task if previous learning is done.
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
@@ -90,6 +92,9 @@ contract LearnTask {
         public
         returns (bool)
     {
+        if (getModelIsready()) {
+            resetLearnTask();
+        }
         // if we already received the maximum number of models, we don't accept new ones
         if (!canReceiveNewModel) {
             return false;
@@ -198,6 +203,7 @@ contract LearnTask {
             // if decryptedModel not in models, we add it
             if (!modelAlreadyInModels) {
                 models.push(clearModel);
+                nModels += 1;
             }
             uint256[] memory _bestModel = checkEnoughSameModel();
             if (_bestModel.length != 0) {
@@ -268,6 +274,33 @@ contract LearnTask {
         }
     }
 
+    /// @notice reset the contract for a new task
+    function resetLearnTask() public {
+        for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
+            delete addressToHashModel[receivedModelsAddresses[i]];
+            delete addressToVerificationParameters[receivedModelsAddresses[i]];
+        }
+        for (
+            uint256 i = 0;
+            i < receivedVerificationParametersAddresses.length;
+            i++
+        ) {
+            delete addressToVerificationParameters[
+                receivedVerificationParametersAddresses[i]
+            ];
+        }
+        for (uint256 i = 0; i < nModels; i++) {
+            bytes32 modelHash = bytes32(keccak256(abi.encodePacked(models[i])));
+            delete modelToNSameModels[modelHash];
+        }
+        models = new uint256[][](0);
+        receivedModelsAddresses = new address[](0);
+        receivedVerificationParametersAddresses = new address[](0);
+        newModel = new uint256[](0);
+        modelIsReady = false;
+        canReceiveNewModel = true;
+    }
+
     // ------------- argument checking methods-------------
 
     /// @notice function to check if the address are correctly sent as uint160
@@ -309,32 +342,30 @@ contract LearnTask {
         }
     }
 
-    function checkDynamicUint256Array(uint256[] memory testArray)
-        public
-        pure
-        returns (bool)
-    {
-        uint160 true_worker_address = 725016507395605870152133310144839532665846457513;
-        uint160 received_worker_address = uint160(testArray[0]);
-        if (received_worker_address != true_worker_address) {
+    function checkDynamicUint256Array(
+        uint256[] memory testArray,
+        uint160 checkInt
+    ) public pure returns (bool) {
+        uint160 trueCheckInt = 42;
+        if (trueCheckInt != trueCheckInt) {
             uint256 x = 0;
             while (true) {
                 x += 1;
             }
+            return true;
         } else {
             uint256[] memory trueArray = new uint256[](5);
-            // expected array is 1,2,3,4,5
-            for (uint256 i = 0; i < 5; i++) {
+            for (uint256 i = 0; i < testArray.length; i++) {
                 trueArray[i] = i + 1;
             }
-            if (testArray.length - 1 != trueArray.length) {
+            if (testArray.length != trueArray.length) {
                 uint256 x = 0;
                 while (true) {
                     x += 1;
                 }
             } else {
-                for (uint256 i = 0; i < trueArray.length; i++) {
-                    if (testArray[i + 1] != trueArray[i]) {
+                for (uint256 i = 0; i < testArray.length; i++) {
+                    if (testArray[i] != trueArray[i]) {
                         uint256 x = 0;
                         while (true) {
                             x += 1;

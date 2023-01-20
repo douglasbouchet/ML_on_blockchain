@@ -84,6 +84,7 @@ contract EncryptionJobContainer {
 
     /// @notice send a new encrypted model to the jobContainer
     /// @notice each address can send only one model
+    /// @notice also reset the learn task if previous learning is done.
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
     /// @return true if the model was added to the jobContainer, false otherwise
@@ -91,6 +92,9 @@ contract EncryptionJobContainer {
         public
         returns (bool)
     {
+        if (getModelIsready()) {
+            resetLearnTask();
+        }
         // if we already received the maximum number of models, we don't accept new ones
         if (!canReceiveNewModel) {
             return false;
