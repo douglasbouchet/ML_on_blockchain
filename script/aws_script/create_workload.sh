@@ -56,4 +56,88 @@ workloads:
           load:
             15: $n_calls_per_second
             25: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "getModelAndBatchIndex()"
+          load:
+            30: $n_calls_per_second
+            40: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            30: $n_calls_per_second
+            40: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            45: $n_calls_per_second
+            55: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "getModelAndBatchIndex()"
+          load:
+            60: $n_calls_per_second
+            70: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            60: $n_calls_per_second
+            70: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            75: $n_calls_per_second
+            85: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "getModelAndBatchIndex()"
+          load:
+            90: $n_calls_per_second
+            100: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            90: $n_calls_per_second
+            100: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            105: $n_calls_per_second
+            115: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "getModelAndBatchIndex()"
+          load:
+            120: $n_calls_per_second
+            130: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addNewEncryptedModel()"
+          load:
+            120: $n_calls_per_second
+            130: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            135: $n_calls_per_second
+            145: 0
 EOF
