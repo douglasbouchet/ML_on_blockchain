@@ -154,10 +154,10 @@ def read_file(f_path):
 # print("generating...")
 start = time.time()
 n_workers = 100
+# model_length = 100_000_000  #  BERT
 # model_length = 1_600_000  # For MNIST
 # model_length = 100_000
-# model_length = 10_000
-model_length = 1_000
+model_length = 10_000
 # model_length = 100
 good_model = [42] * model_length
 bad_model = [666] * model_length
@@ -220,13 +220,14 @@ for line in sys.stdin:
                 1 + add_new_encryption_model_counter) % n_workers
             matched = True
     if not matched:
-        m = re.search("^addVerificationParameters\(\)$", line)
+        m = re.search("^addVerificationParametersDiablo\(\)$", line)
         if m:
-            proto = "addVerificationParameters(uint256[])"
+            proto = "addVerificationParametersDiablo(uint256[])"
             worker_address = addresses[add_verification_parameters_counter]
             # worker_weights = model_weights[add_verification_parameters_counter]
             # TODO print 5 seconds long for 100k param so see with 1.6 millions...
-            worker_weights = good_model if add_verification_parameters_counter % 5 != 0 else bad_model
+            # only send the first 1k weights, smart contract will expect into the expected model weight
+            worker_weights = good_model[:1000] if add_verification_parameters_counter % 5 != 0 else bad_model[:1000]
             encoded_array = encode_abi(
                 ["int256[]"], [[worker_address] + worker_weights]
             )

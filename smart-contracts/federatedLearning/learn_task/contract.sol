@@ -29,6 +29,7 @@ contract LearnTask {
     uint256 thresholdForBestModel = 3; // number of equal models needed to be considered as the best one.
     //uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
     uint256 thresholdMaxNumberReceivedModels = 6; // maximum number of models we can receive before we compute the best model
+    uint256 model_length = 10000; // length of the model
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
@@ -135,6 +136,109 @@ contract LearnTask {
         for (uint256 i = 1; i < array.length; ++i) {
             clearModel[i - 1] = array[i];
         }
+        // check that worker has send a model, that don't receive new model anymore and that model is not ready
+        if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
+            // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
+            for (
+                uint256 i = 0;
+                i < receivedVerificationParametersAddresses.length;
+                i++
+            ) {
+                require(
+                    receivedVerificationParametersAddresses[i] !=
+                        _workerAddress,
+                    "You already sent your verification parameters"
+                );
+            }
+            // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
+            receivedVerificationParametersAddresses.push(_workerAddress);
+            addressToVerificationParameters[
+                _workerAddress
+            ] = VerificationParameters(clearModel, _workerAddress);
+            // We check if hash of clear model + worker's address converted to uint256
+            // is equal to the hash of the model sent by the worker during leaning phase
+            // bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
+            uint256[] memory model_with_public_key = new uint256[](
+                clearModel.length
+            );
+            // add uint256(_workerAddress) to each element of clearModel
+            for (uint256 i = 0; i < clearModel.length; i++) {
+                model_with_public_key[i] =
+                    clearModel[i] +
+                    uint256(_workerAddress);
+            }
+            bytes32 modelHash = keccak256(
+                abi.encodePacked(model_with_public_key)
+            );
+            // we get the model sent by the worker during learning phase
+            bytes32 modelSentByWorker = addressToHashModel[_workerAddress];
+            // we check if the two are equals
+            require(
+                modelHash == modelSentByWorker,
+                "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
+            );
+            // worker proved is did work to send its model, we can add it to the received clear models
+            setValueModelToNSameModels(
+                clearModel,
+                getValueModelToNSameModels(clearModel) + 1
+            );
+            // check if we already registered this model
+            bool modelAlreadyInModels = false;
+            uint256 clearModelLen = clearModel.length;
+            for (uint256 i = 0; i < models.length; i++) {
+                if (models[i].length != clearModelLen) {
+                    // in that case, we cannot already have this model in models
+                    continue;
+                }
+                // we check if the two models are equals
+                bool modelsAreEquals = true;
+                for (uint256 j = 0; j < clearModelLen; j++) {
+                    if (models[i][j] != clearModel[j]) {
+                        modelsAreEquals = false;
+                    }
+                }
+                if (modelsAreEquals) {
+                    modelAlreadyInModels = true;
+                }
+            }
+            // if decryptedModel not in models, we add it
+            if (!modelAlreadyInModels) {
+                models.push(clearModel);
+                nModels += 1;
+            }
+            uint256[] memory _bestModel = checkEnoughSameModel();
+            if (_bestModel.length != 0) {
+                // in that case we elected the best model, so we can pay workers that did correct job
+                modelIsReady = true;
+                // publish the new model
+                newModel = _bestModel;
+                // pay workers
+                //payCorrectWorkers(_bestModel);
+            }
+        } else {
+            revert("You can't send your verification parameters");
+        }
+    }
+
+    /// @notice in this version, as we are limited to an array of size 1k from diablo, we will
+    /// duplicate the received array until we reach the expected model complexity
+    /// @param array the array containing the verification parameters. By convention, the first element of the array
+    function addVerificationParametersDiablo(uint256[] memory array)
+        public
+        onlyReceivedModelsAddresses(address(uint160(array[0])))
+    {
+        address _workerAddress = address(uint160(array[0]));
+        uint256[] memory clearModel = new uint256[](model_length);
+        uint256 arr_length = array.length - 1;
+        uint256 n_repetitions = model_length / arr_length; // array.length should always be 1k
+        for (uint256 repetition = 0; repetition < n_repetitions; ++repetition) {
+            for (uint256 i = 1; i < arr_length; ++i) {
+                clearModel[repetition * arr_length + (i - 1)] = array[i];
+            }
+        }
+        // for (uint256 i = 1; i < array.length; ++i) {
+        //     clearModel[i - 1] = array[i];
+        // }
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
