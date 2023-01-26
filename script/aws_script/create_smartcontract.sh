@@ -33,6 +33,7 @@ contract LearnTask {
     // for a mapping, so we use hash of the model as a key
     mapping(bytes32 => uint256) modelToNSameModels;
     uint256[][] models; // keep track of each different model we have seen (models are stored in clear)
+    uint256 nModels = 0; // number of different models we have seen
 
     address[] receivedModelsAddresses; // each time a worker sends a model, it's address is added to this array
     // each time a worker sends its verification parameters it's address is added to this arra
@@ -42,6 +43,7 @@ contract LearnTask {
     uint256 batchIndex = 12;
     uint256 thresholdForBestModel = $thresholdForBestModel ; // number of equal models needed to be considered as the best one.
     uint256 thresholdMaxNumberReceivedModels = $redundancy; // maximum number of models we can receive before we compute the best model
+    uint256 model_length = 1600000;
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;

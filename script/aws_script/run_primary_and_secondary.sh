@@ -11,14 +11,19 @@ fi
 read -p "Enter a scenario name: " scenario
 read -p "Enter the number of workers: " num_workers
 read -p "Enter the redundancy: " redundancy
+read -p "Enter the model_length: " model_length
 
 echo "Scenario: $scenario"
 echo "Number of workers: $num_workers"
 echo "Redundancy: $redundancy"
+echo "Model length: $model_length"
 
 # setup file for results
-file_name="$num_workers"_workers"_redundancy_"redundancy
-mkdir res/$scenario
+file_name="$num_workers"_workers_"$redundancy"_redundancy_"$model_length"_model_length
+# if res/$scenario does not exist, create it
+if [ ! -d res/$scenario ]; then
+    mkdir res/$scenario
+fi
 touch res/$scenario/$file_name.txt
 
 # count the number of arguments
