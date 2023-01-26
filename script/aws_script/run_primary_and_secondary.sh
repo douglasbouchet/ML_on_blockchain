@@ -10,12 +10,14 @@ fi
 # Read in a string from the user
 read -p "Enter a scenario name: " scenario
 read -p "Enter the number of workers: " num_workers
+read -p "Enter the redundancy: " redundancy
 
 echo "Scenario: $scenario"
 echo "Number of workers: $num_workers"
+echo "Redundancy: $redundancy"
 
 # setup file for results
-file_name="$num_workers"_workers
+file_name="$num_workers"_workers"_redundancy_"redundancy
 mkdir res/$scenario
 touch res/$scenario/$file_name.txt
 

@@ -52,7 +52,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "addVerificationParameters()"
+            function: "addVerificationParametersDiablo()"
           load:
             15: $n_calls_per_second
             25: 0
@@ -73,7 +73,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "addVerificationParameters()"
+            function: "addVerificationParametersDiablo()"
           load:
             45: $n_calls_per_second
             55: 0
@@ -94,7 +94,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "addVerificationParameters()"
+            function: "addVerificationParametersDiablo()"
           load:
             75: $n_calls_per_second
             85: 0
@@ -115,7 +115,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "addVerificationParameters()"
+            function: "addVerificationParametersDiablo()"
           load:
             105: $n_calls_per_second
             115: 0
@@ -136,7 +136,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "addVerificationParameters()"
+            function: "addVerificationParametersDiablo()"
           load:
             135: $n_calls_per_second
             145: 0
