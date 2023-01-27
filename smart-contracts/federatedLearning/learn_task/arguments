@@ -3,20 +3,16 @@
 # See: https://docs.soliditylang.org/en/v0.8.11/abi-spec.html
 
 import os
-from concurrent.futures import ProcessPoolExecutor
-import numpy as np
 import base64
 import re
-
-# import struct
 import sys
+import time
+from web3 import Web3
+from sha3 import keccak_256
+from eth_abi import encode_abi
 from secrets import token_bytes
 from coincurve import PublicKey
-from sha3 import keccak_256
-from web3 import Web3
-from eth_abi import encode_abi
-
-import time
+import multiprocessing as mp
 
 
 def encode_bytes32(value: str) -> str:
@@ -57,51 +53,18 @@ def generate_addresses(n_workers: int):
     return addresses
 
 
-def compute_model_weight(n_workers: int, model_length: int) -> [int]:
-    """Generate an array of model weights.
-
-    Args:
-        n_workers (int): number of workers
-        model_length (int): how much weights are in the model that is learned.
-
-    Returns:
-        [int]: the array of model weights
-    """
-    # weights are good(42) for 4/5 of workers and 1/5 of workers are malicious(666)
-    return [
-        [42] * model_length if i % 5 != 0 else [666] * model_length
-        for i in range(n_workers)
-    ]
+def worker(i: int, worker_address: int, model_length: int, results):
+    model_weights = [42 + worker_address] * \
+        model_length if i % 5 != 0 else [666 + worker_address] * model_length
+    model_hash = Web3.solidityKeccak(
+        ["uint256[]"],
+        [model_weights]).hex()
+    results[i] = model_hash
+    print("number of computed Hash: ", len(
+        [elem for elem in results if elem is not None]))
 
 
-# def compute_add_new_encrypted_model_hash(n_workers: int, addresses, good_model, bad_model):
-#     """Generate an array of model hashes. Model hashed is obtained by
-#     adding worker address (as an int) to model weight.
-
-#     Args:
-#         n_workers (int): number of workers
-#         addresses (int[]): array of worker addresses
-#         good_model (int[]): array of model weights
-#         bad_model (int[]): array of model weights
-
-#     Returns:
-#         str[]: the array of model hashes
-#     """
-#     model_hashes = []
-#     for i in range(n_workers):
-#         worker_address = addresses[i]
-#         if i % 5 != 0:
-#             model_weights = good_model
-#         else:
-#             model_weights = bad_model
-#         encrypted_model = [
-#             weight + worker_address for weight in model_weights]
-#         model_hashes.append(Web3.solidityKeccak(
-#             ["uint256[]"], [encrypted_model]).hex())
-#     return model_hashes
-
-
-def compute_add_new_encrypted_model_hash(n_workers: int, addresses: [int], model_length: int) -> None:
+def parallel_compute_add_new_encrypted_model_hash(n_workers: int, addresses: [int], model_length: int) -> None:
     """Generate an array of model hashes. Model hashed is obtained by
     adding worker address (as an int) to model weight.
 
@@ -114,57 +77,31 @@ def compute_add_new_encrypted_model_hash(n_workers: int, addresses: [int], model
         None
     """
     start_time = time.time()
-    # how much weights are in the model that is learned.
-    good_model = [42] * model_length
-    bad_model = [666] * model_length
+    # num_workers = multiprocessing.cpu_count()
+    with mp.Manager() as manager:
+        # create a shared list to store the results
+        results = manager.list()
+        results.extend([None] * n_workers)
+        with mp.Pool(50) as p:
+            p.starmap(worker, [(i, addresses[i], model_length, results)
+                      for i in range(n_workers)])
+        res = [elem for elem in results]
     with open("generated_args/arg_addNewEncryptedModel_{}_model_length.txt".format(model_length), "w") as f:
-        for i in range(n_workers):
-            worker_address = addresses[i]
-            model_weights = good_model if i % 5 != 0 else bad_model
-            model_hash = Web3.solidityKeccak(
-                ["uint256[]"],
-                [[weight + worker_address for weight in model_weights]]).hex()
-            f.write(model_hash + "\n")
-            print("written hashed:", i)
-    # print("Time: ", time.time() - start_time)
-    return None
+        for elem in res:
+            f.write(elem + "\n")
 
 
-def read_file(f_path):
-    BLOCK_SIZE = 1024
-    with open(file_path, 'rb') as f:
-        previous_line = ""
-        while True:
-            block = f.read(BLOCK_SIZE)
-            if block:
-                lines = block.decode().splitlines()
-                for line in lines:
-                    if not line.startswith("0x"):
-                        previous_line += line
-                    else:
-                        if previous_line:
-                            yield previous_line
-                        previous_line = line
-            else:
-                if previous_line:
-                    yield previous_line
-                return
-
-
-# print("generating...")
-start = time.time()
-n_workers = 100
-# model_length = 100_000_000  #  BERT
-# model_length = 1_600_000  # For MNIST
-# model_length = 100_000
-model_length = 10_000
-# model_length = 100
+n_workers = 1000  #  currently limited to 100
+model_length = 1_600_000
 good_model = [42] * model_length
 bad_model = [666] * model_length
 addresses = generate_addresses(n_workers)
 # TODO use this line only for pre-computation, otw you can read from a file
-# compute_add_new_encrypted_model_hash(n_workers, addresses, model_length)
-# print("generation done")
+start = time.time()
+# compute_add_new_encrypted_model_hash(20, addresses, model_length)
+parallel_compute_add_new_encrypted_model_hash(200, addresses, model_length)
+print("Final Time: ", time.time() - start)
+exit(0)
 
 add_new_encryption_model_args = []
 # ugly solution is to hardcode the args and read from this list
@@ -237,92 +174,17 @@ for line in sys.stdin:
                 1 + add_verification_parameters_counter) % n_workers
             matched = True
     if not matched:
-        # in that case we are checking if the arguments are correct (i.e we expect infinite loop if args no corrects)
-        m = re.search("^checkAddressEncoding\(\)$", line)
-        if m:
-            proto = "checkAddressEncoding(uint160)"
-            matched = True
-            # the one expected by checkAddressEncoding
-            true_worker_address = 725016507395605870152133310144839532665846457513
-            false_worker_address = 725016507395605870152133310144839532665846457512
-            arg0 = encode_uint(true_worker_address)
-            # arg0 = encode_uint(false_worker_address)
-            arguments = base64.b64encode(arg0).decode("ascii")
-            matched = True
-    if not matched:
-        m = re.search("^checkUint160AndBytes32\(\)$", line)
-        if m:
-            proto = "checkUint160AndBytes32(uint160,bytes32)"
-            # proto = 'checkUint160AndBytes32(uint160,uint160)'
-            matched = True
-            # the one expected by checkUintEncoding
-            true_worker_address = 725016507395605870152133310144839532665846457513
-            false_worker_address = 725016507395605870152133310144839532665846457512
-            true_model_hash_with_address = (
-                "0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356d"
-            )
-            false_model_hash_with_address = (
-                "0xe72c25d7ca23adf3090d18988974cb4633e9261db2fb0a4a4d5d703a19cd356e"
-            )
-            arg0 = encode_uint(true_worker_address)
-            # arg1 = encode_bytes32(true_model_hash_with_address)
-            arg1 = encode_bytes32(false_model_hash_with_address)
-            arguments = base64.b64encode(arg0 + arg1).decode("ascii")
-            matched = True
-    if not matched:
-        m = re.search("^checkUint160AndUint256\(\)$", line)
-        if m:
-            proto = "checkUint160AndUint256(uint160,uint256)"
-            matched = True
-            # the one expected by checkUintEncoding
-            true_worker_address = 725016507395605870152133310144839532665846457513
-            false_worker_address = 725016507395605870152133310144839532665846457512
-            true_model_weight = 42
-            false_model_weight = 666
-            arg0 = encode_uint(true_worker_address)
-            # arg0 = encode_uint(false_worker_address)
-            arg1 = encode_uint(true_model_weight)
-            # arg1 = encode_uint(false_model_weight)
-            arguments = base64.b64encode(arg0 + arg1).decode("ascii")
-            matched = True
-    if not matched:
-        m = re.search("^checkDynamicUint256Array\(\)$", line)
-        if m:
-            proto = "checkDynamicUint256Array(uint256[])"
-            true_worker_address = 725016507395605870152133310144839532665846457513
-            true_array = [true_worker_address, 1, 2, 3, 4, 5]
-            false_array_0 = [
-                725016507395605870152133310144839532665846457513,
-                1,
-                2,
-                3,
-                4,
-                6,
-            ]
-            false_array_1 = [
-                725016507395605870152133310144839532665846457513,
-                1,
-                2,
-                3,
-                5,
-                6,
-                7,
-                8,
-                7,
-                5,
-                3,
-            ]
-            false_array_2 = [66666666666666666, 1, 2, 3, 4, 5]
-            # encoded_array = encode_abi(['int256[]'], [true_array])
-            # encoded_array = encode_abi(['int256[]'], [false_array_0])
-            # encoded_array = encode_abi(['int256[]'], [false_array_1])
-            encoded_array = encode_abi(["int256[]"], [false_array_2])
-            arguments = base64.b64encode(encoded_array).decode("ascii")
-            matched = True
-    if not matched:
         # received line isn't a valid method (check yaml file and smart contract method name)
         exit(1)
 
     # we can print the fonction and the arguments
     print(proto)
     print(arguments, flush=True)
+
+
+# import cProfile
+#
+# def function_to_profile():
+#     # code to run
+#
+# cProfile.run("function_to_profile()")

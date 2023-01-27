@@ -242,6 +242,7 @@ contract LearnTask {
         // check that worker has send a model, that don't receive new model anymore and that model is not ready
         if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
             // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
+            //TODO normally already checked in canSendVerificationParameters
             for (
                 uint256 i = 0;
                 i < receivedVerificationParametersAddresses.length;
