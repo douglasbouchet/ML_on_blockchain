@@ -35,11 +35,12 @@ def encode_uint(value: int) -> str:
     return value.to_bytes(32, byteorder="big")
 
 
-def generate_addresses(n_workers: int):
+def generate_addresses(n_workers: int, model_length: int):
     """Generate valid ethereum addresses.
-
+    model_length only used to know to which file save the addresses
     Args:
         n_workers (int): number of addresses to generate
+        model_length (int): how much weights are in the model that is learned.
     Returns:
         int[]: the addresses are already converted to int
     """
@@ -52,7 +53,8 @@ def generate_addresses(n_workers: int):
         addr = keccak_256(public_key).digest()[-20:]
         addresses.append(int(addr.hex(), 16))
     # write addresses to file
-    with open("generated_args/addresses_{}_model_length.txt".format(model_length), "a") as f:
+    prefix = "/home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task"
+    with open(prefix + "/generated_args/addresses_{}_model_length.txt".format(model_length), "a") as f:
         for address in addresses:
             f.write(str(address) + "\n")
     return addresses
@@ -65,8 +67,8 @@ def worker(i: int, worker_address: int, model_length: int, results):
     model_hash = Web3.keccak(encode_packed(
         ['uint256[]'], [model_weights])).hex()
     results[i] = model_hash
-    print("number of computed Hash: ", len(
-        [elem for elem in results if elem is not None]))
+    # print("number of computed Hash: ", len(
+    #     [elem for elem in results if elem is not None]))
 
 
 def parallel_compute_add_new_encrypted_model_hash(n_workers: int, addresses: [int], model_length: int) -> None:
@@ -91,7 +93,8 @@ def parallel_compute_add_new_encrypted_model_hash(n_workers: int, addresses: [in
             p.starmap(worker, [(i, addresses[i], model_length, results)
                       for i in range(n_workers)])
         res = [elem for elem in results]
-    with open("generated_args/arg_addNewEncryptedModel_{}_model_length.txt".format(model_length), "a") as f:
+    prefix = "/home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task"
+    with open(prefix + "/generated_args/arg_addNewEncryptedModel_{}_model_length.txt".format(model_length), "a") as f:
         for elem in res:
             f.write(elem + "\n")
 
@@ -110,16 +113,21 @@ n_workers = 1  #  currently limited to 100
 # print("Final Time: ", time.time() - start)
 
 # generating arguments
-# for i in [1_600_000]:
-# for i in [2_000_000, 4_000_000, 10_000_000]:
-for i in [4_000_000, 10_000_000]:
-    print("generating args for model length: ", i)
-    n_workers = 20
-    start = time.time()
-    model_length = i
-    parallel_compute_add_new_encrypted_model_hash(
-        n_workers, generate_addresses(n_workers), model_length)
-    print("Time for model length: ", i, " is: ", time.time() - start)
+for j in range(20):
+    print("epoch {} over 20".format(j))
+    for model_length in [100_000_000]:
+        n_workers = 8
+        print("generating args for model length: ",
+              model_length, "using", n_workers, " workers")
+        start = time.time()
+        addresses = generate_addresses(n_workers, model_length)
+        parallel_compute_add_new_encrypted_model_hash(
+            n_workers, addresses, model_length)
+        print("Time for model length: ", model_length,
+              " is: ", time.time() - start)
+prefix = "/home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task"
+with open(prefix + "/generated_args/arg_addNewEncryptedModel_{}_model_length.txt".format(100_000_000), "a") as f:
+    f.write("Computation done... DONT FORGET TO DELETE ME")
 exit(0)
 
 add_new_encryption_model_args = []
