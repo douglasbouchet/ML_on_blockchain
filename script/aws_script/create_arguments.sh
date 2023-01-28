@@ -30,8 +30,7 @@ from sha3 import keccak_256
 from eth_abi import encode_abi
 from secrets import token_bytes
 from coincurve import PublicKey
-from concurrent.futures import ProcessPoolExecutor
-
+import multiprocessing as mp
 
 
 def encode_bytes32(value: str) -> str:
@@ -72,9 +71,18 @@ def generate_addresses(n_workers: int):
     return addresses
 
 
+def worker(i: int, worker_address: int, model_length: int, results):
+    model_weights = [42 + worker_address] * \
+        model_length if i % 5 != 0 else [666 + worker_address] * model_length
+    model_hash = Web3.solidityKeccak(
+        ["uint256[]"],
+        [model_weights]).hex()
+    results[i] = model_hash
+    print("number of computed Hash: ", len(
+        [elem for elem in results if elem is not None]))
 
 
-def compute_add_new_encrypted_model_hash(n_workers: int, addresses: [int], model_length: int) -> None:
+def parallel_compute_add_new_encrypted_model_hash(n_workers: int, addresses: [int], model_length: int) -> None:
     """Generate an array of model hashes. Model hashed is obtained by
     adding worker address (as an int) to model weight.
 
@@ -87,30 +95,27 @@ def compute_add_new_encrypted_model_hash(n_workers: int, addresses: [int], model
         None
     """
     start_time = time.time()
-    # how much weights are in the model that is learned.
-    # add the worker address directly in good_model and bad_model
-    good_model = [42] * model_length
-    bad_model = [666] * model_length
+    # num_workers = multiprocessing.cpu_count()
+    with mp.Manager() as manager:
+        # create a shared list to store the results
+        results = manager.list()
+        results.extend([None] * n_workers)
+        with mp.Pool(50) as p:
+            p.starmap(worker, [(i, addresses[i], model_length, results)
+                      for i in range(n_workers)])
+        res = [elem for elem in results]
     with open("generated_args/arg_addNewEncryptedModel_{}_model_length.txt".format(model_length), "w") as f:
-        for i in range(n_workers):
-            worker_address = addresses[i]
-            model_weights = good_model if i % 5 != 0 else bad_model
-            model_hash = Web3.solidityKeccak(
-                ["uint256[]"],
-                [[weight + worker_address for weight in model_weights]]).hex()
-            f.write(model_hash + "\n")
-            print("written hashed:", i)
-    # print("Time: ", time.time() - start_time)
-    return None
+        for elem in res:
+            f.write(elem + "\n")
 
 
-n_workers = $number_workers # currently limited to 100
-model_length = $model_length
+n_workers = $number_workers  # currently limited to 100
+model_length = $model_lenght
 good_model = [42] * model_length
 bad_model = [666] * model_length
 addresses = generate_addresses(n_workers)
 # TODO use this line only for pre-computation, otw you can read from a file
-# compute_add_new_encrypted_model_hash(n_workers, addresses, model_length)
+# parallel_compute_add_new_encrypted_model_hash(200, addresses, model_length)
 
 add_new_encryption_model_args = []
 # ugly solution is to hardcode the args and read from this list

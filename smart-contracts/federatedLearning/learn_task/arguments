@@ -10,6 +10,7 @@ import time
 from web3 import Web3
 from sha3 import keccak_256
 from eth_abi import encode_abi
+from eth_abi.packed import encode_packed
 from secrets import token_bytes
 from coincurve import PublicKey
 import multiprocessing as mp
@@ -50,15 +51,19 @@ def generate_addresses(n_workers: int):
         ]
         addr = keccak_256(public_key).digest()[-20:]
         addresses.append(int(addr.hex(), 16))
+    # write addresses to file
+    with open("generated_args/addresses_{}_model_length.txt".format(model_length), "a") as f:
+        for address in addresses:
+            f.write(str(address) + "\n")
     return addresses
 
 
 def worker(i: int, worker_address: int, model_length: int, results):
     model_weights = [42 + worker_address] * \
         model_length if i % 5 != 0 else [666 + worker_address] * model_length
-    model_hash = Web3.solidityKeccak(
-        ["uint256[]"],
-        [model_weights]).hex()
+    # model_hash = Web3.solidityKeccak(["uint256[]"], [model_weights]).hex()
+    model_hash = Web3.keccak(encode_packed(
+        ['uint256[]'], [model_weights])).hex()
     results[i] = model_hash
     print("number of computed Hash: ", len(
         [elem for elem in results if elem is not None]))
@@ -82,28 +87,43 @@ def parallel_compute_add_new_encrypted_model_hash(n_workers: int, addresses: [in
         # create a shared list to store the results
         results = manager.list()
         results.extend([None] * n_workers)
-        with mp.Pool(50) as p:
+        with mp.Pool() as p:
             p.starmap(worker, [(i, addresses[i], model_length, results)
                       for i in range(n_workers)])
         res = [elem for elem in results]
-    with open("generated_args/arg_addNewEncryptedModel_{}_model_length.txt".format(model_length), "w") as f:
+    with open("generated_args/arg_addNewEncryptedModel_{}_model_length.txt".format(model_length), "a") as f:
         for elem in res:
             f.write(elem + "\n")
 
+# 1 million weights -> 29 seconds
 
-n_workers = 1000  #  currently limited to 100
-model_length = 1_600_000
-good_model = [42] * model_length
-bad_model = [666] * model_length
-addresses = generate_addresses(n_workers)
-# TODO use this line only for pre-computation, otw you can read from a file
-start = time.time()
-# compute_add_new_encrypted_model_hash(20, addresses, model_length)
-parallel_compute_add_new_encrypted_model_hash(200, addresses, model_length)
-print("Final Time: ", time.time() - start)
+
+n_workers = 1  #  currently limited to 100
+# model_length = 1_600_000
+# model_length = 2_000_000
+# good_model = [42] * model_length
+# bad_model = [666] * model_length
+# # TODO use this line only for pre-computation, otw you can read from a file
+# start = time.time()
+# parallel_compute_add_new_encrypted_model_hash(
+#     n_workers, generate_addresses(n_workers), model_length)
+# print("Final Time: ", time.time() - start)
+
+# generating arguments
+# for i in [1_600_000]:
+# for i in [2_000_000, 4_000_000, 10_000_000]:
+for i in [4_000_000, 10_000_000]:
+    print("generating args for model length: ", i)
+    n_workers = 20
+    start = time.time()
+    model_length = i
+    parallel_compute_add_new_encrypted_model_hash(
+        n_workers, generate_addresses(n_workers), model_length)
+    print("Time for model length: ", i, " is: ", time.time() - start)
 exit(0)
 
 add_new_encryption_model_args = []
+addresses = []
 # ugly solution is to hardcode the args and read from this list
 if model_length == 100:
     add_new_encryption_model_args = ["0x3bd0a7c899f0c53ab15df22509471d8a12ff2ddcdfd9e672b6515023d550bf03", "0x2662e793df4f14d95427defdc06cff3be4052324729a0bccec386fd00b67e237", "0x33a9364924b5c20c30c934d9698275680444457072513d381ebe776adb9a7c5e", "0x07fe489cab05af698856182acdb4f85bf7e8344d342522e3e39dc06edb4724a3", "0xb42d3091136195e07dea3934ef031a7dadc8b7bcaa0975ff339be997bfc0d5d5", "0xd16852f39b80f4dedd3a5223cfb8f037ebac3e3e01d5bfb214b457106799284f", "0x0e2da61ed6125827ebbb60ad329ccb8398086bd0ecdd68e90775e1d627977fe6", "0x3d711284391a6416b5c373be8352e3c14705674489406fc81a6b219776c82aed", "0x0ee05e31a30217f6b53bb3c76c2b304ce982e6494dd8b261d8c6b8624904cdfb", "0x348811f14eb4f3af60a5ca85ad54d54f2fe880b40d5fc5951bd3c7da4b9e5bad", "0xbb396561c3997fb480112ab7814b02a4377a9084b73ad1d34080d64cf734f65f", "0x7b999157ff37bfa6ce1954a65b28f0bfb25159c6668e7e06ef781d65f0a4eeae", "0xa8a9681f4e0b3f53dcc3c0b0d18d1064f9ea0b35a8fa7a8fc9b1e5eee5ab917a", "0x5ab929eec247f6dca5649229dfd5d3c393420f557166835eecfac2faebc09277", "0xddd9cf9ff0c8011f392573fa40193f1a7663b6b70d480d6d9eb239b048598909", "0x7ad4a24818ef5976c5b47e10408c19a6fb53c456a4ff879e57a6f7c52346d8e1", "0x4c41bb93432c36ec868fb89419516b04a88baaac9ad31f6ebb282bfd283dbdaf", "0x78966bba1abca6528a278b7698a6c6e024a768e5a2b6b8bdf7365c30168fec13", "0x4af0ebdf4e02c19950fbd3c464eac752ba19180b76153615d2d026aa70322de9", "0xa95e53459686ae655d5fdc041b36128253bbdeb07540700ce5650499166bb9ed", "0xf5cc3383c8cffc5b88a1af573deb17afeab7b04c662218e106b325233a976224", "0x18c9248900162e8683a22d21f421da27a4878629d4d4ffa4bc758d6cdc62202d", "0x42cbd2f6958834190c405ad4cddb561ed092918d6763b29aaede3a1501abc44b", "0x55762d416d0a31a3c51386562285e7f8c9d49e4c8de221597379ec042eda837a", "0xf0c3a90c78ed201eac90876ed6f5495a59ea065bedf8c317ec73d1cfa31fb1ea", "0x27ba4beb6361ecc81386aa08d0669635faac633c1d938c23d3aff94a070142f5", "0x1a2ebbe40784661e01dbd1a6613e09dd804c3cbc67d7a9e15acd3fd6e2044160", "0x1a66db9f60aaa3972e3fc2fbd4556b7ff031b191aa67688cc5e953e1f69c4d84", "0xb1caff7a502830d71ed76131cd24e9101639fd70a34cdc25c4fb328f90cec8ae", "0x580eb9106cfc99d18dd9a9b6d4e8f4269212331583d32e0aaf6f482ab65c92a1", "0xc6b4f57dc7acd93a79cf057d6890048bc1864fcb41d7a43b31c1eef0f1d0a1d1", "0xc336146f50347a61a07feb49bcd25274fe11447d991394141c6f515fad86c9bf", "0xcadd81f60eea79cc0075a347347f212de83d8d9054e561f4801fd702c0e2cd43", "0x860635dea1ea9bfd12ff6dca5883a03744a9d502b8662f0b539582026a71e52a", "0x2709007d022c095215c63500c766c5a420eb6eab31b7911ac3c3b45086801e8c", "0x39ba49354ed682a5ed117ab90b8b063b8079abb3dfd4d4068fd727577a64ca8b", "0x80f38eb537881e79f3488fb2dc8c09377215da52f5f372ba1a4a4a11a96b1797", "0xbbfc5b4025d8260859d88d5a9ccbc89f2cc16b450d50f57dc6800a62a33d5c5a", "0x5f999538c3e515bd29589b4057338e81c4348e1a517f969e67e49ef100e5c902", "0x8b5df5977dfb6a431264a887d085015e6aa8cc09a08d1574f580eef7c6343ec7", "0x88a1d55f9e343896601eb659557aca60423163d82a596b08c0e7bc0dafba740a", "0xd8fca741365df36116d27479bf90df1193d8ee6b9d41180dabbcd56cb7754724", "0x1b49abe15d99261cec2c5fdcb0a8f1e7a7d5fe445b38168d9ee660d7492a7f1f", "0x878c5d918e14af901d074d1f333dcd1b7a2c54765edeec95dfb071d9a0a93c77", "0x4390abc82a213d05f6d87643e35cbf190b0c827b9906cbb8f9544ddfd010e138", "0x24bbfe59f39d11d90d7605a67f436601236072133cfc70cc9b16724785c3598d", "0x840e7f9a99c8ac101ee2cfac601bef96fb2a1579866c4808111caba6814638be", "0xb40a4a28d6a9da6b6920617a8dd7b66660f89d04d875fa3cf53bd2251a6587b7", "0x07bac298550db17fdc4c7de6e2f8f77391c7af9ccdbb7aa29b11767d4b4d1662", "0x442b3cc216b01a817baba1fc0bfc6b2b2e6245fc7c9b9e4b9f721afe20ab7468",
@@ -180,11 +200,3 @@ for line in sys.stdin:
     # we can print the fonction and the arguments
     print(proto)
     print(arguments, flush=True)
-
-
-# import cProfile
-#
-# def function_to_profile():
-#     # code to run
-#
-# cProfile.run("function_to_profile()")

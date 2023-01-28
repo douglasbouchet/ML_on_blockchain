@@ -1,15 +1,16 @@
 #!/bin/sh
 # Check that at least one IP address has been provided as an argument
-if [ $# -lt 2 ]
+if [ $# -lt 4 ]
 then
     echo "Error: No IP addresses provided"
-    echo "Call example: ./setup-vm.sh <number of workers> <redundancy> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
+    echo "Call example: ./setup-vm.sh <number of workers> <redundancy> <model_length> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
     exit 1
 fi
 
 n_workers="$1"
 redundancy="$2"
-shift 2
+model_length="$3"
+shift 3
 
 all_nodes="$@"
 primary="$1"
@@ -40,7 +41,7 @@ then
 fi
 
 echo "Generating smart contract with redundancy:" $redundancy
-./create_smartcontract.sh $redundancy
+./create_smartcontract.sh $redundancy $model_length
 
 # check that workload.yaml exists
 if [ ! -f generated/contract.sol ]
@@ -48,6 +49,17 @@ then
     echo "Error: generated/contract.sol file not found"
     exit 1
 fi
+
+echo "Generating arguments for $n_workers and $model_length model length"
+./create_arguments.sh
+
+# check that workload.yaml exists
+if [ ! -f generated/arguments ]
+then
+    echo "Error: generated/arguments file not found"
+    exit 1
+fi
+
 
 timeout=5 # if the connection is not established within 5 seconds, exit with an error message
 
@@ -57,9 +69,8 @@ echo "copying smart contract folder to primary node + installing required python
 # ssh ubuntu@$primary 'mkdir -p contracts/learn_task && pip3 install coincurve && pip3 install pysha3'
 ssh -o "StrictHostKeyChecking no" ubuntu@$primary 'mkdir -p contracts/learn_task && pip3 install coincurve && pip3 install pysha3'
 
-# if ! scp -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/arguments ubuntu@$1:~/contracts/learn_task; then
-if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/arguments ubuntu@$primary:~/contracts/learn_task; then
-      #echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$1 is reachable."
+# if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout ../../smart-contracts/federatedLearning/learn_task/arguments ubuntu@$primary:~/contracts/learn_task; then
+if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout generated/arguments ubuntu@$primary:~/contracts/learn_task; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$primary is reachable."
       exit 1
 fi
@@ -83,9 +94,3 @@ for var in $all_nodes;do # read the list of ip addresses
     fi
     echo "sent setup.yaml to ubuntu@$var"
 done
-
-# StrictHostKeyChecking=no
-
-# 13.38.8.6 13.38.121.116 13.39.14.186 35.180.42.83 13.38.227.66 35.180.30.38 35.180.43.190 13.39.111.237 35.180.29.49 35.180.190.213
-
-# 15.188.49.247 13.38.129.170 13.39.87.210 35.180.234.185 52.47.114.75 52.47.183.9 13.39.80.62 13.38.117.59

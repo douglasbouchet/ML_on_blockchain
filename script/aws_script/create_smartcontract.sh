@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# this script expect the redundancy of the model computations as argument
-# redundancy means how many workers answers we will wait before aggregating the results
-# check that we have exactly 1 arguments
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
     echo "Wrong number of arguments"
-    echo "Usage: $0 <redundancy>"
+    echo "Usage: $0 <redundancy> <model_length>"
     echo "redundancy: number of models needed to be computed before aggregating the results"
+    echo "model_length: number of weights in the model"
     exit 1
 fi
 
 redundancy=$1
+model_length=$2
 thresholdForBestModel=$((redundancy / 2))
 echo "Number of workers to ask: $redundancy"
 echo "Threshold for best model: $thresholdForBestModel"
+echo "Model length: $model_length"
 
 cat <<EOF > generated/contract.sol
 // SPDX-License-Identifier: MIT
