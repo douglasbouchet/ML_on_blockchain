@@ -25,6 +25,7 @@ class EncryptionWorker:
         address = self.address
         # encrypted_model = [model + int_address]
         encrypted_model = [weight + int_address for weight in self.model]
+        # TODO can be udpated to use the x10 times faster method as in arguments
         model_hash = Web3.solidityKeccak(
             ["uint256[]"], [encrypted_model]).hex()
         res = self.contract.send_hashed_model(
@@ -69,14 +70,19 @@ class EncryptionWorker:
             clear_model, address, self.private_key
         )
 
-    def learn_model(self, good_model=True):
-        """Learn a new model
-        This method is really simple and just returns a simple array of int
-
+    def send_verifications_compressed(self, good_model, good_address) -> bool:
+        """Send the verifications to the blockchain
+        The verifications are the worker address followed by first 1k weights of the model (we do so as
+        in diablo we cannot use txs of more than ~1k parameters)
         Args:
-            good_model (bool, optional): _description_. Defaults to True.
-
+            good_model(bool): If True send correct model, else a model which din't match the one we send before
+            good_address(bool): True if the address is good, False otherwise
         Returns:
-            int: [1]*32 if good_model is true [0]*32 otherwise
+            bool: True if the transaction was successful, False otherwise
         """
-        return [1 for i in range(32)] if good_model else [0 for i in range(32)]
+        address = self.address if good_address else "0x0000000000000000000000000000000000000042"  # dummy address
+        # clear_model = self.model[0] if good_model else 0
+        clear_model = self.model[:1000] if good_model else [0] * 1000
+        return self.contract.send_verifications_parameters(
+            clear_model, address, self.private_key
+        )

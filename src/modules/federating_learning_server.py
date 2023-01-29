@@ -6,7 +6,6 @@ from src.solidity_contract.smart_contracts.job_finder import JobFinder
 from src.solidity_contract.smart_contracts.fragmented_job_finder import (
     FragmentedJobFinder
 )
-from src.solidity_contract.smart_contracts.encryption_job_container import EncryptionJobContainer
 from src.solidity_contract.smart_contracts.encryption_job_finder import (
     EncryptionJobFinder,
 )

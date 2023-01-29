@@ -43,7 +43,7 @@ contract LearnTask {
     uint256 batchIndex = 12;
     uint256 thresholdForBestModel = $thresholdForBestModel ; // number of equal models needed to be considered as the best one.
     uint256 thresholdMaxNumberReceivedModels = $redundancy; // maximum number of models we can receive before we compute the best model
-    uint256 model_length = 1600000;
+    uint256 model_length = $model_length;
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;

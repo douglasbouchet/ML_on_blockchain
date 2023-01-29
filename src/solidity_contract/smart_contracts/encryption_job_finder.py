@@ -114,6 +114,39 @@ class EncryptionJobFinder(Contract):
             return False
         return True
 
+    def send_verifications_parameters_diablo(
+        self,
+        clear_model,
+        worker_address,
+        worker_private_key,
+    ) -> bool:
+        """Send the verification parameters to the blockchain (worker nounce, worker secret)
+
+        Args:
+            clear_model (int): the model as an integer (simple atm)
+            worker_address (str): address of the worker
+            worker_private_key (str): private key of the worker
+        return: true if the transaction is successful false otherwise
+        """
+        worker_address = Web3.toChecksumAddress(worker_address)
+        # add the worker address to the clear model inside a new array (as expected by the smart contract)
+        array = [int(worker_address, 16)] + clear_model
+        try:
+            register_tx = self.contract.functions.addVerificationParametersDiablo(
+                array
+            ).build_transaction(
+                {
+                    "gasPrice": 0,
+                    "from": worker_address,
+                    "nonce": self.web3.eth.get_transaction_count(worker_address),
+                }
+            )
+            _ = super().sign_txs_and_send_it(worker_private_key, register_tx)
+        except Exception as e:
+            print("Error sending verification parameters:", e)
+            return False
+        return True
+
     def parse_send_encrypted_model(self, result):
         return self.contract.web3.codec.decode_single("bool", result)
 
@@ -172,7 +205,8 @@ class EncryptionJobFinder(Contract):
         return self.contract.functions.getModelIsready().call()
 
     def get_keccak(self, clear_model):
-        clear_model = [clear_model[i : i + 1] for i in range(0, len(clear_model), 1)]
+        clear_model = [clear_model[i: i + 1]
+                       for i in range(0, len(clear_model), 1)]
         ret = self.contract.functions.computeKeccak256(clear_model).call()
         # parse the ret to get the hash
         return self.contract.web3.codec.decode_single("bytes32", ret)
