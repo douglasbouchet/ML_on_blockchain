@@ -51,7 +51,7 @@ then
 fi
 
 echo "Generating arguments for $n_workers and $model_length model length"
-./create_arguments.sh
+./create_arguments.sh $n_workers $model_length
 
 # check that workload.yaml exists
 if [ ! -f generated/arguments ]
