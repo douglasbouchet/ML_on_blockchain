@@ -81,42 +81,45 @@ import numpy as np
 
 
 def plot_model_length_perf():
-    waiting_times = []
-    percentages_committed = []
-    n_txs = []
-    i = 0
-    model_length_range = np.arange(1000, 24000, 1000)
-    # for model_length in np.arange(1000, 51000, 1000):
-    for model_length in model_length_range:
-        i += 1
-        print("model_length:", model_length)
-        with open("/home/user/ml_on_blockchain/results/max_model_size/{}.txt".format(model_length)) as json_file:
-            data = json.load(json_file)
-            tx_submitted = 0
-            tx_committed = 0
-            tot_commit_time = 0
-            for tx in data["Locations"][0]["Clients"][0]["Interactions"]:
-                submit_time = tx["SubmitTime"]
-                commit_time = tx["CommitTime"]
-                tx_submitted += 1
-                if commit_time != -1:
-                    tx_committed += 1
-                    tot_commit_time += commit_time - submit_time
-            perc_committed = tx_committed / tx_submitted * 100
-            avg_commit_time = tot_commit_time / tx_committed if tx_committed != 0 else 0
-            print("tx_submitted:", tx_submitted)
-            print("tx_committed:", tx_committed)
-            print("avg_commit_time", avg_commit_time)
-            print("perc_committed:", perc_committed)
-            waiting_times.append(avg_commit_time)
-            percentages_committed.append(perc_committed)
-            # if tx_commited is bigger than 1000, replace thsousands with k
-            # if tx_committed > 1000:
-            #     n_txs.append("{}k txs".format(tx_committed // 1000))
-            # else:
-            #     n_txs.append("{} txs".format(tx_committed))
+    # all_perc_committed = np.array#([])
+    all_perc_committed = []
+    for i in range(4):
+        waiting_times = []
+        percentages_committed = []
+        n_txs = []
+        #model_length_range = np.arange(1000, 51000, 1000)
+        model_length_range = np.arange(1000, 3000, 1000)
+        for model_length in model_length_range:
+            with open("/home/user/ml_on_blockchain/results/max_model_size_{}/{}.txt".format(i, model_length)) as json_file:
+                # with open("/home/user/ml_on_blockchain/results/max_model_size/{}.txt".format(model_length)) as json_file:
+                data = json.load(json_file)
+                tx_submitted = 0
+                tx_committed = 0
+                tot_commit_time = 0
+                for tx in data["Locations"][0]["Clients"][0]["Interactions"]:
+                    submit_time = tx["SubmitTime"]
+                    commit_time = tx["CommitTime"]
+                    tx_submitted += 1
+                    if commit_time != -1:
+                        tx_committed += 1
+                        tot_commit_time += commit_time - submit_time
+                perc_committed = tx_committed / tx_submitted * 100
+                avg_commit_time = tot_commit_time / tx_committed if tx_committed != 0 else 0
+                #print("tx_submitted:", tx_submitted)
+                #print("tx_committed:", tx_committed)
+                #print("avg_commit_time", avg_commit_time)
+                print("i:", i, "model_length:", model_length,
+                      "perc_committed:", perc_committed)
+                # print("perc_committed:", perc_committed)
+                waiting_times.append(avg_commit_time)
+                percentages_committed.append(perc_committed)
+        print("percentage commited:", percentages_committed)
+        all_perc_committed.append(percentages_committed)
+        print("all_perc_committed:", all_perc_committed)
 
-    print("i:", i)
+    mean_commited = np.mean(all_perc_committed, axis=0)
+    print("mean:", mean_commited)
+    # TODO check if this is correct
     fig = plt.figure(figsize=(15, 7.5))
     plt.title("Percentage committed")
     fig.suptitle("Results")
@@ -125,7 +128,7 @@ def plot_model_length_perf():
     plt.plot(
         # workers,
         model_length_range,
-        percentages_committed,
+        mean_commited,
         linestyle="dashed",
         marker="o",
     )

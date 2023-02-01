@@ -3,7 +3,8 @@
 
 
 
-for i in {1..6}; do # 6 measurements for each model length
+# for i in {1..6}; do # 6 measurements for each model length
+for i in {1..9}; do # 6 measurements for each model length
     mkdir ~/ml_on_blockchain/results/max_model_size_$i
     # iterate from 1k to 50k
     for model_size in {1..50}; do
@@ -27,8 +28,8 @@ for i in {1..6}; do # 6 measurements for each model length
         wait
         # copy the results from the primary to the local machine
         # scp user@dclbigmem.epfl.ch:out.txt ~/ml_on_blockchain/results/max_model_size/
-        scp localhost:out.txt ~/ml_on_blockchain/results/max_model_size/
-        mv ~/ml_on_blockchain/results/max_model_size/out.txt ~/ml_on_blockchain/results/max_model_size_$i/$size.txt
+        scp localhost:out.txt ~/ml_on_blockchain/results/max_model_size_$i/
+        mv ~/ml_on_blockchain/results/max_model_size_$i/out.txt ~/ml_on_blockchain/results/max_model_size_$i/$size.txt
 
         echo -e "\n"
 
@@ -40,7 +41,7 @@ for i in {1..6}; do # 6 measurements for each model length
         echo -e "\n"
         # wait 10 secondes
         echo "Waiting 10 seconds before restarting the blockchain"
-        sleep 10
+        sleep 15
     done
 
 done
