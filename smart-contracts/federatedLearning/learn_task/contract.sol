@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-contract LearnTask {
+contract SplittedModelLearnTask {
+    // In this version, we don't use phase 0 (useless in diablo). Phase 1 same as previously. New phase 2.
+    // It do not reconstruct the whole model and then compute hash, but rather used chain hash properties
+    // in order to compute the hash of the model.
     struct VerificationParameters {
         uint256[] workerModel; // store weights of the model
         address workerAddress;
@@ -22,20 +25,32 @@ contract LearnTask {
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
-    uint256 currentModel = 134;
-    uint256 batchIndex = 12;
     uint256 nWorkers = 10;
-    //uint256 thresholdForBestModel = nWorkers / 2; // number of equal models needed to be considered as the best one.
     uint256 thresholdForBestModel = 50; // number of equal models needed to be considered as the best one.
-    //uint256 thresholdMaxNumberReceivedModels = nWorkers; // maximum number of models we can receive before we compute the best model
     uint256 thresholdMaxNumberReceivedModels = 90; // maximum number of models we can receive before we compute the best model
-    uint256 model_length = 100000; // length of the model
+    uint256 model_length = 10000; // length of the model
+    uint256 modelChunkSize = 1000; // length of the model
+    uint256 nChunks = model_length / modelChunkSize; // number of chunks in the model
     uint256[] newModel; // the weight of the new model
     bool modelIsReady = false;
     bool canReceiveNewModel = true;
-
-    //This is a "ugly" solutions, to still reset the smart contract, even if we don't actually store models on it
     uint256 resetCounter = 0;
+    // TODO don't forget that this should be the number of workers (use this in script to generate this file)
+    bytes32[10] workerModelHashes; // hashes of worker's model. Will be udpated by chain hashing in phase 2
+    uint256[10] workerModelIdxCount; // The expected model number for each worker
+    mapping(address => uint256) hashPosition; // The position of the worker address in workerModelHashes and workerModelIdxCount
+
+    // create a constuctor to initialize the newModel array
+    constructor() {
+        // fill workerModelHashes with empty values
+        for (uint256 i = 0; i < workerModelHashes.length; i++) {
+            workerModelHashes[i] = 0x0;
+        }
+        // fill workerModelIdxCount with starting idx
+        for (uint256 i = 0; i < workerModelIdxCount.length; i++) {
+            workerModelIdxCount[i] = 0;
+        }
+    }
 
     modifier onlyReceivedModelsAddresses(address workerAddress) {
         // modified that check if a worker address is inside receivedModelsAddresses
@@ -64,10 +79,6 @@ contract LearnTask {
         _;
     }
 
-    function getModelAndBatchIndex() public view returns (uint256, uint256) {
-        return (currentModel, batchIndex);
-    }
-
     /// @notice tell weather a worker can send its verification parameters or not
     /// @param workerAddress the address of the worker
     /// @return true if the worker can send its verification parameters, false otherwise
@@ -91,14 +102,15 @@ contract LearnTask {
     /// @notice also reset the learn task if previous learning is done.
     /// @param workerAddress the address of the worker sending the model
     /// @param modelHash the hashed model (xored with worker's public key) sent by the worker
-    /// @return true if the model was added to the jobContainer, false otherwise
+    /// @return true if the model hash was recorderd, false otherwise
     function addNewEncryptedModel(uint160 workerAddress, bytes32 modelHash)
         public
         returns (bool)
     {
         // if (getModelIsready()) {
         // TODO Modified to handle case where we don't actually store models on the smart contract
-        if (resetCounter > thresholdMaxNumberReceivedModels) {
+        // if (resetCounter > thresholdMaxNumberReceivedModels) {
+        if (resetCounter > thresholdMaxNumberReceivedModels * nChunks) {
             resetLearnTask();
         }
         // if we already received the maximum number of models, we don't accept new ones
@@ -108,6 +120,7 @@ contract LearnTask {
         address _workerAddress = address(workerAddress); // equivalent to receiving the worker address (checked on remix)
         receivedModelsAddresses.push(_workerAddress);
         addressToHashModel[_workerAddress] = modelHash; // TODO uncomment
+        hashPosition[_workerAddress] = receivedModelsAddresses.length - 1;
         // if the number of received model is equal to the thresholdMaxNumberReceivedModels, we stop receiving
         // new models
         if (
@@ -128,68 +141,39 @@ contract LearnTask {
 
     /// @notice send a new verification parameters to the jobContainer
     /// @notice each address can send only one verification parameters (if has previously sent a model)
-    /// @param array the array containing the verification parameters. By convention, the first element of the array
-    /// is the address of worker encoded as uint160. Remaining elements are models' weights
+    /// @param array the array containing the verification parameters.
+    /// By convention, array[0] = worker address, array[1] = model part index, array[2...] = model weights
     function addVerificationParameters(uint256[] memory array)
         public
-        onlyReceivedModelsAddresses(address(uint160(array[0])))
+        returns (bool)
     {
+        // onlyReceivedModelsAddresses(address(uint160(array[0])))
         address _workerAddress = address(uint160(array[0]));
-        uint256[] memory clearModel = new uint256[](model_length);
-        uint256 received_array_length = array.length - 1;
-        //uint256 received_array_length = 1000;
-        uint256 n_repetitions = model_length / received_array_length; // array.length should always be 1k
-        for (uint256 repetition = 0; repetition < n_repetitions; ++repetition) {
-            for (uint256 i = 1; i <= received_array_length; ++i) {
-                //clearModel[repetition * received_array_length + (i - 1)] = array[i];
-                clearModel[
-                    repetition * received_array_length + (i - 1)
-                ] = array[1]; // we can ause first element as weights are all of same values
+        uint256 modelPartIdx = array[1];
+        uint256 position = hashPosition[_workerAddress];
+        resetCounter += 1; // we expect # workers * N model chunk before resetting
+        // TODO not mandatory to copy the array, see later
+        // uint256[] memory newModelPart = new uint256[](model_length);
+        // for (uint256 i = 0; i < model_length; i++) {
+        //     newModelPart[i] = array[i + 2];
+        // }
+        // we check if the model part index is the expected one
+        if (modelPartIdx == workerModelIdxCount[position]) {
+            // we get the old hash value for this worker
+            bytes32 hashToUpdate = workerModelHashes[position];
+            // we compute the hash value by concatenating the old hash value and the new model part
+            for (uint256 i = 0; i < modelChunkSize; i++) {
+                hashToUpdate = keccak256(
+                    abi.encodePacked(hashToUpdate, array[i + 2])
+                ); // chained hash
             }
-        }
-        // check that worker has send a model, that don't receive new model anymore and that model is not ready
-        if (canSendVerificationParameters(_workerAddress) && !modelIsReady) {
-            // require that the _workerAddress isn't already in receivedVerificationParametersAddresses
-            for (
-                uint256 i = 0;
-                i < receivedVerificationParametersAddresses.length;
-                i++
-            ) {
-                require(
-                    receivedVerificationParametersAddresses[i] !=
-                        _workerAddress,
-                    "You already sent your verification parameters"
-                );
-            }
-
-            // if this address didn't already pushed a model, we can add it to receivedVerificationParametersAddresses
-            receivedVerificationParametersAddresses.push(_workerAddress);
-            //We check if hash of clear model + worker's address converted to uint256
-            //is equal to the hash of the model sent by the worker during leaning phase
-            uint256[] memory model_with_public_key = new uint256[](
-                clearModel.length
-            );
-            // add uint256(_workerAddress) to each element of clearModel
-            uint256 intWorkerAddress = uint256(_workerAddress);
-            for (uint256 i = 0; i < clearModel.length; i++) {
-                model_with_public_key[i] = clearModel[i] + intWorkerAddress;
-            }
-            //bytes32 modelHash = keccak256(abi.encodePacked(uint8(97), uint8(98), uint8(99)));
-            bytes32 modelHash = keccak256(
-                abi.encodePacked(model_with_public_key)
-            );
-            // we get the model sent by the worker during learning phase
-            bytes32 modelSentByWorker = addressToHashModel[_workerAddress];
-            // we check if the two are equals
-            require(
-                modelHash == modelSentByWorker,
-                "The model sent by the worker during learning phase is not equal to the model computed by the worker during verification phase"
-            );
-            resetCounter += 1;
-            if (resetCounter >= thresholdMaxNumberReceivedModels) {
-                // model is ready
-                modelIsReady = true;
-            }
+            // we increment the model part index
+            workerModelIdxCount[position] = workerModelIdxCount[position] + 1;
+            // we update the hash value for this worker
+            workerModelHashes[position] = hashToUpdate;
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -208,34 +192,7 @@ contract LearnTask {
 
     function payCorrectWorkers(bytes32 correctModel) private view {
         require(modelIsReady, "The model is not ready yet");
-        for (
-            uint256 i = 0;
-            i < receivedVerificationParametersAddresses.length;
-            i++
-        ) {
-            address workerAddress = receivedVerificationParametersAddresses[i];
-            VerificationParameters
-                memory verificationParameters = addressToVerificationParameters[
-                    workerAddress
-                ];
-            //bytes4 encryptedModel = addressToHashModel[workerAddress];
-            bytes32 encryptedModel = addressToHashModel[workerAddress];
-            // bytes4 decryptedModel = encryptedModel ^
-            //     verificationParameters.workerSecret;
-            bytes4 decryptedModel = 0;
-            if (decryptedModel == correctModel) {
-                // // now we check that the secret and the nonce are correct
-                // bytes4 secret = verificationParameters.workerSecret;
-                // int256 nonce = verificationParameters.workerNonce;
-                // // we try to decrypt the secret with the public key of worker
-                // string memory workerPublicKey = addressToPublicKey[
-                //     workerAddress
-                // ];
-                // decrypt secret with workerPublicKey
-                // if the result is equal to nonce, we pay the worker else we don't
-                //TODO
-            }
-        }
+        // TODO: pay the correct workers
     }
 
     /// @notice function to get the model
@@ -253,6 +210,7 @@ contract LearnTask {
         for (uint256 i = 0; i < receivedModelsAddresses.length; i++) {
             delete addressToHashModel[receivedModelsAddresses[i]];
             delete addressToVerificationParameters[receivedModelsAddresses[i]];
+            delete hashPosition[receivedModelsAddresses[i]];
         }
         for (
             uint256 i = 0;
@@ -266,6 +224,10 @@ contract LearnTask {
         for (uint256 i = 0; i < nModels; i++) {
             bytes32 modelHash = bytes32(keccak256(abi.encodePacked(models[i])));
             delete modelToNSameModels[modelHash];
+        }
+        for (uint256 i = 0; i < workerModelHashes.length; i++) {
+            delete workerModelHashes[i];
+            delete workerModelIdxCount[i];
         }
         models = new uint256[][](0);
         receivedModelsAddresses = new address[](0);
