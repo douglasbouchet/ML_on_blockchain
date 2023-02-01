@@ -1,19 +1,26 @@
 let:
+
   - !loop &account
     sample: !account
       number: 100
       stake: 10000000
+
   - !loop &any_location
     sample: !location
       - ".*"
+
   - !loop &any_endpoint
     sample: !endpoint
       - ".*"
+
   - &contract
     sample: !contract
       number: 1
       name: "learn_task"
+
+
 workloads:
+
   - number: 1
     client:
       location: *any_location
@@ -22,105 +29,7 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "getModelAndBatchIndex()"
+            function: "createArray()"
           load:
-            0: 10
-            10: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            0: 10
-            10: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParameters()"
-          load:
-            15: 10
-            25: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            30: 10
-            40: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            30: 10
-            40: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParameters()"
-          load:
-            45: 10
-            55: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            60: 10
-            70: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            60: 10
-            70: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParameters()"
-          load:
-            75: 10
-            85: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            90: 10
-            100: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            90: 10
-            100: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParameters()"
-          load:
-            105: 10
-            115: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            120: 10
-            130: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            120: 10
-            130: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParameters()"
-          load:
-            135: 10
-            145: 0
+            0: 100
+            20: 0

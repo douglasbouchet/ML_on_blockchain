@@ -1,0 +1,7 @@
+Number of commits over 100 txs during 20 seconds
+Model length, txs
+1k, 1738
+10k, 1433
+20k, 1027
+30k, 1687
+40k, 1674
