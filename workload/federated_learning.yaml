@@ -1,26 +1,19 @@
 let:
-
   - !loop &account
     sample: !account
       number: 100
       stake: 10000000
-
   - !loop &any_location
     sample: !location
       - ".*"
-
   - !loop &any_endpoint
     sample: !endpoint
       - ".*"
-
   - &contract
     sample: !contract
       number: 1
       name: "learn_task"
-
-
 workloads:
-
   - number: 1
     client:
       location: *any_location
@@ -29,7 +22,14 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "createArray()"
+            function: "addNewEncryptedModel()"
           load:
-            0: 100
-            20: 0
+            0: 204
+            5: 0
+        - interaction: !invoke
+            from: *account
+            contract: *contract
+            function: "addVerificationParameters()"
+          load:
+            6: 1024
+            106: 0

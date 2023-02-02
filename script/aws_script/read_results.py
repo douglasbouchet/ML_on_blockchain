@@ -151,10 +151,15 @@ def plot_model_length_perf():
 
 
 def plot_varying_perf():
-    model_length_range = [100_000]
-    workers_range = [5*2**i for i in range(10)]
+    # model_length_range = [100_000]
+    # model_length_range = [300_000]
+    model_length_range = [1_000_000]
+    # workers_range = [5*2**i for i in range(10)]
+    # workers_range = [5*2**i for i in range(9)]
+    # workers_range = [5*2**i for i in range(8)]
+    workers_range = [5*2**i for i in range(2)]
     print("workers_range:", workers_range)
-    n_runs = 1
+    n_runs = 2
     for model_length in model_length_range:
         model_length_committed = []
         for n_worker in workers_range:
@@ -180,18 +185,9 @@ def plot_varying_perf():
                             tot_commit_time += commit_time - submit_time
                     perc_committed = tx_committed / tx_submitted * 100
                     avg_commit_time = tot_commit_time / tx_committed if tx_committed != 0 else 0
-                    # print("tx_submitted:", tx_submitted)
-                    # print("tx_committed:", tx_committed)
-                    # print("avg_commit_time", avg_commit_time)
-                    # print("run:nb:", run_nb, "model_length:", model_length, "N_workers:", n_worker,
-                    #       "perc_committed:", perc_committed)
-                    # if (perc_committed == 0):
-                    #     print("model_length:", model_length, "run_nb:", run_nb)
                     waiting_times.append(avg_commit_time)
                     percentages_committed.append(perc_committed)  # for 1 truc
-                # print("percentage commited:", percentages_committed)
                 all_perc_committed.append(percentages_committed)
-                # print("all_perc_committed:", all_perc_committed)
             # we finished all runs for this worker number, so compute the mean and append it inside model_length_committed
             worker_mean = np.mean(all_perc_committed, axis=0)
             model_length_committed.append(worker_mean)
