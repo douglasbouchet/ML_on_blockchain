@@ -9,11 +9,16 @@ fi
 
 n_workers=$1
 model_length=$2
-# the time we allow to send the addVerificationParameters transaction. Based on 1M model length
-base_verification_duration=20
+# the time we allow to send the addVerificationParameters transaction. Based on 100k model length
+base_verification_duration=40
 slot_duration_addNewEncryptedModel=5
 # we compute the adapted verification duration based on the model length
-verification_duration=$(($base_verification_duration*$model_length/1000000))
+#verification_duration=$(($base_verification_duration*$model_length/100000))
+verification_duration=$(($base_verification_duration*$model_length/400000))
+# if verification_duration is lower than 40, we set it to 40
+if [ $verification_duration -lt 40 ]; then
+    verification_duration=40
+fi
 # each worker has model_length/1000 txs to send for addVerificationParameters
 worker_number_call_addNewEncryptedModel_per_second=$(($n_workers/$slot_duration_addNewEncryptedModel))
 worker_number_call_verification_parameters_per_second=$(($n_workers*$model_length/(1000*$verification_duration)))
@@ -67,3 +72,5 @@ workloads:
 
 
 EOF
+
+cp generated/workload.yaml /home/user/ml_on_blockchain/workload/federated_learning.yaml
