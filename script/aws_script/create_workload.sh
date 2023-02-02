@@ -1,17 +1,32 @@
 #!/bin/bash
 
 # this script expect the number of workers as argument
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
     echo "Wrong number of arguments"
-    echo "Usage: $0 <number of workers>"
+    echo "Usage: $0 <number of workers> <Model length>"
     exit 1
 fi
 
 n_workers=$1
-# we divide the number of workers by 10 to get number of call to smart contract to make per second
-n_calls_per_second=$((n_workers/10))
+model_length=$2
+# the time we allow to send the addVerificationParameters transaction. Based on 1M model length
+base_verification_duration=20
+slot_duration_addNewEncryptedModel=5
+# we compute the adapted verification duration based on the model length
+verification_duration=$(($base_verification_duration*$model_length/1000000))
+# each worker has model_length/1000 txs to send for addVerificationParameters
+worker_number_call_addNewEncryptedModel_per_second=$(($n_workers/$slot_duration_addNewEncryptedModel))
+worker_number_call_verification_parameters_per_second=$(($n_workers*$model_length/(1000*$verification_duration)))
+# the addNewEncryptedModel slot for sending txs is the same
 echo "Number of workers: $n_workers"
-echo "Number of calls per second: $n_calls_per_second"
+echo "model length: $model_length"
+echo "Verification duration: $verification_duration"
+echo "Number of calls to addNewEncryptedModel: $worker_number_call_addNewEncryptedModel_per_second"
+echo "Number of calls to addVerificationParameters: $worker_number_call_verification_parameters_per_second"
+
+# sum of the two slots
+start_time_verification=$(($slot_duration_addNewEncryptedModel+1))
+end_time_verification=$(($start_time_verification+$verification_duration))
 
 cat <<EOF > generated/workload.yaml
 let:
@@ -38,106 +53,17 @@ workloads:
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            0: $n_calls_per_second
-            10: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
             function: "addNewEncryptedModel()"
           load:
-            0: $n_calls_per_second
-            10: 0
+            0: $worker_number_call_addNewEncryptedModel_per_second
+            $slot_duration_addNewEncryptedModel: 0
         - interaction: !invoke
             from: *account
             contract: *contract
-            function: "addVerificationParametersDiablo()"
+            function: "addVerificationParameters()"
           load:
-            15: $n_calls_per_second
-            25: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            30: $n_calls_per_second
-            40: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            30: $n_calls_per_second
-            40: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParametersDiablo()"
-          load:
-            45: $n_calls_per_second
-            55: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            60: $n_calls_per_second
-            70: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            60: $n_calls_per_second
-            70: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParametersDiablo()"
-          load:
-            75: $n_calls_per_second
-            85: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            90: $n_calls_per_second
-            100: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            90: $n_calls_per_second
-            100: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParametersDiablo()"
-          load:
-            105: $n_calls_per_second
-            115: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "getModelAndBatchIndex()"
-          load:
-            120: $n_calls_per_second
-            130: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addNewEncryptedModel()"
-          load:
-            120: $n_calls_per_second
-            130: 0
-        - interaction: !invoke
-            from: *account
-            contract: *contract
-            function: "addVerificationParametersDiablo()"
-          load:
-            135: $n_calls_per_second
-            145: 0
+            $start_time_verification: $worker_number_call_verification_parameters_per_second
+            $end_time_verification: 0
+
+
 EOF
