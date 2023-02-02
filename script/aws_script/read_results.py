@@ -83,13 +83,12 @@ from scipy.interpolate import make_interp_spline
 
 
 def plot_model_length_perf():
-    # all_perc_committed = np.array#([])
     all_perc_committed = []
     for i in range(10):
         waiting_times = []
         percentages_committed = []
         n_txs = []
-        #model_length_range = np.arange(1000, 51000, 1000)
+        # model_length_range = np.arange(1000, 51000, 1000)
         model_length_range = np.arange(1000, 51000, 1000)
         for model_length in model_length_range:
             with open("/home/user/ml_on_blockchain/results/max_model_size_{}/{}.txt".format(i, model_length)) as json_file:
@@ -107,9 +106,9 @@ def plot_model_length_perf():
                         tot_commit_time += commit_time - submit_time
                 perc_committed = tx_committed / tx_submitted * 100
                 avg_commit_time = tot_commit_time / tx_committed if tx_committed != 0 else 0
-                #print("tx_submitted:", tx_submitted)
-                #print("tx_committed:", tx_committed)
-                #print("avg_commit_time", avg_commit_time)
+                # print("tx_submitted:", tx_submitted)
+                # print("tx_committed:", tx_committed)
+                # print("avg_commit_time", avg_commit_time)
                 # print("i:", i, "model_length:", model_length,
                 #       "perc_committed:", perc_committed)
                 if (perc_committed == 0):
@@ -151,5 +150,74 @@ def plot_model_length_perf():
         "/home/user/ml_on_blockchain/results/images/max_model_length.png")
 
 
+def plot_varying_perf():
+    model_length_range = [100_000]
+    workers_range = [5*2**i for i in range(10)]
+    print("workers_range:", workers_range)
+    n_runs = 1
+    for model_length in model_length_range:
+        model_length_committed = []
+        for n_worker in workers_range:
+            all_perc_committed = []
+            for run_nb in np.arange(1, n_runs + 1):
+                waiting_times = []
+                percentages_committed = []
+                path = "/home/user/ml_on_blockchain/results/varying_workers/model_length_{}/run_{}/{}.txt".format(
+                    model_length, run_nb, n_worker)
+                # print("path:", path)
+                with open(path) as json_file:
+                    # with open("/home/user/ml_on_blockchain/results/max_model_size/{}.txt".format(model_length)) as json_file:
+                    data = json.load(json_file)
+                    tx_submitted = 0
+                    tx_committed = 0
+                    tot_commit_time = 0
+                    for tx in data["Locations"][0]["Clients"][0]["Interactions"]:
+                        submit_time = tx["SubmitTime"]
+                        commit_time = tx["CommitTime"]
+                        tx_submitted += 1
+                        if commit_time != -1:
+                            tx_committed += 1
+                            tot_commit_time += commit_time - submit_time
+                    perc_committed = tx_committed / tx_submitted * 100
+                    avg_commit_time = tot_commit_time / tx_committed if tx_committed != 0 else 0
+                    # print("tx_submitted:", tx_submitted)
+                    # print("tx_committed:", tx_committed)
+                    # print("avg_commit_time", avg_commit_time)
+                    # print("run:nb:", run_nb, "model_length:", model_length, "N_workers:", n_worker,
+                    #       "perc_committed:", perc_committed)
+                    # if (perc_committed == 0):
+                    #     print("model_length:", model_length, "run_nb:", run_nb)
+                    waiting_times.append(avg_commit_time)
+                    percentages_committed.append(perc_committed)  # for 1 truc
+                # print("percentage commited:", percentages_committed)
+                all_perc_committed.append(percentages_committed)
+                # print("all_perc_committed:", all_perc_committed)
+            # we finished all runs for this worker number, so compute the mean and append it inside model_length_committed
+            worker_mean = np.mean(all_perc_committed, axis=0)
+            model_length_committed.append(worker_mean)
+            print("model_length_committed:", model_length_committed)
+        print("final model_length_committed:", model_length_committed)
+        fig = plt.figure()
+        plt.title(
+            "% commited txs by varying number of workers for model length {}".format(model_length))
+        plt.xlabel("Number of workers")
+        plt.ylabel("Commit %")
+        plt.plot(
+            workers_range,
+            model_length_committed,
+            linestyle="dashed",
+            marker="o",
+            label="mean over xx runs",
+        )
+        plt.xscale("log")
+        plt.grid(True)
+        plt.legend()
+        # save figure
+        print("saving path:", "/home/user/ml_on_blockchain/results/images/varying_worker/{}_model_length.png".format(model_length))
+        plt.savefig(
+            "/home/user/ml_on_blockchain/results/images/varying_worker/{}_model_length.png".format(model_length))
+
+
 if __name__ == "__main__":
-    plot_model_length_perf()
+    # plot_model_length_perf()
+    plot_varying_perf()
