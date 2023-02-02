@@ -1,6 +1,8 @@
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.interpolate import make_interp_spline
+
 
 # waiting_times = []
 # percentages_committed = []
@@ -83,12 +85,12 @@ import numpy as np
 def plot_model_length_perf():
     # all_perc_committed = np.array#([])
     all_perc_committed = []
-    for i in range(4):
+    for i in range(10):
         waiting_times = []
         percentages_committed = []
         n_txs = []
         #model_length_range = np.arange(1000, 51000, 1000)
-        model_length_range = np.arange(1000, 3000, 1000)
+        model_length_range = np.arange(1000, 51000, 1000)
         for model_length in model_length_range:
             with open("/home/user/ml_on_blockchain/results/max_model_size_{}/{}.txt".format(i, model_length)) as json_file:
                 # with open("/home/user/ml_on_blockchain/results/max_model_size/{}.txt".format(model_length)) as json_file:
@@ -108,46 +110,43 @@ def plot_model_length_perf():
                 #print("tx_submitted:", tx_submitted)
                 #print("tx_committed:", tx_committed)
                 #print("avg_commit_time", avg_commit_time)
-                print("i:", i, "model_length:", model_length,
-                      "perc_committed:", perc_committed)
+                # print("i:", i, "model_length:", model_length,
+                #       "perc_committed:", perc_committed)
+                if (perc_committed == 0):
+                    print("model_length:", model_length, "i:", i)
                 # print("perc_committed:", perc_committed)
                 waiting_times.append(avg_commit_time)
                 percentages_committed.append(perc_committed)
-        print("percentage commited:", percentages_committed)
+        # print("percentage commited:", percentages_committed)
         all_perc_committed.append(percentages_committed)
-        print("all_perc_committed:", all_perc_committed)
+        # print("all_perc_committed:", all_perc_committed)
 
     mean_commited = np.mean(all_perc_committed, axis=0)
-    print("mean:", mean_commited)
+    # print("mean:", mean_commited)
     # TODO check if this is correct
-    fig = plt.figure(figsize=(15, 7.5))
-    plt.title("Percentage committed")
-    fig.suptitle("Results")
-    plt.xlabel("Model length")
-    plt.ylabel("Commit percentage")
+    # fig = plt.figure(figsize=(15, 7.5))
+    fig = plt.figure()
+    plt.title("Percentage of committed transactions for different model lengths")
+    plt.xlabel("Model number of parameters (uint256)")
+    plt.ylabel("Commit %")
     plt.plot(
         # workers,
         model_length_range,
         mean_commited,
         linestyle="dashed",
         marker="o",
+        label="mean over 10 runs",
     )
-    # #axs[1].set_xlabel("Number of workers")
-    # axs[1].set_xlabel("Number of model_lengths")
-    # axs[1].set_ylabel("Percentage committed")
-    # for i, ax in enumerate(axs):
-    #     ax.grid(True)
-    #     ax.set_xscale("log")
-    #     for x, y, label in zip(
-    #         # workers,
-    #         model_lengths,
-    #         waiting_times if i == 0 else percentages_committed,
-    #         tx_committed
-    #         # n_txs,
-    #     ):
-    #         ax.text(x, y, label, ha="center",
-    #                 va="bottom", fontsize=12, color="b")
-    # # save figure
+    smoothed = make_interp_spline(model_length_range, mean_commited)
+    X = np.linspace(model_length_range.min(),
+                    model_length_range.max(), 1000)
+    commited_smoothed = smoothed(X)
+    plt.plot(X, commited_smoothed, label="smoothed")
+    plt.grid(True)
+    # add legend
+    plt.legend()
+
+    # save figure
     plt.savefig(
         "/home/user/ml_on_blockchain/results/images/max_model_length.png")
 
