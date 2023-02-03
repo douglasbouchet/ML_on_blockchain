@@ -207,8 +207,6 @@ def plot_varying_perf():
         # )
         # plt.ylim(-2, 100)
         # plt.xscale("log")
-        # plt.grid(True)
-        # plt.legend()
 
         print(len(workers_range), len(model_length_committed))
         print("workers_range:", workers_range)
@@ -235,6 +233,86 @@ def plot_varying_perf():
         #     "/home/user/ml_on_blockchain/results/images/varying_worker/{}_model_length.png".format(model_length))
 
 
+def plot_varying_perf_constant_time():
+    # model_length_range = [50_000, 300_000, 600_000, 1_000_000]
+    model_length_range = [50_000, 100_000, 300_000, 600_000, 1_000_000]
+    # workers_range = [2**i for i in range(10)]
+    workers_range = [2**(i+1) for i in range(9)]
+    print("workers_range:", workers_range)
+    n_runs = 1
+    for model_length in model_length_range:
+        model_length_committed = []
+        for n_worker in workers_range:
+            all_perc_committed = []
+            for run_nb in np.arange(1, n_runs + 1):
+                waiting_times = []
+                percentages_committed = []
+                # path = "/home/user/ml_on_blockchain/results/varying_workers/model_length_{}/run_{}/{}.txt".format(
+                path = "/home/user/ml_on_blockchain/results/varying_workers/constant_time/model_length_{}/run_{}/{}.txt".format(
+                    model_length, run_nb, n_worker)
+                with open(path) as json_file:
+                    data = json.load(json_file)
+                    tx_submitted = 0
+                    tx_committed = 0
+                    tot_commit_time = 0
+                    for tx in data["Locations"][0]["Clients"][0]["Interactions"]:
+                        submit_time = tx["SubmitTime"]
+                        commit_time = tx["CommitTime"]
+                        tx_submitted += 1
+                        if commit_time != -1:
+                            tx_committed += 1
+                            tot_commit_time += commit_time - submit_time
+                    perc_committed = tx_committed / tx_submitted * 100
+                    avg_commit_time = tot_commit_time / tx_committed if tx_committed != 0 else 0
+                    waiting_times.append(avg_commit_time)
+                    percentages_committed.append(perc_committed)  # for 1 truc
+                all_perc_committed.append(percentages_committed)
+            # we finished all runs for this worker number, so compute the mean and append it inside model_length_committed
+            worker_mean = np.mean(all_perc_committed, axis=0)
+            model_length_committed.append(worker_mean)
+            # print("model_length_committed:", model_length_committed)
+        print("final model_length_committed:", model_length_committed)
+        # fig = plt.figure()
+        # plt.title(
+        #     "% commited txs by varying number of workers for model length {}".format(model_length))
+        # plt.xlabel("Number of workers")
+        # plt.ylabel("Commit %")
+        # plt.plot(
+        #     workers_range,
+        #     model_length_committed,
+        #     linestyle="dashed",
+        #     marker="o",
+        #     label="mean over xx runs",
+        # )
+        # plt.ylim(-2, 100)
+        # plt.xscale("log")
+
+        print(len(workers_range), len(model_length_committed))
+        print("workers_range:", workers_range)
+        print("model_length_committed:", model_length_committed)
+        # flat model_length_committed
+        model_length_committed = [
+            item for sublist in model_length_committed for item in sublist]
+        print("model_length_committed:", model_length_committed)
+        img_path = "/home/user/ml_on_blockchain/results/images/varying_worker/constant_time/{}_model_length_plotly".format(
+            model_length)
+        fig = px.line(x=workers_range, y=model_length_committed, log_x=True, title="% commited txs by varying number of workers for model length {}".format(
+            model_length), labels={'x': "Number of workers", 'y': "Commit %"})
+        fig.update_traces(
+            mode="lines+markers", hovertemplate="Number of Workers: %{x}<br>Commit %: %{y}", name="xxx")
+        fig.update_layout(yaxis=dict(
+            range=[-2, 100], autorange=False), legend=dict(title="Legend", font=dict(size=14)), showlegend=True)
+
+        fig.write_image(
+            "/home/user/ml_on_blockchain/results/images/varying_worker/constant_time/{}_model_length.png".format(model_length))
+
+        # save figure
+        # print("saving path:", "/home/user/ml_on_blockchain/results/images/varying_worker/{}_model_length.png".format(model_length))
+        # plt.savefig(
+        #     "/home/user/ml_on_blockchain/results/images/varying_worker/{}_model_length.png".format(model_length))
+
+
 if __name__ == "__main__":
     # plot_model_length_perf()
-    plot_varying_perf()
+    # plot_varying_perf()
+    plot_varying_perf_constant_time()
