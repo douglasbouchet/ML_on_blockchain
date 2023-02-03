@@ -118,7 +118,7 @@ def parallel_compute_add_new_encrypted_model_hash(n_workers: int, addresses: [in
 
 
 n_workers = $number_workers  # max of 2k (can be adapted if needed)
-model_length = $model_length
+model_length = 100_000  # we alawys use 100_000 for simplicity as we just test txs.
 good_model = [42] * 1000  # maximum size we can send in diablo
 bad_model = [666] * 1000
 
