@@ -1,14 +1,24 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
     echo "Wrong number of arguments"
-    echo "Usage: $0 <model_length>"
+    echo "Usage: $0 <n workers> <model_length>"
+    echo "n_workers: number of workers"
     echo "model_length: number of weights in the model"
     exit 1
 fi
 
-model_length=$1
+n_workers=$1
+model_length=$2
+echo "n workers: $n_workers"
 echo "Model length: $model_length"
+# divide by 1000 because we send 1000 weights at a time
+thresholdForBestModel=$(( $n_workers / 2 + 1))
+if [ $thresholdForBestModel -lt 1 ]; then
+    thresholdForBestModel=1
+fi
+echo "thresholdForBestModel: $thresholdForBestModel"
+
 
 cat <<EOF > generated/contract.sol
 // SPDX-License-Identifier: MIT
@@ -38,9 +48,9 @@ contract SplittedModelLearnTask {
     // each time a worker sends its verification parameters it's address is added to this arra
     address[] receivedVerificationParametersAddresses;
 
-    uint256 nWorkers = 10;
-    uint256 thresholdForBestModel = 50; // number of equal models needed to be considered as the best one.
-    uint256 thresholdMaxNumberReceivedModels = 90; // maximum number of models we can receive before we compute the best model
+    uint256 nWorkers = $n_workers; // number of workers
+    uint256 thresholdForBestModel = $thresholdForBestModel; // number of equal models needed to be considered as the best one.
+    uint256 thresholdMaxNumberReceivedModels = $n_workers; // maximum number of models we can receive before we compute the best model
     uint256 model_length = $model_length; // length of the model
     uint256 modelChunkSize = 1000; // length of the model
     uint256 nChunks = model_length / modelChunkSize; // number of chunks in the model

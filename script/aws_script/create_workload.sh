@@ -93,5 +93,3 @@ workloads:
 
 
 EOF
-
-cp generated/workload.yaml /home/user/ml_on_blockchain/workload/federated_learning.yaml

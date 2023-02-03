@@ -12,7 +12,7 @@ constant_time=$1
 echo "constant_time:" $constant_time
 shift 1
 fleet_id=$1
-echo "fleet_id-id:" $fleet_id
+echo "fleet_id:" $fleet_id
 shift 1
 primary_secondary_ip=$1
 echo "primary_secondary_ip:" $primary_secondary_ip
@@ -30,37 +30,36 @@ echo "folder:" $folder
 
 # model_lengths=( 50000 100000 1000000 )
 # model_lengths=( 100000 1000000 )
-model_lengths=( 100000 200000 )
+# model_lengths=( 100000 200000 )
+model_lengths=( 200000 )
 
 # TODO this point the blockchain should already have been deployed and cut
 
-for i in {1..1}; do # 3 measurements for each model length
+for i in {1..2}; do # 3 measurements for each model length
     for model_length in "${model_lengths[@]}"; do
         # check if folder exists
         if [ ! -d "/home/user/ml_on_blockchain/results/aws/varying_workers/$folder/model_length_$model_length/run_$i" ]; then
             # create folder
             mkdir -p /home/user/ml_on_blockchain/results/aws/varying_workers/$folder/model_length_$model_length/run_$i
         fi
-        num_workers=1
-        for j in {1..2}; do
+        num_workers=5
+        for j in {1..1}; do
             echo "Testing blockchain with $num_workers workers, model length $model_length, run $i"
             echo "setting up nodes"
             ./setup_vm_v2.sh $num_workers $model_length $constant_time $primary_secondary_ip "$@"
-            echo "Nodes setup"
+            echo "Setup ended"
             echo "Deploying blockchain..."
             timeout 35 ssh localhost "( cd ~/aws/minion ; /home/user/aws/minion/bin/minion run -vv --breakpoint=chain quorum-ibft ../../workloads/counter.yaml $fleet_id )"
             echo "Blockchain deployed"
             # open 2 ssh connections to launch primary and secondary
             echo "Launching primary"
-            # TODO chg workload_temp.yaml
-            ssh ubuntu@$primary_secondary_ip 'export PATH=install/solidity/build/solc/:$PATH; ./install/diablo/diablo primary --env=accounts=install/geth-accounts/accounts.yaml --output=out.txt --env=contracts=contracts  --port=9000 -vvv --stat 1 setup.yaml workload_temp.yaml; ' &
+            ssh ubuntu@$primary_secondary_ip 'export PATH=install/solidity/build/solc/:$PATH; ./install/diablo/diablo primary --env=accounts=install/geth-accounts/accounts.yaml --output=out.txt --env=contracts=contracts  --port=9000 --stat 1 setup.yaml workload.yaml; ' &
             sleep 5
             echo "Launching secondary"
-            ssh ubuntu@$primary_secondary_ip './install/diablo/diablo secondary -vvv --port=9000 --tag=any ' $primary_secondary_ip &
+            ssh ubuntu@$primary_secondary_ip './install/diablo/diablo secondary --port=9000 --tag=any ' $primary_secondary_ip &
             wait
             echo "Done with primary and secondary"
             # copy the results from the primary to the local machine
-            # scp ubuntu@$1:out.txt ~/ml_on_blockchain/results/aws/varying_workers/$folder/model_length_$model_length/run_$i/
             scp ubuntu@$primary_secondary_ip:out.txt ~/ml_on_blockchain/results/aws/varying_workers/$folder/model_length_$model_length/run_$i/
             mv ~/ml_on_blockchain/results/aws/varying_workers/$folder/model_length_$model_length/run_$i/out.txt /home/user/ml_on_blockchain/results/aws/varying_workers/$folder/model_length_$model_length/run_$i/$num_workers.txt
             # touch /home/user/ml_on_blockchain/results/aws/varying_workers/$folder/model_length_$model_length/run_$i/$num_workers.txt
