@@ -3,13 +3,13 @@
 if [ $# -lt 4 ]
 then
     echo "Error: No IP addresses provided"
-    echo "Call example: ./setup-vm.sh <number of workers> <model_length> <constant time (true/false)> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
+    echo "Call example: ./setup_vm_v2.sh <number of workers> <model_length> <constant time (true/false)> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
     exit 1
 fi
 
 n_workers="$1"
-use_cste_time="$2"
-model_length="$3"
+model_length="$2"
+use_cste_time="$3"
 shift 3
 
 all_nodes="$@"
@@ -22,7 +22,6 @@ shift
 # create the setup.yaml file for the given ip addresses
 ./create_setup.sh "$@"
 
-
 # check that the setup.yaml file has been created
 if [ ! -f generated/setup.yaml ]
 then
@@ -31,24 +30,24 @@ then
 fi
 
 echo "Generating workload for:" $n_workers workers
-./create_workload.sh $n_workers $model_length $use_cste_time
+./create_workload_temp.sh $n_workers $model_length $use_cste_time
 
 # check that workload.yaml exists
-if [ ! -f generated/workload.yaml ]
+if [ ! -f generated/workload_temp.yaml ]
 then
-    echo "Error: generated/workload.yaml file not found"
+    echo "Error: generated/workload_temp.yaml file not found"
     exit 1
 fi
 
 echo "Generating smart contract with model length:" $model_length
 # ./create_smartcontract.sh $redundancy $model_length
-./create_smart_contract_bis.sh $model_length
+./create_smartcontract.sh $model_length
 # this is saved at /home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task/contract.sol
 
 # check that smart contract  exists
-if [ ! -f /home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task/contract.sol ]
+if [ ! -f generated/contract.sol ]
 then
-    echo "Error: /home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task/contract.sol file not found"
+    echo "Error: generated/contract.sol file not found"
     exit 1
 fi
 
@@ -67,14 +66,17 @@ if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout /home/user/ml_on
       exit 1
 fi
 # if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout generated/contract.sol ubuntu@$primary:~/contracts/learn_task; then
-if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout /home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task/contract.sol ubuntu@$primary:~/contracts/learn_task; then
+# if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout /home/user/ml_on_blockchain/smart-contracts/federatedLearning/learn_task/contract.sol ubuntu@$primary:~/contracts/learn_task; then
+if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout generated/contract.sol ubuntu@$primary:~/contracts/learn_task; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$primary is reachable."
       exit 1
 fi
 
 for var in $all_nodes;do # read the list of ip addresses
     # Use scp to copy the file to the remote IP address, and exit with an error message if nothing happens after 5 seconds
-    if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout generated/workload.yaml ubuntu@$var:~; then
+    # if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout generated/workload.yaml ubuntu@$var:~; then
+    # TODO don't forget to swap back to workload.yaml
+    if ! scp -o StrictHostKeyChecking=no -o ConnectTimeout=$timeout generated/workload_temp.yaml ubuntu@$var:~; then
       echo "Error: scp failed to connect within $timeout seconds. Verify that address: ubuntu@$var is reachable."
       exit 1
     fi

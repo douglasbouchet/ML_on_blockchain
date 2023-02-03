@@ -13,7 +13,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 # model_lengths=( 50000 100000 300000 600000 1000000 10000000 )
-model_lengths=( 50000 100000 1000000 10000000 )
+model_lengths=( 50000 100000 300000 600000 1000000 5000000 10000000 )
 
 for i in {1..1}; do # 3 measurements for each model length
     for model_length in "${model_lengths[@]}"; do
@@ -22,8 +22,8 @@ for i in {1..1}; do # 3 measurements for each model length
             # create folder
             mkdir -p /home/user/ml_on_blockchain/results/varying_workers/constant_time/model_length_$model_length/run_$i
         fi
-        num_workers=1
-        for j in {1..1}; do
+        num_workers=2
+        for j in {1..9}; do
             echo "Testing blockchain with $num_workers workers, model length $model_length, run $i"
             # modify the solidity contract to test the model size
             ./create_smart_contract_bis.sh $model_length
@@ -52,7 +52,7 @@ for i in {1..1}; do # 3 measurements for each model length
             scp localhost:out.txt ~/ml_on_blockchain/results/varying_workers/constant_time/model_length_$model_length/run_$i/
             mv ~/ml_on_blockchain/results/varying_workers/constant_time/model_length_$model_length/run_$i/out.txt /home/user/ml_on_blockchain/results/varying_workers/constant_time/model_length_$model_length/run_$i/$num_workers.txt
             # touch /home/user/ml_on_blockchain/results/varying_workers/constant_time/model_length_$model_length/run_$i/$num_workers.txt
-            kill the blockchain: close all geth instances in parallel
+            # kill the blockchain: close all geth instances in parallel
             for ssh_port in {2233..2236}; do
                 ssh user@dclbigmem.epfl.ch -p $ssh_port "pgrep geth | xargs kill -9" && echo "Closed geth instance on: $ssh_port" &
             done
