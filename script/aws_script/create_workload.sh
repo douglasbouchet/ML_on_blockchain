@@ -39,6 +39,10 @@ if [ $worker_number_call_addNewEncryptedModel_per_second -lt 1 ]; then
     worker_number_call_addNewEncryptedModel_per_second=1
 fi
 worker_number_call_verification_parameters_per_second=$(($n_workers*$model_length/(1000*$verification_duration)))
+# if less than 1 tx per second, we set it to 1
+if [ $worker_number_call_verification_parameters_per_second -lt 1 ]; then
+    worker_number_call_verification_parameters_per_second=1
+fi
 # the addNewEncryptedModel slot for sending txs is the same
 echo "Number of workers: $n_workers"
 echo "model length: $model_length"
