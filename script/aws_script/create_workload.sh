@@ -1,23 +1,33 @@
 #!/bin/bash
 
 # this script expect the number of workers as argument
-if [ $# -ne 2 ]; then
+if [ $# -ne 3 ]; then
     echo "Wrong number of arguments"
-    echo "Usage: $0 <number of workers> <Model length>"
+    echo "Usage: $0 <number of workers> <Model length> <contant time (true/false)> "
     exit 1
 fi
 
 n_workers=$1
 model_length=$2
+use_constant_time=$3
 # the time we allow to send the addVerificationParameters transaction. Based on 100k model length
-# base_verification_duration=40
 # Upon working on 100k model length, each worker has 100 txs of 1000 weights to send.
 # we assume that each worker send a new txs every second -> expected time to send all txs is 100s i.e time to perform one learning step
 base_verification_duration=100
 slot_duration_addNewEncryptedModel=5
-# we compute the adapted verification duration based on the model length
-#verification_duration=$(($base_verification_duration*$model_length/100000))
-verification_duration=$(($base_verification_duration*$model_length/100000))
+
+if [ $use_constant_time = "true" ]; then
+    echo "Using contant time for verification"
+    verification_duration=$base_verification_duration
+else
+    echo "Varying time for verification"
+    # we compute the adapted verification duration based on the model length
+    # verification_duration=$(($base_verification_duration*$model_length/100000))
+    verification_duration=$(($base_verification_duration*$model_length/100000))
+fi
+
+echo "Verification duration: $verification_duration"
+
 # if verification_duration is lower than 40, we set it to 40
 if [ $verification_duration -lt 40 ]; then
     verification_duration=40
@@ -33,8 +43,8 @@ worker_number_call_verification_parameters_per_second=$(($n_workers*$model_lengt
 echo "Number of workers: $n_workers"
 echo "model length: $model_length"
 echo "Verification duration: $verification_duration"
-echo "Number of calls to addNewEncryptedModel: $worker_number_call_addNewEncryptedModel_per_second"
-echo "Number of calls to addVerificationParameters: $worker_number_call_verification_parameters_per_second"
+echo "per second calls to addNewEncryptedModel: $worker_number_call_addNewEncryptedModel_per_second"
+echo "per second calls to addVerificationParameters: $worker_number_call_verification_parameters_per_second"
 
 # sum of the two slots
 start_time_verification=$(($slot_duration_addNewEncryptedModel+1))
