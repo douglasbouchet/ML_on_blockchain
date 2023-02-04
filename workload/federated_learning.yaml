@@ -24,12 +24,12 @@ workloads:
             contract: *contract
             function: "addNewEncryptedModel()"
           load:
-            0: 204
+            0: 12
             5: 0
         - interaction: !invoke
             from: *account
             contract: *contract
             function: "addVerificationParameters()"
           load:
-            6: 1024
+            6: 3200
             106: 0

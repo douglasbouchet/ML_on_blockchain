@@ -28,7 +28,7 @@ contract SplittedModelLearnTask {
     uint256 nWorkers = 10;
     uint256 thresholdForBestModel = 50; // number of equal models needed to be considered as the best one.
     uint256 thresholdMaxNumberReceivedModels = 90; // maximum number of models we can receive before we compute the best model
-    uint256 model_length = 1000000; // length of the model
+    uint256 model_length = 5000000; // length of the model
     uint256 modelChunkSize = 1000; // length of the model
     uint256 nChunks = model_length / modelChunkSize; // number of chunks in the model
     uint256[] newModel; // the weight of the new model

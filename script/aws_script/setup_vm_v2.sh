@@ -53,11 +53,14 @@ echo "Generating arguments for $n_workers"
 ./create_arguments.sh $n_workers $model_length
 
 # check that smart contract  exists
-if [ ! -f generated/contract.sol ]
+if [ ! -f generated/arguments ]
 then
-    echo "Error: generated/contract.sol file not found"
+    echo "Error: generated/arguments file not found"
     exit 1
 fi
+
+# give execution rights to generated/arguments
+chmod u+x generated/arguments
 
 
 timeout=5 # if the connection is not established within 5 seconds, exit with an error message
