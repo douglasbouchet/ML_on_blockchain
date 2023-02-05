@@ -4,6 +4,7 @@ import numpy as np
 from scipy.interpolate import make_interp_spline
 import plotly.express as px
 import os
+from matplotlib.ticker import ScalarFormatter
 
 
 # waiting_times = []
@@ -350,7 +351,6 @@ def plot_varying_perf_constant_time():
         plt.plot(
             workers_range,
             model_perf[i],
-            # linestyle="dashed",
             marker="o",
             label="model length {}k".format(int(model_length_range[i] / 1e3)),
             linewidth=3
@@ -366,7 +366,47 @@ def plot_varying_perf_constant_time():
         "/home/user/ml_on_blockchain/results/images/aws/constant_time/all.png")
 
 
+def plot_max_n_workers_as_model_length():
+    model_length_range = [50_000, 100_000,
+                          300_000, 600_000, 1_000_000, 5_000_000]
+    max_n_workers = [64, 32, 8, 4, 4, 0]
+    fig, ax = plt.subplots()
+    fig.set_size_inches(12.5, 8)
+    fontsize = 18
+    plt.title(
+        "Max number of workers to get at least 90% committed txs",
+        # "Max number of workers as a function of model length \n and constant training time",
+        fontdict={'fontsize': fontsize})
+    plt.ylabel("Number of workers", fontsize=fontsize)
+    plt.xlabel("Model # parameters", fontsize=fontsize)
+    plt.xscale("log")
+    # plt.ylim(-2, 100)
+    plt.plot(
+        model_length_range,
+        max_n_workers,
+        marker="o",
+        linewidth=3
+    )
+    plt.grid(True, which="both", ls="-")
+    ax.set_facecolor("whitesmoke")
+    # increase size of x and y ticks
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    ax.set_xticks(model_length_range)
+    ax.set_xticklabels(
+        [str(int(length / 1000)) + "k" for length in model_length_range])
+    ax.set_yticks(max_n_workers)
+    ax.set_yticklabels(
+        [str(worker) for worker in max_n_workers])
+    # write the number of workers on the plot on x axis
+
+    # add border to legend
+    plt.savefig(
+        "/home/user/ml_on_blockchain/results/images/aws/constant_time/max_workers.png")
+
+
 if __name__ == "__main__":
     # plot_model_length_perf()
     # plot_varying_perf()
-    plot_varying_perf_constant_time()
+    # plot_varying_perf_constant_time()
+    plot_max_n_workers_as_model_length()

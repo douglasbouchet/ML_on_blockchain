@@ -31,8 +31,8 @@ echo "folder:" $folder
 # model_lengths=( 50000 100000 300000 600000 1000000 5000000)
 # model_lengths=( 50000 100000 300000 600000 1000000 )
 # model_lengths=( 50000 100000 300000 600000 )
-# model_lengths=( 300000 600000 1000000 )
-model_lengths=( 5000000 )
+model_lengths=( 200000 )
+# model_lengths=( 5000000 )
 
 # TODO this point the blockchain should already have been deployed and cut
 
@@ -45,8 +45,8 @@ for i in {1..1}; do # 2 measurements for each model length
         fi
         num_workers=1
         # for j in {1..9}; do
+        for j in {1..7}; do
         # for j in {1..1}; do
-        for j in {1..1}; do
             echo "Testing blockchain with $num_workers workers, model length $model_length, run $i"
             echo "setting up nodes"
             ./setup_vm_v2.sh $num_workers $model_length $constant_time $primary_secondary_ip "$@"
@@ -85,4 +85,3 @@ date
 echo "Done"
 
 # sfr-8d1341e7-facf-4c81-b122-68cc96c44d05@eu-west-3 35.180.243.182 52.47.121.193 13.37.213.34 13.38.245.132 15.236.207.167 35.180.42.100 15.188.54.19 52.47.190.21
-52.47.121.193 13.37.213.34 13.38.245.132 15.236.207.167 35.180.42.100 15.188.54.19 52.47.190.21
