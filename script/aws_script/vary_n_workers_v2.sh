@@ -28,8 +28,11 @@ fi
 echo "folder:" $folder
 
 
-model_lengths=( 50000 100000 300000 600000 1000000 5000000)
-# model_lengths=( 50000 100000 )
+# model_lengths=( 50000 100000 300000 600000 1000000 5000000)
+# model_lengths=( 50000 100000 300000 600000 1000000 )
+# model_lengths=( 50000 100000 300000 600000 )
+# model_lengths=( 300000 600000 1000000 )
+model_lengths=( 5000000 )
 
 # TODO this point the blockchain should already have been deployed and cut
 
@@ -42,7 +45,8 @@ for i in {1..1}; do # 2 measurements for each model length
         fi
         num_workers=1
         # for j in {1..9}; do
-        for j in {1..6}; do
+        # for j in {1..1}; do
+        for j in {1..1}; do
             echo "Testing blockchain with $num_workers workers, model length $model_length, run $i"
             echo "setting up nodes"
             ./setup_vm_v2.sh $num_workers $model_length $constant_time $primary_secondary_ip "$@"
@@ -53,10 +57,13 @@ for i in {1..1}; do # 2 measurements for each model length
             # open 2 ssh connections to launch primary and secondary
             echo "Launching primary"
             # give user execution rights to arguments
+            # ssh ubuntu@$primary_secondary_ip './install/diablo/diablo primary -vvv --env=accounts=install/geth-accounts/accounts.yaml --output=out.txt --env=contracts=contracts  --port=9000 --stat 1 setup.yaml workload.yaml; ' &
             ssh ubuntu@$primary_secondary_ip 'export PATH=install/solidity/build/solc/:$PATH; ./install/diablo/diablo primary -vvv --env=accounts=install/geth-accounts/accounts.yaml --output=out.txt --env=contracts=contracts  --port=9000 --stat 1 setup.yaml workload.yaml; ' &
+            #ssh ubuntu@$primary_secondary_ip 'export PATH=install/solidity/build/solc/:$PATH; ./install/diablo/diablo primary --env=accounts=install/geth-accounts/accounts.yaml --output=out.txt --env=contracts=contracts  --port=9000 --stat 1 setup.yaml workload.yaml; ' &
             sleep 5
             echo "Launching secondary"
             ssh ubuntu@$primary_secondary_ip './install/diablo/diablo secondary -vvv --port=9000 --tag=any ' $primary_secondary_ip &
+            #ssh ubuntu@$primary_secondary_ip './install/diablo/diablo secondary --port=9000 --tag=any ' $primary_secondary_ip &
             wait
             echo "Benchmark ended"
             # # copy the results from the primary to the local machine
@@ -73,6 +80,9 @@ for i in {1..1}; do # 2 measurements for each model length
         done
     done
 done
+# print current time to know when the script ended
+date
 echo "Done"
 
-# 35.181.44.127 35.181.26.92 52.47.198.117 13.38.57.101 35.180.58.150 35.180.227.197 15.188.52.131 13.38.120.5
+# sfr-8d1341e7-facf-4c81-b122-68cc96c44d05@eu-west-3 35.180.243.182 52.47.121.193 13.37.213.34 13.38.245.132 15.236.207.167 35.180.42.100 15.188.54.19 52.47.190.21
+52.47.121.193 13.37.213.34 13.38.245.132 15.236.207.167 35.180.42.100 15.188.54.19 52.47.190.21
