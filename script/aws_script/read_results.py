@@ -87,7 +87,7 @@ def plot_max_array_length():
     fontsize = 18
     plt.xticks(model_length_range, [str(int(x/1000)) + 'k'
                for x in model_length_range])
-    plt.title("Percentage of committed transactions for different array size",
+    plt.title("Percentage of commited transactions for different array size",
               fontsize=fontsize+2)
     plt.xlabel("Array size",
                fontsize=fontsize)
@@ -237,12 +237,14 @@ def plot_varying_perf_constant_time():
     fig.set_size_inches(12.5, 8)
     fontsize = 18
     plt.title(
-        "% txs commited by varying number of workers for different model lengths \n and constant training time",
+        "% transactions commited with different # workers, different model lengths, \n constant training time",
         fontdict={'fontsize': fontsize})
     # increase font size of title
     plt.rcParams.update({'font.size': 14})
     plt.xlabel("Number of workers", fontsize=fontsize)
     plt.ylabel("Commit %", fontsize=fontsize)
+    plt.xticks(fontsize=fontsize-2)
+    plt.yticks(fontsize=fontsize-2)
     plt.xscale("log")
     plt.ylim(-2, 100)
     for i in range(len(model_perf)):
@@ -259,6 +261,8 @@ def plot_varying_perf_constant_time():
     # increase size of x and y ticks
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
+    ax.set_xticks(workers_range)
+    ax.set_xticklabels(workers_range)
     # add border to legend
     plt.savefig(
         "/home/user/ml_on_blockchain/results/images/aws/constant_time/all.png")
@@ -272,7 +276,7 @@ def plot_max_n_workers_as_model_length():
     fig.set_size_inches(12.5, 8)
     fontsize = 18
     plt.title(
-        "Max number of workers to get at least 90% committed txs",
+        "Max number of workers to get at least 90% commited txs",
         # "Max number of workers as a function of model length \n and constant training time",
         fontdict={'fontsize': fontsize})
     plt.ylabel("Number of workers", fontsize=fontsize)
@@ -305,6 +309,6 @@ def plot_max_n_workers_as_model_length():
 
 if __name__ == "__main__":
     # plot_max_array_length()
-    plot_varying_perf()
-    # plot_varying_perf_constant_time()
+    # plot_varying_perf()
+    plot_varying_perf_constant_time()
     # plot_max_n_workers_as_model_length()
