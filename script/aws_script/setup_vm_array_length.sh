@@ -3,16 +3,17 @@
 if [ $# -lt 3 ]
 then
     echo "Error: No IP addresses provided"
-    echo "Call example: ./setup_vm_v2.sh <model_length> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
+    echo "Call example: ./setup_vm_array_length.sh <model_length> 192.168.201.3 192.168.201.4 192.168.201.5 192.168.201.6"
     exit 1
 fi
 
-model_length=$1
+model_length="$1"
 shift 1
 
 all_nodes="$@"
 primary="$1"
 echo "model_length:" $model_length
+echo "primary:" $primary
 echo "all nodes:" $all_nodes
 shift
 

@@ -10,7 +10,8 @@ fi
 model_length=$1
 echo "Model length: $model_length"
 
-cat <<EOF > ../../smart-contracts/federatedLearning/learn_task/contract.sol
+# cat <<EOF > ../../smart-contracts/federatedLearning/learn_task/contract.sol
+cat <<EOF > generated/contract.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 

@@ -20,7 +20,7 @@ shift
 
 
 # create the setup.yaml file for the given ip addresses
-./create_setup.sh "$@"
+#./create_setup.sh "$@"
 
 # check that the setup.yaml file has been created
 if [ ! -f generated/setup.yaml ]
