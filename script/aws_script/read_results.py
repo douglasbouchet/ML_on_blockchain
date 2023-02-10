@@ -13,7 +13,7 @@ def plot_max_array_length():
         1000, 50000, 2000)  # select half of the points
     # 1000, 49000, 2000)  # select half of the points
     all_perc_committed = []
-    #n_runs = 9
+    # n_runs = 9
     n_runs = 20
     for run_nb in range(1, n_runs+1):
         waiting_times = []
@@ -307,8 +307,50 @@ def plot_max_n_workers_as_model_length():
         "/home/user/ml_on_blockchain/results/images/aws/constant_time/max_workers.png")
 
 
+git inimum index of percentages_committed such that element >= 85
+        index = next((i for i, x in enumerate(
+            percentages_committed) if x >= 85), None)
+        if index is None:
+            print("No index found")
+        else:
+            print("Min pace value to get at least 85% committed txs:",
+                  pace_range[index])
+    x = workers_range[:-1]
+    y = [0.05, 0.1, 0.1, 0.25, 1]
+    fig, ax = plt.subplots()
+    fig.set_size_inches(12.5, 8)
+    fontsize = 18
+    plt.title(
+        "Redundancy/Pace trade-off to get at least 85% committed transactions",
+        fontdict={'fontsize': fontsize})
+    # increase font size of title
+    plt.rcParams.update({'font.size': 14})
+    plt.xlabel("Redundancy", fontsize=fontsize)
+    plt.ylabel("Minimum Pace(s)", fontsize=fontsize)
+    plt.xticks(fontsize=fontsize-2)
+    plt.yticks(fontsize=fontsize-2)
+    # plt.xscale("log")
+    plt.plot(
+        x,
+        y,
+        marker="o",
+        linewidth=3
+    )
+    plt.grid(True, which="both", ls="-")
+    # legend = ax.legend(loc="center left")
+    ax.set_facecolor("whitesmoke")
+    ax.set_xticks(x)
+    ax.set_xticklabels(x)
+    ax.set_yticks(y)
+    ax.set_yticklabels(y)
+    # add border to legend
+    plt.savefig(
+        "/home/user/ml_on_blockchain/results/images/aws/redundancy_pace.png")
+
+
 if __name__ == "__main__":
     # plot_max_array_length()
     # plot_varying_perf()
-    plot_varying_perf_constant_time()
+    # plot_varying_perf_constant_time()
     # plot_max_n_workers_as_model_length()
+    plot_latency_as_redundancy()
