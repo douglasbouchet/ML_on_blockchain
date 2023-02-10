@@ -307,7 +307,42 @@ def plot_max_n_workers_as_model_length():
         "/home/user/ml_on_blockchain/results/images/aws/constant_time/max_workers.png")
 
 
-git inimum index of percentages_committed such that element >= 85
+def plot_latency_as_redundancy():
+    model_perf = []
+    workers_range = [2**(i) for i in range(6)]
+    pace_range = [0.05, 0.1, 0.25, 0.5, 1]
+    print("pace_range:", pace_range)
+    print("workers_range:", workers_range)
+    n_runs = 1
+    for n_worker in workers_range:
+        print("n_worker:", n_worker)
+        percentages_committed = []
+        for pace in pace_range:
+            # print("pace:", pace)
+            waiting_times = []
+            path = "/home/user/ml_on_blockchain/results/aws/redundancy_pace/redundancy_{}/pace_{}.txt".format(
+                n_worker, pace)
+            if os.stat(path).st_size == 0:
+                percentages_committed.append(0.0)
+            else:
+                with open(path) as json_file:
+                    data = json.load(json_file)
+                    tx_submitted = 0
+                    tx_committed = 0
+                    tot_commit_time = 0
+                    for tx in data["Locations"][0]["Clients"][0]["Interactions"]:
+                        submit_time = tx["SubmitTime"]
+                        commit_time = tx["CommitTime"]
+                        tx_submitted += 1
+                        if commit_time != -1:
+                            tx_committed += 1
+                            tot_commit_time += commit_time - submit_time
+                    perc_committed = tx_committed / tx_submitted * 100
+                    avg_commit_time = tot_commit_time / tx_committed if tx_committed != 0 else 0
+                    waiting_times.append(avg_commit_time)
+                    percentages_committed.append(
+                        perc_committed)  # for 1 truc
+        # get the minimum index of percentages_committed such that element >= 85
         index = next((i for i, x in enumerate(
             percentages_committed) if x >= 85), None)
         if index is None:
