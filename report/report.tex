@@ -39,10 +39,25 @@ Can be questionable, as performaces of some BC can be quite limited
 --------------
 \section{Method}
 \subsection{The need for comp. resources in ML}
-- Powerfull models
-- require lots data and computational power
-\subsection{3 main goals of scaling up comp. power}
-\subsection{Federated Learning, an existing solution to having computational resources}
+Recently, many machine learning models have been published. These models have become very popular mainly due to their
+performance. We can quote models such as DALL-E, or GPT-3. The training of these models requires a huge amount of data
+and computing power. If we wanted to train GPT-3 using one of the most powerful GPUs currently available,
+the NVIDA v100, the time required would be about 300 years (also making the optimistic assumption that all the
+training data could fit in the GPU RAM). There is therefore a need for techniques to increase computing power in order
+to generate these huge models.
+\subsection{The three main goals of scaling up the computational power}
+When designing a system able to provide such an increase of power, the following three aspects should be taken care of
+by this system, as they are the ones that make it currently feasible.
+\begin{enumerate}
+    \item \textbf{Provide reasonable performances}. Indeed, the purpose of such a system is to provide an increase in computing
+     capacity. The availability of sufficient computing power is therefore one of the main factors.
+    \item \textbf{Reward those that participates in the system}. What would be the interest for the participants to work for
+     free, or without guarantee of payment?
+    \item \textbf{Shouldn't be specific to machine learning}. This system should be able to adapt to any type of task, so as not
+     to be too specific, and potentially limited in its evolution or adaptation.
+\end{enumerate}
+
+\subsection{Federated Learning, an existing system to provide computational resources}
 - brief explanation of the protocol
 \subsection{Advantages of using a blockchain to enhance this protocol}
 slides which answer the 3 goals
