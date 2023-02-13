@@ -1,0 +1,17 @@
+\contentsline {section}{\numberline {1}Abstract}{2}{}%
+\contentsline {section}{\numberline {2}Introduction}{3}{}%
+\contentsline {section}{\numberline {3}Method}{3}{}%
+\contentsline {subsection}{\numberline {3.1}The need for comp. resources in ML}{3}{}%
+\contentsline {subsection}{\numberline {3.2}3 main goals of scaling up comp. power}{3}{}%
+\contentsline {subsection}{\numberline {3.3}Federated Learning, an existing solution to having computational resources}{3}{}%
+\contentsline {subsection}{\numberline {3.4}Advantages of using a blockchain to enhance this protocol}{3}{}%
+\contentsline {subsection}{\numberline {3.5}Including BC in federated learning}{3}{}%
+\contentsline {subsection}{\numberline {3.6}Solving the model stealing pb}{4}{}%
+\contentsline {subsection}{\numberline {3.7}Dealing with SC limited memory}{4}{}%
+\contentsline {section}{\numberline {4}Learning a model using blockchain result and observations}{4}{}%
+\contentsline {subsection}{\numberline {4.1}First limitation, txs size}{4}{}%
+\contentsline {subsection}{\numberline {4.2}The Redundancy/Pace tradeoff}{4}{}%
+\contentsline {subsection}{\numberline {4.3}Minimum pace depending on model length}{4}{}%
+\contentsline {subsection}{\numberline {4.4}Expected training time for some classical models}{4}{}%
+\contentsline {section}{\numberline {5}Conclusion}{4}{}%
+\contentsline {section}{\numberline {6}References}{4}{}%

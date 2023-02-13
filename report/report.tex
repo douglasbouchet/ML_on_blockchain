@@ -1,0 +1,85 @@
+\documentclass{article}
+
+\title{Benchmarking the Internet Computer}
+\date{2023-02-13}
+\author{Douglas Bouchet}
+
+\begin{document}
+\pagenumbering{gobble}
+\maketitle
+\newpage
+\pagenumbering{arabic}
+
+\tableofcontents
+
+\newpage
+\section{Abstract}
+This paper presents a study on the use of blockchain technology as a platform for performing heavy computational tasks
+such as machine learning. Through a series of tests, the paper attempts to identify the capabilities of blockchain for
+such applications. The results of the research indicate that the size of transactions is limited to ten thousand values
+and that there is a trade-off between redundancy and pace of execution. Furthermore, the length of the model has an
+influence on the pace of the model. These results provide insights into the potential of blockchain for heavy
+computational tasks and can be used to inform future research and development in this area.
+\newpage
+\section{Introduction}
+The emergence of blockchain technology and its associated smart contracts has revolutionized the way we think about data
+storage and computing. As a (student) researcher interested in the potential of blockchain technologies, I sought to explore the
+ability of blockchain to provide a transparent and secure environment for performing heavy computational tasks, such
+as machine learning. This paper aims to investigate if blockchain can indeed be used for such purposes.
+In order to see if the blockchain can then be used to help with heavy computational tasks, we will take an already
+existing protocol to perform this task, the Federated Learning. We will then see how it is possible to modify it by adding the blockchain.
+We will detail the smart contracts used, as well as the interactions between the different agents involved in the
+machine learning task. Finally we will test our new framework using diablo, a program that allows to submit transactions
+to a blockchain, and to measure the performance of the latter, in response to these transactions. For more realism,
+ the nodes constituting our blockchain will be emulated using machines made available by the AWS service
+
+DO we add these ? -------
+The expectations of some fundation such as Dfinity project
+Can be questionable, as performaces of some BC can be quite limited
+--------------
+\section{Method}
+\subsection{The need for comp. resources in ML}
+- Powerfull models
+- require lots data and computational power
+\subsection{3 main goals of scaling up comp. power}
+\subsection{Federated Learning, an existing solution to having computational resources}
+- brief explanation of the protocol
+\subsection{Advantages of using a blockchain to enhance this protocol}
+slides which answer the 3 goals
+\subsection{Including BC in federated learning}
+- explain smart contract architecture
+- explain model potential stealing
+\subsection{Solving the model stealing pb}
+- commit reveal protocol
+\subsection{Dealing with SC limited memory}
+- soem numbers for max var size
+- idea: split the models
+- new protocol explanation
+- formula with hashes and chunk
+- possibility to store model on an external sotrage
+- total expected memory usage on the smart contract
+\section{Learning a model using blockchain result and observations}
+- small intro about aws + diablo
+\subsection{First limitation, txs size}
+- explain protocol for testing
+- add graph
+- add explanation
+\subsection{The Redundancy/Pace tradeoff}
+- term definition
+- add graph
+- add explanation
+\subsection{Minimum pace depending on model length}
+- Do this, as it could provide some idea about time needed to train a model
+- Fix redundancy, why 8
+- add graph
+- add explanation
+\subsection{Expected training time for some classical models}
+- add tab
+- add analysis
+\section{Conclusion}
+- extend what was said in the abstract
+- opening to small ml model + transfert learning
+\section{References}
+- any ref to number used in the report
+- link to github repo
+\end{document}
