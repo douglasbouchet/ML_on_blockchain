@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage{amsmath}
 
 \title{Benchmarking the Internet Computer}
 \date{2023-02-13}
@@ -38,7 +39,7 @@ The expectations of some fundation such as Dfinity project
 Can be questionable, as performaces of some BC can be quite limited
 --------------
 \section{Method}
-\subsection{The need for comp. resources in ML}
+\subsection{The need for computational resources in Machine Learning}
 Recently, many machine learning models have been published. These models have become very popular mainly due to their
 performance. We can quote models such as DALL-E, or GPT-3. The training of these models requires a huge amount of data
 and computing power. If we wanted to train GPT-3 using one of the most powerful GPUs currently available,
@@ -58,20 +59,118 @@ by this system, as they are the ones that make it currently feasible.
 \end{enumerate}
 
 \subsection{Federated Learning, an existing system to provide computational resources}
-- brief explanation of the protocol
+Federated Learning is a system that allows to involve multiple devices in the training of a model. The idea is to
+distribute the training data to the different devices, and to train the model on each of them. The model is then
+aggregated to obtain a single model. This system is therefore able to provide a significant increase in computing power.
+In this project, we will consider a simplified version of federated learning. We assume that each participants
+already has the data needed to train the model. Our version consists of the following steps:
+\begin{enumerate}
+    \item The model is initialized on the server
+    \item The model is sent to each participant
+    \item Each participant compute one model update
+    \item Each participant send the updated model to the server
+    \item The server update the model using some aggregation rules
+    \item Repeat step 2 to 5 for a given number of iterations, or until some convergence criteria is met
+\end{enumerate}
+This system has some limitations, such that the rewarding of the participants is not guaranteed, or the possibility for
+new participants to join the process.
 \subsection{Advantages of using a blockchain to enhance this protocol}
+Using a blockchain to coordinate workers brings several advantages, which might help to solve the three main goals of
+scaling up the computational power.
+\begin{enumerate}
+    \item Goal 1 "provide reasonable performances": Using a blockchain allow in theory anyone to join the learning
+process. This can provide an unbounded increase in computing power. The only limitations would be the number of workers
+involved in the learning, their power, but also the maximum number of participant the blockchain could handle.
+    \item Goal 2 "reward those that participates in the system": Using a blockchain provide an easy way to reward the
+participants. In order to to so, we could use smart contract, paying in gas participants that did a correct job - i.e
+learn a correct model. This has the advantage that anyone could actually see the code executed when rewarding the
+participants, as the smart contract code can be read from the blockchain. This is a very important point,
+as it can bring confidence to the participants, increasing the trust in the system, and potentialy motivate participants
+to join the process.
+    \item Goal 3 "shouldn't be specific to machine learning": Redundancy protocol in blockchain is a measure taken to
+ensure the continuity of the blockchain network by replicating the data across multiple nodes. This is done to ensure
+that if one node fails, the data on the other nodes can be used to prevent any disruption to the network. This also
+guarantee that data cannot be tampered. This implies that using a blockchain in combination with federated learning
+isn't only reserved to machine learning problem, but any other type of problems, involving heavy computational tasks.
+\end{enumerate}
+
 slides which answer the 3 goals
-\subsection{Including BC in federated learning}
-- explain smart contract architecture
-- explain model potential stealing
-\subsection{Solving the model stealing pb}
-- commit reveal protocol
-\subsection{Dealing with SC limited memory}
+\subsection{Including BC in federated learning, a naïve approach}
+Now let's see how we can add a blockchain to our current federated learning protocol. The base case is the same as in
+the federated learning scenario, but now we can add a smart contract between the server and the participants. The smart
+contract is published by the server on the blockchain, and it will coordinate the participants. Our new protocol in
+order to do one model update is the following:
+\begin{enumerate}
+    \item Server sends the model weights to the smart contract
+    \item The smart contract sends the same model weights to a pool of participants choosen among all participants. The
+number of participants in the pool (the ones that will perform the same model update) is called the \textbf{redundancy}
+    \item By assumption, each participant has the training data, so each one can perform one model update
+    \item Each participant send the updated model weights, along their public key to the smart contracts. The public key
+is sent as the smart contract need to associate each model submission to a worker in order to potentially pay them later.
+    \item The smart contract then set the elected model as the model with the most bids from participants.
+    \item The elected model is then sent to the server, which can update its current model. This makes one epoch
+    \item The steps 1 to 6 are then repeated for a chosen number, or until some convergence on loss is reached.
+\end{enumerate}
+This explanation was focus on only one pool/group of participants, but in a real case there would be several pools
+running in parallel, allowing for a quicker model training, which is what this protocol is aiming at.\\
+There is however a big problem with this protocol. As the smart contract is located on a blockchain, everything that is
+actually written to the smart contract, can be read by anyone (assuming we are using a public blockchain). This means
+that it is actually possible for a participant to not actually perform the model update, but still get paid. Let's
+illustrate this with a simple example.\\
+Suppose we have a worker($W_0$) that sends its updated model weights $M_{W_0}$to the smart contract. The transaction would then
+be ($M_{W_0},Pk_0$). Some evil worker ($W_1$) can read this transaction, and steal the model weights $M_{W_0}$. It can then send
+the following transaction ($M_{W_0}, Pk_1$). The smart contract has no way to know if the model weights $M_{W_0}$ were actually
+learned by $W_0$ and $W_1$. If this model is the elected one, then both $W_0$, $W_1$ will be paid. Indeed it's actually
+possible for someone to get paid, without performing the computation. Let's now see how we can solve this issue.
+\subsection{Solving the model stealing issue}
+In order to solve the model stealing issue, we will use a \textbf{commit-reveal} protocol. It involves two steps:
+a sender first commits to a message by providing a cryptographic hash of it, without revealing the actual message.
+Then, the sender reveals the message to prove they are the one who committed to it.\\
+Let $H$ be a one-way cryptographic hash function. This involve that it is easy to compute $H(x)$, but it is hard to
+compute $x$ from $H(x)$.\\
+Our commit-reveal schema will be the following:
+\begin{itemize}
+    \item Commit: the worker $W_i$ sends $H(M_{W_i}|Pk_i)$ to the smart contract
+    \item Reveal: the worker $W_i$ sends $M_{W_i},Pk_i$ to the smart contract
+\end{itemize}
+After the reveal, the smart contract can check that $H(M_{W_i}|Pk_i)$ is equal to the commit. If it is the case, then
+the submission is considered valid. Otherwise its rejected. The elected model is computed on valid submission only.\\
+One important thing to add: during the reveal phase, no more commits are accepted as during the reveal we send
+the model in clear. If new commits were still accepted, it would be possible for someone to read some of the submitted
+models, and create a commit with them. The commit would indeed be valid, therefore our protocol wouldn't prevent anymore
+from model stealing.
+\subsection{Dealing with smart contract limited memory}
 - soem numbers for max var size
 - idea: split the models
-- new protocol explanation
-- formula with hashes and chunk
-- possibility to store model on an external sotrage
+In order to deal with these limitations, we will not send the model weights in one transaction during the reveal phase,
+but rather send chunks of it. Now suppose that we can write our model as following:
+\begin{equation}
+    M = M_1 | M_2 | ... | M_n
+\end{equation}
+We modify the reveal as following:
+\begin{enumerate}
+    \item worker i sends $H(M_{W_{i, 1}})$, which is the hash of the first chunk of the model
+    \item he can then send the hash corresponding to the next chunk: $H(M_{W_{i, 2}})$ and so on.
+\end{enumerate}
+The smart contract create only one variable for the chunk received (for each worker). This variable contains the hash
+of the first chunk, which is computed by the smart contract. The model chunk can be stored on an external storage, to
+not use memory in the smart contract. Upon receiving the next chunk,
+it update the previous hash by hashing it with the new chunk. The new chunk is also added to the external storage. This
+operation is repeated for every new chunk received from this worker. The last chunk received is also concatenated with
+the public key of the worker.\\
+At the end, for each worker we have the complete model in an external storage, and the following hash on the smart contract
+\begin{equation}
+    \begin{split}
+         Hash_{W_i} & = H(...(H(H(M_{W_{i, 1}})|M_{W_{i, 2}})|...)|M_{W_{i, n}}|Pk_i) \\
+         & = H(M_{W_{i, 1}} | M_{W_{i, 2}} | ... | M_{W_{i, n}} | Pk_i) \\
+         & = H (M_{W_i} | Pk_i)
+        \end{split}
+\end{equation}
+The second line is obtained using the Merkle-Damgard theorem. We see that using this construction
+$Hash_{W_i}$ during reveal protocol can be compared to the one send during the commit protocol. \\
+We don't need to modify the commit, as we only send an hash, which is of small constant size. Using this construction,
+we can therefore reduce the memory used on the smart contract. In fact, we are only storing hash on the smart contract,
+which are 32 bytes long.
 - total expected memory usage on the smart contract
 \section{Learning a model using blockchain result and observations}
 - small intro about aws + diablo
