@@ -1,5 +1,8 @@
 \documentclass{article}
 \usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+\graphicspath{ {./images/} }
 
 \title{Benchmarking the Internet Computer}
 \date{2023-02-13}
@@ -173,15 +176,49 @@ we can therefore reduce the memory used on the smart contract. In fact, we are o
 which are 32 bytes long.
 - total expected memory usage on the smart contract
 \section{Learning a model using blockchain result and observations}
+Now that we have seen a theoritical protocol that would allow to train a machine learning model.
+In order to measure the performances of our protocol, we will simulate a Quorum blockchain using Amazon Web Service. TODO check name
+The nodes which are responsible of validating the transactions, will be rented on AWS. Each one has two virtual cpu, and
+four Gb of RAM. There are height such nodes, all located in the same geographical region (Paris). We implemented the
+smart contract responsible for all the methods defined in {3.5, 3.6, 3.7} in solidity. Diablo will be used to send
+transactions. This is a tool that given a list of transactions defined by the smart contract method
+called, the arguments passed to the fonction and the time where the transaction should be send, will send them to the
+smart contract. With this technology, we can easily modify the 'workload' (sequence of transaction) we will be sending
+to the smart contract. This will be usefull when varying the number of transactions send by second.
 - small intro about aws + diablo
-\subsection{First limitation, txs size}
-- explain protocol for testing
-- add graph
-- add explanation
-\subsection{The Redundancy/Pace tradeoff}
-- term definition
-- add graph
-- add explanation
+\subsection{First limitation, transaction size}
+One first problem to deal with when working with blockchain is the transaction size. In fact, we should expect
+transaction with a high number of parameters take more time and ressources to be handled than smaller transactions. This
+can impact the throughput our blockchain is able to handle.\\
+Let's start by tuning the transaction size. In the following experiment, we will be calling a smart contract function
+that only copy uint256 (256 bits unsigned integers) inside an array. For each array size ranging from one thousand
+to fifty thousand, we will send one hundred transaction per second during twenty second. We then measure which percentage of transactions were committed. In order to have more robust
+results, we will perform twenty measurements on each array size. We plot our results on the graph below.
+\begin{figure}[H]
+    \hspace*{-1.55cm}
+    \includegraphics[scale=0.75]{max_array_length}
+    \hspace{2mm}%
+    \caption{Tuning the transaction size}
+\end{figure}
+There are two phases on the graph. During the first blue one we see that as the transaction size increases, the percentage of committed transaction decreases. This is an expected result, as the more parameters we have, the more time it takes to process the transaction. In the second phase in red, we can see that the percentage of commited transaction actually increases with their size, until 85\% of commit. This counter intuitive results is due to the fact that transctions with too much parameters aren't processed by the blockchain. In fact, nodes handling them run out of gas before finished to fill the array. In consequence, the transactions are aborted, and therefore not persitted to the blockchain. This can greatly impact the throughput of the blockchain, as it takes resources to actually persist the transaction. In diablo an aborted transaction is considered as a commit. This explains why we obtain this graph shape. We can deduce that we shouldn't use transactions of more than ten thousands parameters, as going beyond indude lots of aborted transactions.
+
+\subsection{The Redundancy/Pace trade-off}
+Remember from section 3.7 that participants are sending chunks of the model. The pace is the time each participant is
+waiting between sending two chunks. The redundancy is the number of participants that will be asked to do the same
+computation. We will now see if there is a trade-off between the pace and the redundancy. We did the following experiment:
+we learned a one million parameters model, but only for one epoch as it can took already one hour to perform one epoch with
+this model length. We vary the redundancy and the pace. On the graph below is plotted for each
+redundancy the minimum pace that is required to have at least heighty five percent of committed transactions. We took
+heighty five as a threshold because this indicates that most of the transactions have actually been committed, which
+means that the model has chances of being learned. From our result of previous section about tuning the
+transaction size, we decided to use chunk of size one thousand.
+\begin{figure}[H]
+    \hspace*{-2cm}
+        \includegraphics[scale=0.75]{redundancy_pace}
+    \hspace{2mm}%
+    \caption{Redundancy/Pace trade-off}
+\end{figure}
+We can observe that as the redundancy increases, the minimum pace also increases. This is due to the fact that we are involving more participants in the process. As each participants needs to send all its model's chunks, we have to increase the time each participants wait between sending each chunk in order to not overload the blockchain with too much transactions. We can see that there is a trade-off between the redundancy and the mininum pace. This means that the more secure the learning has to be, the more time is needed to perform this learning, as we need to increase the mimimum pace.
 \subsection{Minimum pace depending on model length}
 - Do this, as it could provide some idea about time needed to train a model
 - Fix redundancy, why 8
