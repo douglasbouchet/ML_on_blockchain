@@ -2,6 +2,8 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{longtable}
+\usepackage{hyperref}
 \graphicspath{ {./images/} }
 
 \title{Benchmarking the Internet Computer}
@@ -20,7 +22,7 @@
 \section{Abstract}
 This paper presents a study on the use of blockchain technology as a platform for performing heavy computational tasks
 such as machine learning. Through a series of tests, the paper attempts to identify the capabilities of blockchain for
-such applications. The results of the research indicate that the size of transactions is limited to ten thousand values
+such applications. The results of the research indicate that the size of transactions is limited to ten thousand
 and that there is a trade-off between redundancy and pace of execution. Furthermore, the length of the model has an
 influence on the pace of the model. These results provide insights into the potential of blockchain for heavy
 computational tasks and can be used to inform future research and development in this area.
@@ -179,7 +181,7 @@ which are 32 bytes long.
 Now that we have seen a theoritical protocol that would allow to train a machine learning model.
 In order to measure the performances of our protocol, we will simulate a Quorum blockchain using Amazon Web Service. TODO check name
 The nodes which are responsible of validating the transactions, will be rented on AWS. Each one has two virtual cpu, and
-four Gb of RAM. There are height such nodes, all located in the same geographical region (Paris). We implemented the
+four Gb of RAM. There are eight such nodes, all located in the same geographical region (Paris). We implemented the
 smart contract responsible for all the methods defined in {3.5, 3.6, 3.7} in solidity. Diablo will be used to send
 transactions. This is a tool that given a list of transactions defined by the smart contract method
 called, the arguments passed to the fonction and the time where the transaction should be send, will send them to the
@@ -208,8 +210,8 @@ waiting between sending two chunks. The redundancy is the number of participants
 computation. We will now see if there is a trade-off between the pace and the redundancy. We did the following experiment:
 we learned a one million parameters model, but only for one epoch as it can took already one hour to perform one epoch with
 this model length. We vary the redundancy and the pace. On the graph below is plotted for each
-redundancy the minimum pace that is required to have at least heighty five percent of committed transactions. We took
-heighty five as a threshold because this indicates that most of the transactions have actually been committed, which
+redundancy the minimum pace that is required to have at least eighty five percent of committed transactions. We took
+eighty five as a threshold because this indicates that most of the transactions have actually been committed, which
 means that the model has chances of being learned. From our result of previous section about tuning the
 transaction size, we decided to use chunk of size one thousand.
 \begin{figure}[H]
@@ -218,19 +220,87 @@ transaction size, we decided to use chunk of size one thousand.
     \hspace{2mm}%
     \caption{Redundancy/Pace trade-off}
 \end{figure}
-We can observe that as the redundancy increases, the minimum pace also increases. This is due to the fact that we are involving more participants in the process. As each participants needs to send all its model's chunks, we have to increase the time each participants wait between sending each chunk in order to not overload the blockchain with too much transactions. We can see that there is a trade-off between the redundancy and the mininum pace. This means that the more secure the learning has to be, the more time is needed to perform this learning, as we need to increase the mimimum pace.
+We can observe that as the redundancy increases, the minimum pace also increases. This is due to the fact that we are
+involving more participants in the process. As each participants needs to send all its model's chunks, we have to
+increase the time each participants wait between sending each chunk in order to not overload the blockchain with
+too much transactions. We can see that there is a trade-off between the redundancy and the mininum pace. This means
+that the more secure the learning has to be, the more time is needed to perform this learning, as we need to increase
+the mimimum pace.
 \subsection{Minimum pace depending on model length}
-- Do this, as it could provide some idea about time needed to train a model
-- Fix redundancy, why 8
-- add graph
-- add explanation
+Now that we have seen that there is a trade-off between the redundancy and the pace, we will try to give an idea of the
+minimum pace needed to learn a model of a given length. This could give a rough idea of how much training time would be
+expected using our proposed framework. In the following experiment, we repeated what was done in previous subsection,
+but we varied the model length, instead of fixing it to one million. We also vary the pace, and seted the minimum one leading
+to at least eigty five percent of committed transactions to be the minimum pace. We however fixed the redundancy to eight. We choosed eight as
+the redundancy used by the DFINITY fundation is less than $\frac{1}{3}$ \cite{DFINITY_redundancy} of the workers.
+\begin{figure}[H]
+    \hspace*{-2cm}
+        \includegraphics[scale=0.5]{length_pace}
+    \hspace{2mm}%
+    \caption{Minimum pace as a function of model length}
+\end{figure}
+From the following graph, we can see that when increasing the model length from fifty thousand to two hundred
+fifty thousand, we can actually reduce the minumum pace. This might be due to the fact that in the first phase of the
+learning, all the participants send the hash of their model, almost all at the same time. The blockchain might be overloaded
+and would need some time to handle those transactions. Using a higher model length would ensure that we have such a time.
+Then from two hundred fifty thousand to 2.5 million, we see the minimum pace being actually flat to 0.25 seconds. This is an expected result
+as increasing the model length doesn't increase the number of transactions per second. It only increases the time needed to
+send all the chunks, are there are more of them. Finally, from 2.5 million to 5 million, we see the minimum pace increasing.
+This is a strange result, as we wouldn't expect it. This could be due to some network congestion appening after some time,
+but a more in depth analysis would be needed to confirm this hypothesis. One could also monitor the nodes of the blockchain,
+in order to see if they're actually overloaded. This could give a better idea of what is happening.
 \subsection{Expected training time for some classical models}
-- add tab
-- add analysis
+Now that we know the minimum pace used to train models of a length around one million parameters, we can estimate
+how much time we would need to actually train some real models. In the following results, we make the
+assumption that model with a length higher than 2.5 million parameters can be trained with a pace of 0.25 seconds. We've
+however seen from previous section that it doesn't seems to be the case, and these results would rather be lower bound.
+\begin{longtable}{|l|l|l|}
+    \hline
+    Model                                & Number of epochs & Training Time \\ \hline
+    \endfirsthead
+    %
+    \endhead
+    %
+    CNN for MNIST (1 million parameters) & 100              & 7 hours       \\ \hline
+    BERT (100 million parameters)        & 100 000          & 8 years       \\ \hline
+    GPT-3 (175 billion parameters)       & 10 000           & 1400 years    \\ \hline
+\end{longtable}
+Training a CNN for MNIST take twenty minutes\cite{MNIST_runtime} on a mac book . We however see that it takes seven hours
+with our implementation, which is quite a huge loss of performances. For BERT, it would take several days \cite{BERT_runtime} using one of the
+most powerfull GPU. Again we see that our framework would need at least height years to do the training. Finally, for GPT-3,
+it would take 1400 years to train it using our framework. Some estimation of the training time for GPT-3 using powerfull
+GPU can be found in \cite{GPT_runtime}. They estimate the training time to be 665 years. We only see a two times
+factor, but our estimate of 1400 years was optimal, and may not have taken into account several other parameters that could influence
+the training time (such as GPU memory limitation). To conclude we have seen that using this framework allowing to use the
+blockchain to help in machine learning induce a huge loss of performances. Again in our computation, we only estimate the
+training time as the time we need to send all the model's chunk hash to the smart contract. We didn't take into account
+the training time of the participants to actually compute the new model weights.
 \section{Conclusion}
-- extend what was said in the abstract
-- opening to small ml model + transfert learning
-\section{References}
-- any ref to number used in the report
-- link to github repo
+During this project, we have seen that it can be possible to use the blockchain to help in heavy computational tasks, such as
+machine learning. We have defined a framework allowing to do so, and have seen that it is possible to use it to train a model.
+We have however seen that there are several challenges to overcome in order to make this framework usable in real life.
+We focused on the Quorum blockchain, but there might be other blockchains allowing a higher transaction throughput, or size.
+We also saw that there is a trade-off between the redundancy and the minimum pace. Finally we provided lower bounds
+on the training time for some classical models.\\
+Focusing on smaller machine learning model could be a good application for our framework as it could invoke a smaller workload
+on the blockchain. The framework might also be explored for other tasks in machine learning such as the transfert learning, This is a method where
+you use an already trained model, and vary only some of its parameters in order to specialize it to a new task. This has the
+advantage of using a lower number of parameters, and could in consequence have a good synergy with our framework.\\
+You can find the code we used for this project \href{https://github.com/douglasbouchet/ml_on_blockchain}{on github.}
+
+
+\begin{thebibliography}{9}
+    \bibitem{DFINITY_redundancy}
+    2022, \href{DFINITY white paper}{https://internetcomputer.org/whitepaper.pdf} 2.2 Consensus layer
+
+    \bibitem{MNIST_runtime}
+    Mustafa Hoda (2018) \href{https://medium.datadriveninvestor.com/my-take-at-the-mnist-dataset-97304dff2057}{https://medium.datadriveninvestor.com/my-take-at-the-mnist-dataset-97304dff2057}
+
+    \bibitem{BERT_runtime}
+    Aditya Bindal, Kevin Haas, and Indu Thangakrishnan (2019) \href{https://aws.amazon.com/fr/blogs/machine-learning/amazon-web-services-achieves-fastest-training-times-for-bert-and-mask-r-cnn/}{https://aws.amazon.com/fr/blogs/machine-learning/amazon-web-services-achieves-fastest-training-times-for-bert-and-mask-r-cnn/}
+
+    \bibitem{GPT_runtime}
+    Chuan Li (2020) \href{https://lambdalabs.com/blog/demystifying-gpt-3}{https://lambdalabs.com/blog/demystifying-gpt-3}, Training the Model
+
+\end{thebibliography}
 \end{document}
