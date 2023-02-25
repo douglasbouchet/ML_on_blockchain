@@ -4,6 +4,13 @@
 \usepackage{float}
 \usepackage{longtable}
 \usepackage{hyperref}
+\usepackage{xcolor}
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly boxes
+  urlcolor     = blue, %Colour for external hyperlinks
+  linkcolor    = black, %Colour of internal links
+  citecolor   = blue %Colour of citations
+}
 \graphicspath{ {./images/} }
 
 \title{Benchmarking the Internet Computer}
@@ -32,17 +39,11 @@ The emergence of blockchain technology and its associated smart contracts has re
 storage and computing. As a (student) researcher interested in the potential of blockchain technologies, I sought to explore the
 ability of blockchain to provide a transparent and secure environment for performing heavy computational tasks, such
 as machine learning. This paper aims to investigate if blockchain can indeed be used for such purposes.
-In order to see if the blockchain can then be used to help with heavy computational tasks, we will take an already
-existing protocol to perform this task, the Federated Learning. We will then see how it is possible to modify it by adding the blockchain.
+To answer such question, we will take an already existing protocol to perform this task, the Federated Learning. We will then see how it is possible to modify it by adding the blockchain.
 We will detail the smart contracts used, as well as the interactions between the different agents involved in the
-machine learning task. Finally we will test our new framework using diablo, a program that allows to submit transactions
-to a blockchain, and to measure the performance of the latter, in response to these transactions. For more realism,
- the nodes constituting our blockchain will be emulated using machines made available by the AWS service
-
-DO we add these ? -------
-The expectations of some fundation such as Dfinity project
-Can be questionable, as performaces of some BC can be quite limited
---------------
+machine learning task. Finally we will test our new framework using diablo \cite{diablo}, a program that submits transactions
+to a blockchain, and measure the performance of the latter. For more realism,
+the nodes constituting our blockchain will be emulated using machines made available by the AWS service
 \section{Method}
 \subsection{The need for computational resources in Machine Learning}
 Recently, many machine learning models have been published. These models have become very popular mainly due to their
@@ -99,7 +100,6 @@ guarantee that data cannot be tampered. This implies that using a blockchain in 
 isn't only reserved to machine learning problem, but any other type of problems, involving heavy computational tasks.
 \end{enumerate}
 
-slides which answer the 3 goals
 \subsection{Including BC in federated learning, a naïve approach}
 Now let's see how we can add a blockchain to our current federated learning protocol. The base case is the same as in
 the federated learning scenario, but now we can add a smart contract between the server and the participants. The smart
@@ -145,8 +145,9 @@ the model in clear. If new commits were still accepted, it would be possible for
 models, and create a commit with them. The commit would indeed be valid, therefore our protocol wouldn't prevent anymore
 from model stealing.
 \subsection{Dealing with smart contract limited memory}
-- soem numbers for max var size
-- idea: split the models
+Some smart contract have limited memory, and can't store a large model. For example, the Algorand blockchain uses TEAL
+as a language for smart contract. The smart contract size cannot exceed 700 bytes \cite{TEAL_size}, which mean we must deal with limited
+memory.
 In order to deal with these limitations, we will not send the model weights in one transaction during the reveal phase,
 but rather send chunks of it. Now suppose that we can write our model as following:
 \begin{equation}
@@ -176,10 +177,9 @@ $Hash_{W_i}$ during reveal protocol can be compared to the one send during the c
 We don't need to modify the commit, as we only send an hash, which is of small constant size. Using this construction,
 we can therefore reduce the memory used on the smart contract. In fact, we are only storing hash on the smart contract,
 which are 32 bytes long.
-- total expected memory usage on the smart contract
 \section{Learning a model using blockchain result and observations}
 Now that we have seen a theoritical protocol that would allow to train a machine learning model.
-In order to measure the performances of our protocol, we will simulate a Quorum blockchain using Amazon Web Service. TODO check name
+In order to measure the performances of our protocol, we will simulate a Quorum blockchain using Amazon Web Services.
 The nodes which are responsible of validating the transactions, will be rented on AWS. Each one has two virtual cpu, and
 four Gb of RAM. There are eight such nodes, all located in the same geographical region (Paris). We implemented the
 smart contract responsible for all the methods defined in {3.5, 3.6, 3.7} in solidity. Diablo will be used to send
@@ -187,7 +187,6 @@ transactions. This is a tool that given a list of transactions defined by the sm
 called, the arguments passed to the fonction and the time where the transaction should be send, will send them to the
 smart contract. With this technology, we can easily modify the 'workload' (sequence of transaction) we will be sending
 to the smart contract. This will be usefull when varying the number of transactions send by second.
-- small intro about aws + diablo
 \subsection{First limitation, transaction size}
 One first problem to deal with when working with blockchain is the transaction size. In fact, we should expect
 transaction with a high number of parameters take more time and ressources to be handled than smaller transactions. This
@@ -216,7 +215,7 @@ means that the model has chances of being learned. From our result of previous s
 transaction size, we decided to use chunk of size one thousand.
 \begin{figure}[H]
     \hspace*{-2cm}
-        \includegraphics[scale=0.75]{redundancy_pace}
+        \includegraphics[scale=0.7]{redundancy_pace}
     \hspace{2mm}%
     \caption{Redundancy/Pace trade-off}
 \end{figure}
@@ -275,6 +274,7 @@ the training time (such as GPU memory limitation). To conclude we have seen that
 blockchain to help in machine learning induce a huge loss of performances. Again in our computation, we only estimate the
 training time as the time we need to send all the model's chunk hash to the smart contract. We didn't take into account
 the training time of the participants to actually compute the new model weights.
+\newpage
 \section{Conclusion}
 During this project, we have seen that it can be possible to use the blockchain to help in heavy computational tasks, such as
 machine learning. We have defined a framework allowing to do so, and have seen that it is possible to use it to train a model.
@@ -286,12 +286,20 @@ Focusing on smaller machine learning model could be a good application for our f
 on the blockchain. The framework might also be explored for other tasks in machine learning such as the transfert learning, This is a method where
 you use an already trained model, and vary only some of its parameters in order to specialize it to a new task. This has the
 advantage of using a lower number of parameters, and could in consequence have a good synergy with our framework.\\
-You can find the code we used for this project \href{https://github.com/douglasbouchet/ml_on_blockchain}{on github.}
+You can find the code we used for this project and the results \href{https://github.com/douglasbouchet/ml_on_blockchain}{on github.}
 
 
+\newpage
 \begin{thebibliography}{9}
+
+    \bibitem{diablo}
+    NatoliChris, Gauthier Voron (2021), \href{https://github.com/NatoliChris/diablo-benchmark/tree/develop}{github: diablo-benchmark}
+
+    \bibitem{TEAL_size}
+    Algorand Developer Portal, \href{https://developer.algorand.org/docs/get-details/dapps/avm/teal}{https://developer.algorand.org/docs/get-details/dapps/avm/teal} Limitation and Best Pratices, Dynamic operational cost of TEAL opcodes
+
     \bibitem{DFINITY_redundancy}
-    2022, \href{DFINITY white paper}{https://internetcomputer.org/whitepaper.pdf} 2.2 Consensus layer
+    2022, \href{https://internetcomputer.org/whitepaper.pdf}{DFINITY white paper} 2.2 Consensus layer
 
     \bibitem{MNIST_runtime}
     Mustafa Hoda (2018) \href{https://medium.datadriveninvestor.com/my-take-at-the-mnist-dataset-97304dff2057}{https://medium.datadriveninvestor.com/my-take-at-the-mnist-dataset-97304dff2057}
