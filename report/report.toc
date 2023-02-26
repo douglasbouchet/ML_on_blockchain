@@ -1,3 +1,4 @@
+\babel@toc {english}{}
 \contentsline {section}{\numberline {1}Abstract}{2}{section.1}%
 \contentsline {section}{\numberline {2}Introduction}{3}{section.2}%
 \contentsline {section}{\numberline {3}Method}{3}{section.3}%
@@ -5,7 +6,7 @@
 \contentsline {subsection}{\numberline {3.2}The three main goals of scaling up the computational power}{3}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Federated Learning, an existing system to provide computational resources}{4}{subsection.3.3}%
 \contentsline {subsection}{\numberline {3.4}Advantages of using a blockchain to enhance this protocol}{4}{subsection.3.4}%
-\contentsline {subsection}{\numberline {3.5}Including BC in federated learning, a naïve approach}{5}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.5}Including BC in federated learning, a na\IeC {\"\i }ve approach}{5}{subsection.3.5}%
 \contentsline {subsection}{\numberline {3.6}Solving the model stealing issue}{6}{subsection.3.6}%
 \contentsline {subsection}{\numberline {3.7}Dealing with smart contract limited memory}{6}{subsection.3.7}%
 \contentsline {section}{\numberline {4}Learning a model using blockchain result and observations}{7}{section.4}%

@@ -5,6 +5,18 @@
 \usepackage{longtable}
 \usepackage{hyperref}
 \usepackage{xcolor}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{filecontents}
+\usepackage{verbatim}
+\usepackage{eurosym}
+\usepackage[export]{adjustbox}
 \hypersetup{
   colorlinks   = true, %Colours links instead of ugly boxes
   urlcolor     = blue, %Colour for external hyperlinks
@@ -13,13 +25,68 @@
 }
 \graphicspath{ {./images/} }
 
-\title{Benchmarking the Internet Computer}
-\date{2023-02-13}
-\author{Douglas Bouchet}
-
 \begin{document}
+\begin{titlepage}
+
+    \newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+    \center % Center everything on the page
+
+    %----------------------------------------------------------------------------------------
+    %	HEADING SECTIONS
+    %----------------------------------------------------------------------------------------
+
+    \textsc{\LARGE École Polytechnique Fédérale de Lausanne}\\[1.5cm] % Name of your university/college
+    \textsc{\Large Semester Project}\\[0.5cm] % Major heading such as course name
+    %\textsc{\large Assignment 1}\\[0.5cm] % Minor heading such as course title
+
+    %----------------------------------------------------------------------------------------
+    %	TITLE SECTION
+    %----------------------------------------------------------------------------------------
+
+    \HRule \\[0.4cm]
+    { \huge \bfseries Benchmarking the Internet Computer}\\[0.4cm] % Title of your document
+    \HRule \\[1.5cm]
+
+    %----------------------------------------------------------------------------------------
+    %	AUTHOR SECTION
+    %----------------------------------------------------------------------------------------
+
+    \begin{minipage}{0.4\textwidth}
+    \begin{flushleft} \large
+    \emph{Author:}\\
+    Bouchet \textsc{Douglas}\\
+    \end{flushleft}
+    \end{minipage}
+    ~
+    \begin{minipage}{0.4\textwidth}
+    \begin{flushright} \large
+    \emph{Supervisor:} \\
+    Voron \textsc{Gauthier} \\
+    Distributed Computing Laboratory
+    \end{flushright}
+    \end{minipage}\\[2cm]
+
+
+    %----------------------------------------------------------------------------------------
+    %	DATE SECTION
+    %----------------------------------------------------------------------------------------
+
+    {\large \today}\\[2cm] % Date, change the \today to a set date if you want to be precise
+
+    %----------------------------------------------------------------------------------------
+    %	LOGO SECTION
+    %----------------------------------------------------------------------------------------
+
+    \includegraphics[width=200px, keepaspectratio]{epfl}\\[1cm] % Include a department/university logo - this will require the graphicx package
+
+    %----------------------------------------------------------------------------------------
+
+    \vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
 \pagenumbering{gobble}
-\maketitle
 \newpage
 \pagenumbering{arabic}
 
@@ -29,9 +96,9 @@
 \section{Abstract}
 This paper presents a study on the use of blockchain technology as a platform for performing heavy computational tasks
 such as machine learning. Through a series of tests, the paper attempts to identify the capabilities of blockchain for
-such applications. The results of the research indicate that the size of transactions is limited to ten thousand
-and that there is a trade-off between redundancy and pace of execution. Furthermore, the length of the model has an
-influence on the pace of the model. These results provide insights into the potential of blockchain for heavy
+such applications. The results of the research indicate that the size of transactions on a Quorum blockchain is limited to ten thousand.
+There is also a trade-off between redundancy (how many participants are involved in the learning) and the training time of a machine learning model.
+Furthermore, the length of the model learned also seems to influence the training time. These results provide insights into the potential of blockchain for heavy
 computational tasks and can be used to inform future research and development in this area.
 \newpage
 \section{Introduction}
@@ -43,7 +110,8 @@ To answer such question, we will take an already existing protocol to perform th
 We will detail the smart contracts used, as well as the interactions between the different agents involved in the
 machine learning task. Finally, we will test our new framework using diablo \cite{diablo}, a program that submits transactions
 to a blockchain and measure the performance of the latter. For more realism,
-the nodes constituting our blockchain will be emulated using machines made available by the AWS service.
+the nodes constituting our blockchain will be emulated using machines made available by the AWS service.\\
+You can find the code we used for this project and the results \href{https://github.com/douglasbouchet/ml_on_blockchain}{on github.}
 \section{Method}
 \subsection{The need for computational resources in Machine Learning}
 Recently, many machine learning models have been published. These models have become very popular mainly due to their
@@ -120,7 +188,7 @@ This explanation was focus on only one pool/group of participants, but in a real
 running in parallel, allowing for a quicker model training, which is what this protocol is aiming at.\\
 There is however a big problem with this protocol. As the smart contract is located on a blockchain, everything that is
 actually written to the smart contract, can be read by anyone (assuming we are using a public blockchain). This means
-that it is actually possible for a participant to not actually perform the model update, but still get paid. Let's
+that it is possible for a participant to not perform the model update, but still get paid. Let's
 illustrate this with a simple example.\\
 Suppose we have a worker($W_0$) that sends its updated model weights $M_{W_0}$to the smart contract. The transaction would then
 be ($M_{W_0},Pk_0$). Some evil worker ($W_1$) can read this transaction and steal the model weights $M_{W_0}$. It can then send
@@ -155,8 +223,9 @@ but rather send chunks of it. Now suppose that we can write our model as followi
 \end{equation}
 We modify the reveal as following:
 \begin{enumerate}
-    \item worker i sends $H(M_{W_{i, 1}})$, which is the hash of the first chunk of the model
-    \item he can then send the hash corresponding to the next chunk: $H(M_{W_{i, 2}})$ and so on.
+    \item worker i sends $M_{W_{i, 1}}$, which is the first chunk of the model
+    \item when the smart contract received this chunk, it can send an acknowledgement to the worker
+    \item worker i receive the acknowledgement and send the next chunk, and so on until last chunk
 \end{enumerate}
 The smart contract create only one variable for the chunk received (for each worker). This variable contains the hash
 of the first chunk, which is computed by the smart contract. The model chunk can be stored on an external storage, to
@@ -172,8 +241,8 @@ At the end, for each worker we have the complete model in an external storage, a
          & = H (M_{W_i} | Pk_i)
         \end{split}
 \end{equation}
-The second line is obtained using the Merkle-Damgard theorem. We see that using this construction
-$Hash_{W_i}$ during reveal protocol can be compared to the one send during the commit protocol. \\
+The second line is obtained using the Merkle-Damgard theorem. We see that using this construction, the
+$Hash_{W_i}$ computed in (2) can be compared to the one send during the commit protocol. \\
 We don't need to modify the commit, as we only send a hash, which is of small constant size. Using this construction,
 we can therefore reduce the memory used on the smart contract. In fact, we are only storing hash on the smart contract,
 which are 32 bytes long.
@@ -285,16 +354,15 @@ the training time of the participants to actually compute the new model weights.
 \newpage
 \section{Conclusion}
 During this project, we have seen that it can be possible to use the blockchain to help in heavy computational tasks, such as
-machine learning. We have defined a framework allowing to do so and have seen that it is possible to use it to train a model.
-We have however seen that there are several challenges to overcome in order to make this framework usable in real life.
-We focused on the Quorum blockchain, but there might be other blockchains allowing a higher transaction throughput or size.
+machine learning, and we defined a framework for this task.
+We have however seen that there are several challenges to overcome in order to make this framework usable in real life, such as
+throughput or transaction size limitations. We focused on the Quorum blockchain, but there might be other blockchains allowing a higher transaction throughput or size.
 We also saw that there is a trade-off between the redundancy and the minimum pace. Finally, we provided lower bounds
 on the training time for some classical models.\\
 Focusing on smaller machine learning model could be a good application for our framework as it could invoke a smaller workload
 on the blockchain. The framework might also be explored for other tasks in machine learning such as the transfert learning, This is a method where
 you use an already trained model, and vary only some of its parameters in order to specialize it to a new task. This has the
 advantage of using a lower number of parameters, and could in consequence have a good synergy with our framework.\\
-You can find the code we used for this project and the results \href{https://github.com/douglasbouchet/ml_on_blockchain}{on github.}
 
 
 \newpage
